@@ -1,11 +1,12 @@
 module Memory
+imports from Binary all
 exports all
 definitions
 types
      OID = nat; -- inv x == x <= 0xffffffffffffffff
 
 values
-	  /* oid bits */
+     /* oid bits */
      smallIntegerMask = 1;
      smallIntegerValue = 0;
      immediateOrHeapMask = 2;
@@ -16,7 +17,7 @@ values
      typeValue = 4;
      optionTypeMask = 8;
      optionTypeValue = 8;
-	  /* immediate value oid defs */
+     /* immediate value oid defs */
      immediateValueMask = 0xff;
      floatValue = 0x01;
      characterValue = 0x09;
@@ -27,7 +28,7 @@ values
      emptySeqValue = 0xa1;
      emptySetValue = 0xc1;
      emptyMapValue = 0xe1;
-	  /* immediate type oid defs */
+     /* immediate type oid defs */
      unitType = 0x05;
      boolType = 0x15;
      charType = 0x25;
@@ -37,7 +38,7 @@ values
      nat1Type = 0x65;
      tokenType = 0x75;
      anyType = 0xf5;
-	  /* heap value oid defs */
+     /* heap value oid defs */
      heapValueMask = 0xff; -- remaining 56 bits pointer
      tupleRecordValue = 0x03;
      tokenValue = 0x13;
@@ -49,7 +50,7 @@ values
      operationValue = 0x73;
      largePositiveIntValue = 0x83;
      largeNegativeIntValue = 0x93;
-	  /* heap type oid defs */
+     /* heap type oid defs */
      tupleRecordType = 0x07;
      seqType = 0x27;
      setType = 0x37;
@@ -59,63 +60,9 @@ values
      operationType = 0x77;
      productType = 0x87;
      unionType = 0x97;
+
+functions
+    isSmallIntValue : OID -> bool
+    isSmallIntValue(oid) == Binary`mask(oid, 1) = 0;
 
 end Memory
-types
-     OID = nat; -- inv x == x <= 0xffffffffffffffff
-
-values
-	  /* oid bits */
-     smallIntegerMask = 1;
-     smallIntegerValue = 0;
-     immediateOrHeapMask = 2;
-     immediateValue = 0;
-     heapValue = 2;
-     valueOrTypeMask = 4;
-     valueValue = 0;
-     typeValue = 4;
-     optionTypeMask = 8;
-     optionTypeValue = 8;
-	  /* immediate value oid defs */
-     immediateValueMask = 0xff;
-     floatValue = 0x01;
-     characterValue = 0x09;
-     nilValue = 0x21;
-     trueValue = 0x41;
-     falseValue = 0x61;
-     undefinedValue = 0x81;
-     emptySeqValue = 0xa1;
-     emptySetValue = 0xc1;
-     emptyMapValue = 0xe1;
-	  /* immediate type oid defs */
-     unitType = 0x05;
-     boolType = 0x15;
-     charType = 0x25;
-     realType = 0x35;
-     intType = 0x45;
-     natType = 0x55;
-     nat1Type = 0x65;
-     tokenType = 0x75;
-     anyType = 0xf5;
-	  /* heap value oid defs */
-     heapValueMask = 0xff; -- remaining 56 bits pointer
-     tupleRecordValue = 0x03;
-     tokenValue = 0x13;
-     seqValue = 0x23;
-     setValue = 0x33;
-     mapValue = 0x43;
-     quoteValue = 0x53;
-     functionValue = 0x63;
-     operationValue = 0x73;
-     largePositiveIntValue = 0x83;
-     largeNegativeIntValue = 0x93;
-	  /* heap type oid defs */
-     tupleRecordType = 0x07;
-     seqType = 0x27;
-     setType = 0x37;
-     mapType = 0x47;
-     quoteType = 0x57;
-     functionType = 0x67;
-     operationType = 0x77;
-     productType = 0x87;
-     unionType = 0x97;

@@ -1,0 +1,16 @@
+module Binary
+exports all
+definitions
+functions
+	/* utility functions for bits */
+    mask : nat * nat -> nat
+    mask(i, m) ==
+        cases m:
+            1 -> i mod 2,
+            2 -> i div 2 mod 2  * 2,
+            4 -> i div 4 mod 2  * 4,
+            8 -> i div 8 mod 2  * 8,
+            0xff -> i mod 0x100
+            end;
+
+end Binary

@@ -1,0 +1,118 @@
+module Data
+exports all
+definitions
+types
+     byte = nat inv b == b < 0x100; -- 8bits unsigned integer
+     Register :: oid : OID i : [Int] f : [Float] c : [Char] p : [Pointer];
+     OID = nat inv oid == oid < 0x10000000000000000; -- 64 bits unsigned integer
+     Int = int
+        inv i == i > -0x4000000000000000 and i < 0x4000000000000000; -- 63 bits signed integer
+     Float :: sign : nat exponent : nat fraction : nat
+        inv mk_Float(s, e, f) == (s < 2 and e < 0x100) and f < 0x800000; -- 32 bits floating point
+     Char = nat inv c == c < 0x100000000; -- 32 bits unsigned int
+     Pointer = nat inv p == p < 0x100000000000000; -- 56 bits address
+
+values
+     /* oid tag flags */
+     smallIntegerFlag = 1;
+     pointerFlag = 2;
+     typeFlag = 4;
+     optionTypeFlag = 8;
+     /* immediate value oid tags */
+     smallIntegerTag = 1;
+     floatTag = 0x08;
+     charTag = 0x08;
+     invalidTag = 0x00;
+     nilTag = 0x10;
+     trueTag = 0x18;
+     falseTag = 0x20;
+     undefinedTag = 0x28;
+     emptySeqTag = 0x80;
+     emptySetTag = 0x88;
+     emptyMapTag = 0x90;
+     /* immediate type oid defs */
+     unitType = 0x04;
+     boolType = 0x14;
+     charType = 0x24;
+     realType = 0x34;
+     intType = 0x44;
+     natType = 0x54;
+     nat1Type = 0x64;
+     tokenType = 0x74;
+     anyType = 0xf4;
+     /* heap value oid defs */
+     tupleRecordTag = 0x02;
+     tokenTag = 0x12;
+     seqTag = 0x22;
+     setTag = 0x32;
+     mapTag = 0x42;
+     quoteTag = 0x52;
+     functionTag = 0x62;
+     operationTag = 0x72;
+     largePositiveIntTag = 0x82;
+     largeNegativeIntTag = 0x92;
+     /* heap type oid defs */
+     tupleRecordType = 0x06;
+     seqType = 0x26;
+     setType = 0x36;
+     mapType = 0x46;
+     quoteType = 0x56;
+     functionType = 0x66;
+     operationType = 0x76;
+     productType = 0x86;
+     unionType = 0x96;
+	/* default values */
+     defaultIntValue = 0x8000000000000000;
+     defaultFloatValue = mk_Float(1, 255, 0x7fffff);
+     defaultCharValue = 0;
+     defaultPointerValue = 0;
+
+functions
+    oid2int : OID -> Int
+    oid2int(oid) ==
+        if
+            oid mod 2 = 1
+        then
+            (if oid <= 0x8000000000000000 then oid div 2 else oid div 2 - 0x8000000000000000)
+        else
+            defaultIntValue;
+    
+    int2oid : Int -> OID
+    int2oid(i) ==
+        if i >= 0 then i  * 2 + 1 else (0x8000000000000000 + i)  * 2 + smallIntegerTag;
+    
+    oid2float : OID -> Float
+    oid2float(oid) ==
+        if
+            oid mod 0x100 = floatTag
+        then
+            (let
+                    f : nat = oid div 0x100,
+                    fraction : nat = f mod 0x800000,
+                    signExponent : nat = f div 0x800000,
+                    exponent : nat = signExponent mod 0x100,
+                    sign : nat = signExponent div 0x100
+                in mk_Float(sign, exponent, fraction))
+        else
+            defaultFloatValue;
+    
+    float2oid : Float -> OID
+    float2oid(mk_Float(sign, exponent, fraction)) ==
+        sign  * 0x8000000000 + exponent  * 0x80000000 + fraction  * 0x100
+        + floatTag;
+    
+    oid2char : OID -> Char
+    oid2char(oid) ==
+        if oid mod 0x100 = charTag then oid div 0x100 else defaultCharValue;
+    
+    char2oid : Char -> OID
+    char2oid(c) == c  * 0x100 + charTag;
+    
+    oid2pointer : OID -> Pointer
+    oid2pointer(oid) ==
+        if oid mod 4 = 2 then oid div 0x100 else defaultPointerValue;
+    
+    pointer2oid : Pointer -> OID
+    pointer2oid(p) == p  * 0x100;
+
+end Data

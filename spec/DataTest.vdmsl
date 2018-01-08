@@ -1,0 +1,62 @@
+module DataTest
+imports from Data all
+exports all
+definitions
+operations
+    testAll : () ==> ()
+    testAll() ==
+        (testOid2int();
+        testOid2float();
+        testOid2char());
+    
+    testOid2int : () ==> ()
+    testOid2int() ==
+        (if Data`oid2int(Data`int2oid(12)) <> 12 then error;
+        if
+            Data`oid2int(Data`int2oid(0x1122334455667788)) <> 0x1122334455667788
+        then
+            error;
+        if Data`oid2int(Data`int2oid(-12)) <> -12 then error;
+        if
+            Data`oid2int(Data`int2oid(-0x1122334455667788))
+            <> -0x1122334455667788
+        then
+            error;
+        if
+            Data`int2oid(0x1122334455667788) mod 0x2 <> Data`smallIntegerTag
+        then
+            error;
+        if
+            Data`int2oid(-0x1122334455667788) mod 0x2 <> Data`smallIntegerTag
+        then
+            error);
+    
+    testOid2float : () ==> ()
+    testOid2float() ==
+        (if
+            Data`oid2float(Data`float2oid(mk_Data`Float(0, 0x12, 0x12345)))
+            <> mk_Data`Float(0, 0x12, 0x12345)
+        then
+            error;
+        if
+            Data`oid2float(Data`float2oid(mk_Data`Float(1, 0xab, 0x23456)))
+            <> mk_Data`Float(1, 0xab, 0x23456)
+        then
+            error;
+        if
+            Data`float2oid(mk_Data`Float(0, 0x12, 0x12345)) mod 0x100
+            <> Data`floatTag
+        then
+            error;
+        if
+            Data`float2oid(mk_Data`Float(1, 0xab, 0x23456)) mod 0x100
+            <> Data`floatTag
+        then
+            error);
+    
+    testOid2char : () ==> ()
+    testOid2char() ==
+        (if Data`oid2char(Data`char2oid(0x1234)) <> 0x1234 then error;
+        if Data`char2oid(0x1234) mod 0x100 <> Data`charTag then error);
+
+end DataTest

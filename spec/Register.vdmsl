@@ -1,0 +1,148 @@
+module Register
+imports
+    from Data
+        types
+            OID renamed OID;
+            Int renamed Int;
+            Float renamed Float;
+            Char renamed Char;
+            Pointer renamed Pointer;
+        values
+            invalidTag: OID renamed invalidTag;
+            defaultIntValue renamed defaultIntValue;
+            defaultFloatValue renamed defaultFloatValue;
+            defaultCharValue renamed defaultCharValue;
+            defaultPointerValue renamed defaultPointerValue;
+        functions
+            int2oid: Int -> OID renamed int2oid;
+            float2oid: Float -> OID renamed float2oid;
+            char2oid: Char -> OID renamed char2oid;
+            pointer2oid: Pointer -> OID renamed pointer2oid;
+            oid2int: OID -> Int renamed oid2int;
+            oid2float: OID -> Float renamed oid2float;
+            oid2char: OID -> Char renamed oid2char;
+            oid2pointer: OID -> Pointer renamed oid2pointer;
+exports all
+definitions
+types
+     Register :: oid : OID i : [Int] f : [Float] c : [Char] p : [Pointer];
+
+state State of
+    registers : seq of Register
+init s ==
+    s
+    = mk_State(
+        [mk_Register(invalidTag, nil, nil, nil, nil)
+            | i in set {1, ..., 16}])
+end
+
+operations
+    read_oid : nat ==> OID
+    read_oid(r) ==
+        let register : Register = registers(r)
+        in
+            if register.oid <> invalidTag
+                then return register.oid
+            elseif register.i <> invalidTag
+                then (dcl oid:OID := int2oid(register.i);
+                registers(r) .oid := oid;
+                return oid)
+            elseif register.f <> nil
+                then (dcl oid:OID := float2oid(register.f);
+                registers(r) .oid := oid;
+                return oid)
+            elseif register.c <> nil
+                then (dcl oid:OID := char2oid(register.c);
+                registers(r) .oid := oid;
+                return oid)
+            elseif register.p <> nil
+                then (dcl oid:OID := pointer2oid(register.p);
+                registers(r) .oid := oid;
+                return oid)
+            else
+                return invalidTag;
+    
+    write_oid : nat * OID ==> ()
+    write_oid(r, oid) ==
+        registers(r) := mk_Register(oid, nil, nil, nil, nil);
+    
+    read_tag : nat ==> OID
+    read_tag(r) == return read_oid(r) mod 0x100;
+    
+    write_tag : nat * OID ==> ()
+    write_tag(r, tag) ==
+        registers(r) := mk_Register(read_oid(r) + tag, nil, nil, nil, nil);
+    
+    read_int : nat ==> Int
+    read_int(r) ==
+        let i : [Int] = registers(r).i
+        in
+            if
+                i <> nil
+            then
+                return i
+            else
+                let i2 : Int = oid2int(registers(r).oid)
+                in
+                    (registers(r) .i := i2;
+                    return i2);
+    
+    write_int : nat * Int ==> ()
+    write_int(r, i) ==
+        registers(r) := mk_Register(invalidTag, i, nil, nil, nil);
+    
+    read_float : nat ==> Float
+    read_float(r) ==
+        let f : [Float] = registers(r).f
+        in
+            if
+                f <> nil
+            then
+                return f
+            else
+                let f2 : Float = oid2float(registers(r).oid)
+                in
+                    (registers(r) .f := f2;
+                    return f2);
+    
+    write_float : nat * Float ==> ()
+    write_float(r, f) ==
+        registers(r) := mk_Register(invalidTag, nil, f, nil, nil);
+    
+    read_char : nat ==> Char
+    read_char(r) ==
+        let c : [Char] = registers(r).c
+        in
+            if
+                c <> nil
+            then
+                return c
+            else
+                let c2 : Char = oid2char(registers(r).oid)
+                in
+                    (registers(r) .c := c2;
+                    return c2);
+    
+    write_char : nat * Char ==> ()
+    write_char(r, c) ==
+        registers(r) := mk_Register(invalidTag, nil, nil, c, nil);
+    
+    read_pointer : nat ==> Pointer
+    read_pointer(r) ==
+        let p : [Pointer] = registers(r).p
+        in
+            if
+                p <> nil
+            then
+                return p
+            else
+                let p2 : Pointer = oid2pointer(registers(r).oid)
+                in
+                    (registers(r) .p := p2;
+                    return p2);
+    
+    write_pointer : nat * Pointer ==> ()
+    write_pointer(r, p) ==
+        registers(r) := mk_Register(invalidTag, nil, nil, nil, p);
+
+end Register

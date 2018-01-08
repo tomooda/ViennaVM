@@ -1,0 +1,60 @@
+module BinaryTest
+imports from Binary all
+exports all
+definitions
+operations
+    testAll : () ==> ()
+    testAll() ==
+        (testMask();
+        testXor();
+        testRshift();
+        testLshift());
+    
+    testMask : () ==> ()
+    testMask() ==
+        (for i = 0 to  255
+        do
+            (for m1 = 0 to  255
+            do
+                (let
+                    m2 : nat = 255 - m1,
+                    i1 : nat = Binary`mask(i, m1),
+                    i2 : nat = Binary`mask(i, m2)
+                in
+                    (if i1 > 255 then error;
+                    if i2 > 255 then error;
+                    if Binary`mask(i1, i2) <> 0 then error ;
+                    if i1 + i2 <> i then error))));
+    
+    testXor : () ==> ()
+    testXor() ==
+        (for i = 0 to  255
+        do
+            (for j = 0 to  255
+            do if Binary`xor(Binary`xor(i, j), j) <> i then error;
+            if Binary`xor(i, i) <> 0 then error);
+        if
+            Binary`xor(
+                Binary`xor(Binary`xor(0x11223344, 0xaaaaaaaa), 0x55555555),
+                0xffffffff)
+            <> 0x11223344
+        then
+            error);
+    
+    testRshift : () ==> ()
+    testRshift() ==
+        (if Binary`rshift(0xa, 0) <> 0xa then error;
+        if Binary`rshift(0xa, 1) <> 0x5 then error;
+        if Binary`rshift(0xa, 2) <> 0x2 then error;
+        if Binary`rshift(0xa, 3) <> 0x1 then error;
+        if Binary`rshift(0xa, 4) <> 0 then error);
+    
+    testLshift : () ==> ()
+    testLshift() ==
+        (if Binary`lshift(0xa, 0) <> 0xa then error;
+        if Binary`lshift(0xa, 1) <> 0x14 then error;
+        if Binary`lshift(0xa, 2) <> 0x28 then error;
+        if Binary`lshift(0xa, 3) <> 0x50 then error;
+        if Binary`lshift(0xa, 4) <> 0xa0 then error);
+
+end BinaryTest

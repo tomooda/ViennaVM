@@ -6,11 +6,11 @@ types
      Register :: oid : OID i : [Int] f : [Float] c : [Char] p : [Pointer];
      OID = nat inv oid == oid < 0x10000000000000000; -- 64 bits unsigned integer
      Int = int
-        inv i == i > -0x4000000000000000 and i < 0x4000000000000000; -- 63 bits signed integer
+        inv i == i > -0x8000000000000000 and i < 0x8000000000000000; -- 63 bits signed integer
      Float :: sign : nat exponent : nat fraction : nat
-        inv mk_Float(s, e, f) == (s < 2 and e < 0x100) and f < 0x800000; -- 32 bits floating point
+        inv mk_Float(s, e, f) == (s < 2 and e < 0x100) and f < 0x1000000; -- 32 bits floating point
      Char = nat inv c == c < 0x100000000; -- 32 bits unsigned int
-     Pointer = nat inv p == p < 0x100000000000000; -- 56 bits address
+     Pointer = nat inv p == p < 0x10000000000000000; -- 64 bits address
 
 values
      /* oid tag flags */
@@ -62,10 +62,11 @@ values
      productType = 0x86;
      unionType = 0x96;
 	/* default values */
-     defaultIntValue = 0x8000000000000000;
-     defaultFloatValue = mk_Float(1, 255, 0x7fffff);
-     defaultCharValue = 0;
-     defaultPointerValue = 0;
+     invalidOidValue = invalidTag;
+     invalidIntValue = 0x7fffffffffffffff;
+     invalidFloatValue = mk_Float(1, 255, 0x7fffff);
+     invalidCharValue = 0xffffffff;
+     invalidPointerValue = 0x8000000000000000;
 
 functions
     oid2int : OID -> Int
@@ -75,11 +76,16 @@ functions
         then
             (if oid <= 0x8000000000000000 then oid div 2 else oid div 2 - 0x8000000000000000)
         else
-            defaultIntValue;
+            invalidIntValue;
     
     int2oid : Int -> OID
     int2oid(i) ==
-        if i >= 0 then i  * 2 + 1 else (0x8000000000000000 + i)  * 2 + smallIntegerTag;
+        if
+            i <> invalidIntValue
+        then
+            (if i >= 0 then i  * 2 + 1 else (0x8000000000000000 + i)  * 2 + smallIntegerTag)
+        else
+            invalidOidValue;
     
     oid2float : OID -> Float
     oid2float(oid) ==
@@ -94,25 +100,33 @@ functions
                     sign : nat = signExponent div 0x100
                 in mk_Float(sign, exponent, fraction))
         else
-            defaultFloatValue;
+            invalidFloatValue;
     
     float2oid : Float -> OID
-    float2oid(mk_Float(sign, exponent, fraction)) ==
-        sign  * 0x8000000000 + exponent  * 0x80000000 + fraction  * 0x100
-        + floatTag;
+    float2oid(f) ==
+        if
+            f <> invalidFloatValue
+        then
+            f.sign  * 0x8000000000 + f.exponent  * 0x80000000
+            + f.fraction  * 0x100
+            + floatTag
+        else
+            invalidOidValue;
     
     oid2char : OID -> Char
     oid2char(oid) ==
-        if oid mod 0x100 = charTag then oid div 0x100 else defaultCharValue;
+        if oid mod 0x100 = charTag then oid div 0x100 else invalidCharValue;
     
     char2oid : Char -> OID
-    char2oid(c) == c  * 0x100 + charTag;
+    char2oid(c) ==
+        if c <> invalidCharValue then c  * 0x100 + charTag else invalidOidValue;
     
     oid2pointer : OID -> Pointer
     oid2pointer(oid) ==
-        if oid mod 4 = 2 then oid div 0x100 else defaultPointerValue;
+        if oid mod 4 = 2 then oid div 0x100 else invalidPointerValue;
     
     pointer2oid : Pointer -> OID
-    pointer2oid(p) == p  * 0x100;
+    pointer2oid(p) ==
+        if p <> invalidPointerValue then p  * 0x100 else invalidOidValue;
 
 end Data

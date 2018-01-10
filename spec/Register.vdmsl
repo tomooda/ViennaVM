@@ -9,10 +9,11 @@ imports
             Pointer renamed Pointer;
         values
             invalidTag: OID renamed invalidTag;
-            defaultIntValue renamed defaultIntValue;
-            defaultFloatValue renamed defaultFloatValue;
-            defaultCharValue renamed defaultCharValue;
-            defaultPointerValue renamed defaultPointerValue;
+            invalidOidValue: OID renamed invalidOidValue;
+            invalidIntValue: Int renamed invalidIntValue;
+            invalidFloatValue: Float renamed invalidFloatValue;
+            invalidCharValue: Char renamed invalidCharValue;
+            invalidPointerValue: Pointer renamed invalidPointerValue;
         functions
             int2oid: Int -> OID renamed int2oid;
             float2oid: Float -> OID renamed float2oid;
@@ -25,14 +26,19 @@ imports
 exports all
 definitions
 types
-     Register :: oid : OID i : [Int] f : [Float] c : [Char] p : [Pointer];
+     Register :: oid : OID i : Int f : Float c : Char p : Pointer;
 
 state State of
     registers : seq of Register
 init s ==
     s
     = mk_State(
-        [mk_Register(invalidTag, nil, nil, nil, nil)
+        [mk_Register(
+            invalidOidValue,
+            invalidIntValue,
+            invalidFloatValue,
+            invalidCharValue,
+            invalidPointerValue)
             | i in set {1, ..., 16}])
 end
 
@@ -47,15 +53,15 @@ operations
                 then (dcl oid:OID := int2oid(register.i);
                 registers(r) .oid := oid;
                 return oid)
-            elseif register.f <> nil
+            elseif register.f <> invalidFloatValue
                 then (dcl oid:OID := float2oid(register.f);
                 registers(r) .oid := oid;
                 return oid)
-            elseif register.c <> nil
+            elseif register.c <> invalidCharValue
                 then (dcl oid:OID := char2oid(register.c);
                 registers(r) .oid := oid;
                 return oid)
-            elseif register.p <> nil
+            elseif register.p <> invalidPointerValue
                 then (dcl oid:OID := pointer2oid(register.p);
                 registers(r) .oid := oid;
                 return oid)
@@ -64,21 +70,33 @@ operations
     
     write_oid : nat * OID ==> ()
     write_oid(r, oid) ==
-        registers(r) := mk_Register(oid, nil, nil, nil, nil);
+        registers(r)
+            := mk_Register(
+                oid,
+                invalidIntValue,
+                invalidFloatValue,
+                invalidCharValue,
+                invalidPointerValue);
     
     read_tag : nat ==> OID
     read_tag(r) == return read_oid(r) mod 0x100;
     
     write_tag : nat * OID ==> ()
     write_tag(r, tag) ==
-        registers(r) := mk_Register(read_oid(r) + tag, nil, nil, nil, nil);
+        registers(r)
+            := mk_Register(
+                read_oid(r) + tag,
+                invalidIntValue,
+                invalidFloatValue,
+                invalidCharValue,
+                invalidPointerValue);
     
     read_int : nat ==> Int
     read_int(r) ==
         let i : [Int] = registers(r).i
         in
             if
-                i <> nil
+                i <> invalidIntValue
             then
                 return i
             else
@@ -89,14 +107,16 @@ operations
     
     write_int : nat * Int ==> ()
     write_int(r, i) ==
-        registers(r) := mk_Register(invalidTag, i, nil, nil, nil);
+        registers(r)
+            := mk_Register(
+                invalidTag, i, invalidFloatValue, invalidCharValue, invalidPointerValue);
     
     read_float : nat ==> Float
     read_float(r) ==
         let f : [Float] = registers(r).f
         in
             if
-                f <> nil
+                f <> invalidFloatValue
             then
                 return f
             else
@@ -107,14 +127,16 @@ operations
     
     write_float : nat * Float ==> ()
     write_float(r, f) ==
-        registers(r) := mk_Register(invalidTag, nil, f, nil, nil);
+        registers(r)
+            := mk_Register(
+                invalidTag, invalidIntValue, f, invalidCharValue, invalidPointerValue);
     
     read_char : nat ==> Char
     read_char(r) ==
         let c : [Char] = registers(r).c
         in
             if
-                c <> nil
+                c <> invalidCharValue
             then
                 return c
             else
@@ -125,14 +147,16 @@ operations
     
     write_char : nat * Char ==> ()
     write_char(r, c) ==
-        registers(r) := mk_Register(invalidTag, nil, nil, c, nil);
+        registers(r)
+            := mk_Register(
+                invalidTag, invalidIntValue, invalidFloatValue, c, invalidPointerValue);
     
     read_pointer : nat ==> Pointer
     read_pointer(r) ==
         let p : [Pointer] = registers(r).p
         in
             if
-                p <> nil
+                p <> invalidPointerValue
             then
                 return p
             else
@@ -143,6 +167,8 @@ operations
     
     write_pointer : nat * Pointer ==> ()
     write_pointer(r, p) ==
-        registers(r) := mk_Register(invalidTag, nil, nil, nil, p);
+        registers(r)
+            := mk_Register(
+                invalidTag, invalidIntValue, invalidFloatValue, invalidCharValue, p);
 
 end Register

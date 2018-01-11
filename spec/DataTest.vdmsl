@@ -1,5 +1,10 @@
 module DataTest
-imports from Data all
+imports
+    from Data all,
+    from UnitTesting
+        operations
+            assert renamed assert;
+            assertEquals renamed assertEquals;
 exports all
 definitions
 operations
@@ -7,56 +12,44 @@ operations
     testAll() ==
         (testOid2int();
         testOid2float();
-        testOid2char());
+        testOid2char();
+        testOid2pointer());
     
     testOid2int : () ==> ()
     testOid2int() ==
-        (if Data`oid2int(Data`int2oid(12)) <> 12 then error;
-        if
-            Data`oid2int(Data`int2oid(0x1122334455667788)) <> 0x1122334455667788
-        then
-            error;
-        if Data`oid2int(Data`int2oid(-12)) <> -12 then error;
-        if
-            Data`oid2int(Data`int2oid(-0x1122334455667788))
-            <> -0x1122334455667788
-        then
-            error;
-        if
-            Data`int2oid(0x1122334455667788) mod 0x2 <> Data`smallIntegerTag
-        then
-            error;
-        if
-            Data`int2oid(-0x1122334455667788) mod 0x2 <> Data`smallIntegerTag
-        then
-            error);
+        (assertEquals(Data`oid2int(Data`int2oid(12)), 12);
+        assertEquals(
+            Data`oid2int(Data`int2oid(0x1122334455667788)), 0x1122334455667788);
+        assertEquals(Data`oid2int(Data`int2oid(-12)), -12);
+        assertEquals(
+            Data`oid2int(Data`int2oid(-0x1122334455667788)),
+            -0x1122334455667788);
+        assertEquals(Data`int2oid(0x1122334455667788) mod 0x2, Data`smallIntegerTag);
+        assertEquals(Data`int2oid(-0x1122334455667788) mod 0x2, Data`smallIntegerTag));
     
     testOid2float : () ==> ()
     testOid2float() ==
-        (if
-            Data`oid2float(Data`float2oid(mk_Data`Float(0, 0x12, 0x12345)))
-            <> mk_Data`Float(0, 0x12, 0x12345)
-        then
-            error;
-        if
-            Data`oid2float(Data`float2oid(mk_Data`Float(1, 0xab, 0x23456)))
-            <> mk_Data`Float(1, 0xab, 0x23456)
-        then
-            error;
-        if
-            Data`float2oid(mk_Data`Float(0, 0x12, 0x12345)) mod 0x100
-            <> Data`floatTag
-        then
-            error;
-        if
-            Data`float2oid(mk_Data`Float(1, 0xab, 0x23456)) mod 0x100
-            <> Data`floatTag
-        then
-            error);
+        (assertEquals(
+            Data`oid2float(Data`float2oid(mk_Data`Float(0, 0x12, 0x12345))),
+            mk_Data`Float(0, 0x12, 0x12345));
+        assertEquals(
+            Data`oid2float(Data`float2oid(mk_Data`Float(1, 0xab, 0x23456))),
+            mk_Data`Float(1, 0xab, 0x23456));
+        assertEquals(
+            Data`float2oid(mk_Data`Float(0, 0x12, 0x12345)) mod 0x100,
+            Data`floatTag);
+        assertEquals(
+            Data`float2oid(mk_Data`Float(1, 0xab, 0x23456)) mod 0x100,
+            Data`floatTag));
     
     testOid2char : () ==> ()
     testOid2char() ==
-        (if Data`oid2char(Data`char2oid(0x1234)) <> 0x1234 then error;
-        if Data`char2oid(0x1234) mod 0x100 <> Data`charTag then error);
+        (assertEquals(Data`oid2char(Data`char2oid(0x1234)), 0x1234);
+        assertEquals(Data`char2oid(0x1234) mod 0x100, Data`charTag));
+    
+    testOid2pointer : () ==> ()
+    testOid2pointer() ==
+        (assertEquals(Data`oid2pointer(Data`pointer2oid(0x12345)), 0x12345);
+        assertEquals(Data`oid2pointer(0x12345) mod 0x100, 0));
 
 end DataTest

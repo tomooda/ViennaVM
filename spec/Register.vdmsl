@@ -49,7 +49,7 @@ operations
         in
             if register.oid <> invalidTag
                 then return register.oid
-            elseif register.i <> invalidTag
+            elseif register.i <> invalidIntValue
                 then (dcl oid:OID := int2oid(register.i);
                 registers(r) .oid := oid;
                 return oid)

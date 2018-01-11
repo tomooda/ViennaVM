@@ -1,0 +1,11 @@
+module UnitTesting
+exports all
+definitions
+operations
+    assert : bool ==> ()
+    assert(b) == if not b then error;
+    
+    assertEquals : ? * ? ==> ()
+    assertEquals(actual, expected) == if actual <> expected then error;
+
+end UnitTesting

@@ -15,52 +15,52 @@ types
 values
      /* oid tag flags */
      smallIntegerFlag = 1;
-     pointerFlag = 2;
+     immediateFlag = 2;
      typeFlag = 4;
      optionTypeFlag = 8;
      /* immediate value oid tags */
      smallIntegerTag = 1;
-     floatTag = 0x08;
-     charTag = 0x08;
-     invalidTag = 0x00;
-     nilTag = 0x10;
-     trueTag = 0x18;
-     falseTag = 0x20;
-     undefinedTag = 0x28;
-     emptySeqTag = 0x80;
-     emptySetTag = 0x88;
-     emptyMapTag = 0x90;
+     invalidTag = 0x0a;
+     floatTag = 0x12;
+     charTag = 0x1a;
+     nilTag = 0x22;
+     trueTag = 0x2a;
+     falseTag = 0x32;
+     undefinedTag = 0x3a;
+     emptySeqTag = 0x82;
+     emptySetTag = 0x8a;
+     emptyMapTag = 0x92;
      /* immediate type oid defs */
-     unitType = 0x04;
-     boolType = 0x14;
-     charType = 0x24;
-     realType = 0x34;
-     intType = 0x44;
-     natType = 0x54;
-     nat1Type = 0x64;
-     tokenType = 0x74;
-     anyType = 0xf4;
+     unitType = 0x06;
+     boolType = 0x16;
+     charType = 0x26;
+     realType = 0x36;
+     intType = 0x46;
+     natType = 0x56;
+     nat1Type = 0x66;
+     tokenType = 0x76;
+     anyType = 0xf6;
      /* heap value oid defs */
-     tupleRecordTag = 0x02;
-     tokenTag = 0x12;
-     seqTag = 0x22;
-     setTag = 0x32;
-     mapTag = 0x42;
-     quoteTag = 0x52;
-     functionTag = 0x62;
-     operationTag = 0x72;
-     largePositiveIntTag = 0x82;
-     largeNegativeIntTag = 0x92;
+     tupleRecordTag = 0x10;
+     tokenTag = 0x20;
+     seqTag = 0x30;
+     setTag = 0x40;
+     mapTag = 0x50;
+     quoteTag = 0x60;
+     functionTag = 0x70;
+     operationTag = 0x80;
+     largePositiveIntTag = 0x90;
+     largeNegativeIntTag = 0xa0;
      /* heap type oid defs */
-     tupleRecordType = 0x06;
-     seqType = 0x26;
-     setType = 0x36;
-     mapType = 0x46;
-     quoteType = 0x56;
-     functionType = 0x66;
-     operationType = 0x76;
-     productType = 0x86;
-     unionType = 0x96;
+     tupleRecordType = 0x04;
+     seqType = 0x24;
+     setType = 0x34;
+     mapType = 0x44;
+     quoteType = 0x54;
+     functionType = 0x64;
+     operationType = 0x74;
+     productType = 0x84;
+     unionType = 0x94;
 	/* default values */
      invalidOidValue = invalidTag;
      invalidIntValue = 0x7fffffffffffffff;
@@ -123,7 +123,7 @@ functions
     
     oid2pointer : OID -> Pointer
     oid2pointer(oid) ==
-        if oid mod 4 = 2 then oid div 0x100 else invalidPointerValue;
+        if oid mod 4 = 0 then oid div 0x100 else invalidPointerValue;
     
     pointer2oid : Pointer -> OID
     pointer2oid(p) ==

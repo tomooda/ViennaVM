@@ -1,0 +1,4 @@
+RegisterTest
+	testRead_oid()
+	testWrite_oid()
+	

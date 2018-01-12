@@ -96,3 +96,4 @@ operations
             assertEquals(Register`read_pointer(1), Data`invalidPointerValue));
 
 end RegisterTest
+

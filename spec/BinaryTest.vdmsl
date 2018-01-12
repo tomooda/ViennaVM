@@ -23,7 +23,7 @@ operations
                 in
                     (if i1 > 255 then error;
                     if i2 > 255 then error;
-                    if Binary`mask(i1, i2) <> 0 then error ;
+                    if Binary`mask(i1, i2) <> 0 then error;
                     if i1 + i2 <> i then error))));
     
     testXor : () ==> ()
@@ -58,3 +58,4 @@ operations
         if Binary`lshift(0xa, 4) <> 0xa0 then error);
 
 end BinaryTest
+

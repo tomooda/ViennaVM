@@ -10,13 +10,13 @@ definitions
 operations
     testAll : () ==> ()
     testAll() ==
-        (testOid2int();
-        testOid2float();
-        testOid2char();
-        testOid2pointer());
+        (test_oid2int();
+        test_oid2float();
+        test_oid2char();
+        test_oid2pointer());
     
-    testOid2int : () ==> ()
-    testOid2int() ==
+    test_oid2int : () ==> ()
+    test_oid2int() ==
         (assertEquals(Data`oid2int(Data`int2oid(12)), 12);
         assertEquals(
             Data`oid2int(Data`int2oid(0x1122334455667788)), 0x1122334455667788);
@@ -25,10 +25,12 @@ operations
             Data`oid2int(Data`int2oid(-0x1122334455667788)),
             -0x1122334455667788);
         assertEquals(Data`int2oid(0x1122334455667788) mod 0x2, Data`smallIntegerTag);
-        assertEquals(Data`int2oid(-0x1122334455667788) mod 0x2, Data`smallIntegerTag));
+        assertEquals(Data`int2oid(-0x1122334455667788) mod 0x2, Data`smallIntegerTag);
+        assertEquals(Data`int2oid(Data`invalidIntValue), Data`invalidOidValue);
+        assertEquals(Data`oid2int(Data`invalidOidValue), Data`invalidIntValue));
     
-    testOid2float : () ==> ()
-    testOid2float() ==
+    test_oid2float : () ==> ()
+    test_oid2float() ==
         (assertEquals(
             Data`oid2float(Data`float2oid(mk_Data`Float(0, 0x12, 0x12345))),
             mk_Data`Float(0, 0x12, 0x12345));
@@ -40,16 +42,22 @@ operations
             Data`floatTag);
         assertEquals(
             Data`float2oid(mk_Data`Float(1, 0xab, 0x23456)) mod 0x100,
-            Data`floatTag));
+            Data`floatTag);
+        assertEquals(Data`float2oid(Data`invalidFloatValue), Data`invalidOidValue);
+        assertEquals(Data`oid2float(Data`invalidOidValue), Data`invalidFloatValue));
     
-    testOid2char : () ==> ()
-    testOid2char() ==
+    test_oid2char : () ==> ()
+    test_oid2char() ==
         (assertEquals(Data`oid2char(Data`char2oid(0x1234)), 0x1234);
-        assertEquals(Data`char2oid(0x1234) mod 0x100, Data`charTag));
+        assertEquals(Data`char2oid(0x1234) mod 0x100, Data`charTag);
+        assertEquals(Data`char2oid(Data`invalidCharValue), Data`invalidOidValue);
+        assertEquals(Data`oid2char(Data`invalidOidValue), Data`invalidCharValue));
     
-    testOid2pointer : () ==> ()
-    testOid2pointer() ==
+    test_oid2pointer : () ==> ()
+    test_oid2pointer() ==
         (assertEquals(Data`oid2pointer(Data`pointer2oid(0x12345)), 0x12345);
-        assertEquals(Data`oid2pointer(0x12345) mod 0x100, 0));
+        assertEquals(Data`oid2pointer(0x12345) mod 0x100, 0);
+        assertEquals(Data`oid2pointer(Data`invalidOidValue), Data`invalidPointerValue);
+        assertEquals(Data`pointer2oid(Data`invalidPointerValue), Data`invalidOidValue));
 
 end DataTest

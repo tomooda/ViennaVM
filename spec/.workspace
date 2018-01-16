@@ -1,4 +1,3 @@
-RegisterTest
-	testRead_oid()
-	testWrite_oid()
+assert(false)
+BinaryTest`testAll()Write_oid()
 	

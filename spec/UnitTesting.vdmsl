@@ -1,11 +1,18 @@
 module UnitTesting
 exports all
 definitions
+types
+	AssertFailure :: msg : seq of char;
+	AssertEqualsFailure :: actual : ? expected: ? msg: seq of char;
 operations
-    assert : bool ==> ()
-    assert(b) == if not b then error;
+    assert : bool * seq of char ==> ()
+    assert(b, msg) == if not b then exit mk_AssertFailure(msg);
     
-    assertEquals : ? * ? ==> ()
-    assertEquals(actual, expected) == if actual <> expected then error;
+    assertEquals : ? * ? * seq of char ==> ()
+    assertEquals(actual, expected, msg) ==
+        if
+            actual <> expected
+        then
+            exit mk_AssertEqualsFailure(actual, expected, msg);
 
 end UnitTesting

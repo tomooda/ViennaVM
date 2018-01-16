@@ -19,77 +19,77 @@ operations
     testWriteAndReadDifferentRegister() ==
         (Register`write_oid(1, oid1);
         Register`write_oid(2, oid2);
-        assertEquals(Register`read_oid(1), oid1);
-        assertEquals(Register`read_oid(2), oid2));
+        assertEquals(Register`read_oid(1), oid1, "read oid1");
+        assertEquals(Register`read_oid(2), oid2, "read oid2"));
     
     testBoxAndReadInt : () ==> ()
     testBoxAndReadInt() ==
         (Register`write_int(1, int2);
-        assertEquals(Register`read_oid(1), Data`int2oid(int2));
+        assertEquals(Register`read_oid(1), Data`int2oid(int2), "box int");
         Register`write_int(1, Data`invalidIntValue);
-        assertEquals(Register`read_oid(1), Data`invalidOidValue));
+        assertEquals(Register`read_oid(1), Data`invalidOidValue, "box invalid int"));
     
     testBoxAndReadFloat : () ==> ()
     testBoxAndReadFloat() ==
         (Register`write_float(1, float1);
-        assertEquals(Register`read_oid(1), Data`float2oid(float1));
+        assertEquals(Register`read_oid(1), Data`float2oid(float1), "box float");
         Register`write_float(1, Data`invalidFloatValue);
-        assertEquals(Register`read_oid(1), Data`invalidOidValue));
+        assertEquals(Register`read_oid(1), Data`invalidOidValue, "box invalid float"));
     
     testBoxAndReadChar : () ==> ()
     testBoxAndReadChar() ==
         (Register`write_char(1, char1);
-        assertEquals(Register`read_oid(1), Data`char2oid(char1));
+        assertEquals(Register`read_oid(1), Data`char2oid(char1), "box char");
         Register`write_char(1, Data`invalidCharValue);
-        assertEquals(Register`read_oid(1), Data`invalidOidValue));
+        assertEquals(Register`read_oid(1), Data`invalidOidValue, "box invalid char"));
     
     testBoxAndReadPointer : () ==> ()
     testBoxAndReadPointer() ==
         (Register`write_pointer(1, pointer1);
-        assertEquals(Register`read_oid(1), Data`pointer2oid(pointer1));
+        assertEquals(Register`read_oid(1), Data`pointer2oid(pointer1), "box pointer");
         Register`write_pointer(1, Data`invalidPointerValue);
-        assertEquals(Register`read_oid(1), Data`invalidOidValue);
+        assertEquals(Register`read_oid(1), Data`invalidOidValue, "box invalid pointer");
         Register`write_oid(1, Data`invalidOidValue);
-        assertEquals(Register`read_oid(1), Data`invalidOidValue));
+        assertEquals(Register`read_oid(1), Data`invalidOidValue, "invalid oid"));
     
     testWriteBoxedIntAndUbox : () ==> ()
     testWriteBoxedIntAndUbox() ==
         (Register`write_oid(1, Data`int2oid(int1));
-        assertEquals(Register`read_int(1), int1);
-        assertEquals(Register`read_float(1), Data`invalidFloatValue);
-        assertEquals(Register`read_char(1), Data`invalidCharValue);
-        assertEquals(Register`read_pointer(1), Data`invalidPointerValue));
+        assertEquals(Register`read_int(1), int1, "int->int");
+        assertEquals(Register`read_float(1), Data`invalidFloatValue, "int->float");
+        assertEquals(Register`read_char(1), Data`invalidCharValue, "int-char");
+        assertEquals(Register`read_pointer(1), Data`invalidPointerValue, "int->pointer"));
     
     testWriteBoxedFloatAndUbox : () ==> ()
     testWriteBoxedFloatAndUbox() ==
         (Register`write_oid(1, Data`float2oid(float1));
-        assertEquals(Register`read_int(1), Data`invalidIntValue);
-        assertEquals(Register`read_float(1), float1);
-        assertEquals(Register`read_char(1), Data`invalidCharValue);
-        assertEquals(Register`read_pointer(1), Data`invalidPointerValue));
+        assertEquals(Register`read_int(1), Data`invalidIntValue, "float->int");
+        assertEquals(Register`read_float(1), float1, "float->float");
+        assertEquals(Register`read_char(1), Data`invalidCharValue, "float->char");
+        assertEquals(Register`read_pointer(1), Data`invalidPointerValue, "float->pointer"));
     
     testWriteBoxedCharAndUnbox : () ==> ()
     testWriteBoxedCharAndUnbox() ==
         (Register`write_oid(1, Data`char2oid(char1));
-        assertEquals(Register`read_int(1), Data`invalidIntValue);
-        assertEquals(Register`read_float(1), Data`invalidFloatValue);
-        assertEquals(Register`read_char(1), char1);
-        assertEquals(Register`read_pointer(1), Data`invalidPointerValue));
+        assertEquals(Register`read_int(1), Data`invalidIntValue, "char->int");
+        assertEquals(Register`read_float(1), Data`invalidFloatValue, "char->float");
+        assertEquals(Register`read_char(1), char1, "char->char");
+        assertEquals(Register`read_pointer(1), Data`invalidPointerValue, "char->pointer"));
     
     testWriteBoxedPointerAndUnbox : () ==> ()
     testWriteBoxedPointerAndUnbox() ==
         (Register`write_oid(1, Data`pointer2oid(pointer1));
-        assertEquals(Register`read_int(1), Data`invalidIntValue);
-        assertEquals(Register`read_float(1), Data`invalidFloatValue);
-        assertEquals(Register`read_char(1), Data`invalidCharValue);
-        assertEquals(Register`read_pointer(1), pointer1));
+        assertEquals(Register`read_int(1), Data`invalidIntValue, "pointer->int");
+        assertEquals(Register`read_float(1), Data`invalidFloatValue, "pointer->float");
+        assertEquals(Register`read_char(1), Data`invalidCharValue, "pointer->char");
+        assertEquals(Register`read_pointer(1), pointer1, "pointer->pointer"));
     
     testWriteInvalidOopAndUnbox : () ==> ()
     testWriteInvalidOopAndUnbox() ==
         (Register`write_oid(1, Data`invalidOidValue);
-        assertEquals(Register`read_int(1), Data`invalidIntValue);
-        assertEquals(Register`read_float(1), Data`invalidFloatValue);
-        assertEquals(Register`read_char(1), Data`invalidCharValue);
-        assertEquals(Register`read_pointer(1), Data`invalidPointerValue));
+        assertEquals(Register`read_int(1), Data`invalidIntValue, "->int");
+        assertEquals(Register`read_float(1), Data`invalidFloatValue, "->float");
+        assertEquals(Register`read_char(1), Data`invalidCharValue, "->char");
+        assertEquals(Register`read_pointer(1), Data`invalidPointerValue, "->pointer"));
 
 end RegisterTest

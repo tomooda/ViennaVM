@@ -26,14 +26,14 @@ imports
 exports all
 definitions
 types
-     Register :: oid : OID i : Int f : Float c : Char p : Pointer;
+     Reg :: oid : OID i : Int f : Float c : Char p : Pointer;
 
 state State of
-    registers : seq of Register
+    registers : seq of Reg
 init s ==
     s
     = mk_State(
-        [mk_Register(
+        [mk_Reg(
             invalidOidValue,
             invalidIntValue,
             invalidFloatValue,
@@ -45,7 +45,7 @@ end
 operations
     read_oid : nat ==> OID
     read_oid(r) ==
-        let register : Register = registers(r)
+        let register : Reg = registers(r)
         in
             if register.oid <> invalidTag
                 then return register.oid
@@ -71,7 +71,7 @@ operations
     write_oid : nat * OID ==> ()
     write_oid(r, oid) ==
         registers(r)
-            := mk_Register(
+            := mk_Reg(
                 oid,
                 invalidIntValue,
                 invalidFloatValue,
@@ -84,7 +84,7 @@ operations
     write_tag : nat * OID ==> ()
     write_tag(r, tag) ==
         registers(r)
-            := mk_Register(
+            := mk_Reg(
                 read_oid(r) + tag,
                 invalidIntValue,
                 invalidFloatValue,
@@ -108,7 +108,7 @@ operations
     write_int : nat * Int ==> ()
     write_int(r, i) ==
         registers(r)
-            := mk_Register(
+            := mk_Reg(
                 invalidTag, i, invalidFloatValue, invalidCharValue, invalidPointerValue);
     
     read_float : nat ==> Float
@@ -128,7 +128,7 @@ operations
     write_float : nat * Float ==> ()
     write_float(r, f) ==
         registers(r)
-            := mk_Register(
+            := mk_Reg(
                 invalidTag, invalidIntValue, f, invalidCharValue, invalidPointerValue);
     
     read_char : nat ==> Char
@@ -148,7 +148,7 @@ operations
     write_char : nat * Char ==> ()
     write_char(r, c) ==
         registers(r)
-            := mk_Register(
+            := mk_Reg(
                 invalidTag, invalidIntValue, invalidFloatValue, c, invalidPointerValue);
     
     read_pointer : nat ==> Pointer
@@ -168,7 +168,7 @@ operations
     write_pointer : nat * Pointer ==> ()
     write_pointer(r, p) ==
         registers(r)
-            := mk_Register(
+            := mk_Reg(
                 invalidTag, invalidIntValue, invalidFloatValue, invalidCharValue, p);
 
 end Register

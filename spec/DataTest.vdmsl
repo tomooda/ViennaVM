@@ -17,47 +17,47 @@ operations
     
     test_oid2int : () ==> ()
     test_oid2int() ==
-        (assertEquals(Data`oid2int(Data`int2oid(12)), 12);
+        (assertEquals(Data`oid2int(Data`int2oid(12)), 12, "trip around");
         assertEquals(
-            Data`oid2int(Data`int2oid(0x1122334455667788)), 0x1122334455667788);
-        assertEquals(Data`oid2int(Data`int2oid(-12)), -12);
+            Data`oid2int(Data`int2oid(0x1122334455667788)), 0x1122334455667788, "64 bits");
+        assertEquals(Data`oid2int(Data`int2oid(-12)), -12, "negative");
         assertEquals(
             Data`oid2int(Data`int2oid(-0x1122334455667788)),
-            -0x1122334455667788);
-        assertEquals(Data`int2oid(0x1122334455667788) mod 0x2, Data`smallIntegerTag);
-        assertEquals(Data`int2oid(-0x1122334455667788) mod 0x2, Data`smallIntegerTag);
-        assertEquals(Data`int2oid(Data`invalidIntValue), Data`invalidOidValue);
-        assertEquals(Data`oid2int(Data`invalidOidValue), Data`invalidIntValue));
+            -0x1122334455667788, "64 bits negative");
+        assertEquals(Data`int2oid(0x1122334455667788) mod 0x2, Data`smallIntegerTag, "tagged smallInt");
+        assertEquals(Data`int2oid(-0x1122334455667788) mod 0x2, Data`smallIntegerTag, "negative tagged smallInt");
+        assertEquals(Data`int2oid(Data`invalidIntValue), Data`invalidOidValue, "invalid int to invalid OID");
+        assertEquals(Data`oid2int(Data`invalidOidValue), Data`invalidIntValue, "invalid OID to invalid int"));
     
     test_oid2float : () ==> ()
     test_oid2float() ==
         (assertEquals(
             Data`oid2float(Data`float2oid(mk_Data`Float(0, 0x12, 0x12345))),
-            mk_Data`Float(0, 0x12, 0x12345));
+            mk_Data`Float(0, 0x12, 0x12345), "trip around");
         assertEquals(
             Data`oid2float(Data`float2oid(mk_Data`Float(1, 0xab, 0x23456))),
-            mk_Data`Float(1, 0xab, 0x23456));
+            mk_Data`Float(1, 0xab, 0x23456), "negative");
         assertEquals(
             Data`float2oid(mk_Data`Float(0, 0x12, 0x12345)) mod 0x100,
-            Data`floatTag);
+            Data`floatTag, "tagged float");
         assertEquals(
             Data`float2oid(mk_Data`Float(1, 0xab, 0x23456)) mod 0x100,
-            Data`floatTag);
-        assertEquals(Data`float2oid(Data`invalidFloatValue), Data`invalidOidValue);
-        assertEquals(Data`oid2float(Data`invalidOidValue), Data`invalidFloatValue));
+            Data`floatTag, "negative tagged float");
+        assertEquals(Data`float2oid(Data`invalidFloatValue), Data`invalidOidValue, "invalid float to invalid OID");
+        assertEquals(Data`oid2float(Data`invalidOidValue), Data`invalidFloatValue, "invalid OID to invalid float"));
     
     test_oid2char : () ==> ()
     test_oid2char() ==
-        (assertEquals(Data`oid2char(Data`char2oid(0x1234)), 0x1234);
-        assertEquals(Data`char2oid(0x1234) mod 0x100, Data`charTag);
-        assertEquals(Data`char2oid(Data`invalidCharValue), Data`invalidOidValue);
-        assertEquals(Data`oid2char(Data`invalidOidValue), Data`invalidCharValue));
+        (assertEquals(Data`oid2char(Data`char2oid(0x1234)), 0x1234, "trip around");
+        assertEquals(Data`char2oid(0x1234) mod 0x100, Data`charTag, "tagged char");
+        assertEquals(Data`char2oid(Data`invalidCharValue), Data`invalidOidValue, "invalid char to invalid OID");
+        assertEquals(Data`oid2char(Data`invalidOidValue), Data`invalidCharValue, "invalid OID to invalid char"));
     
     test_oid2pointer : () ==> ()
     test_oid2pointer() ==
-        (assertEquals(Data`oid2pointer(Data`pointer2oid(0x12345)), 0x12345);
-        assertEquals(Data`oid2pointer(0x12345) mod 0x100, 0);
-        assertEquals(Data`oid2pointer(Data`invalidOidValue), Data`invalidPointerValue);
-        assertEquals(Data`pointer2oid(Data`invalidPointerValue), Data`invalidOidValue));
+        (assertEquals(Data`oid2pointer(Data`pointer2oid(0x12345)), 0x12345, "trip around");
+        assertEquals(Data`oid2pointer(0x12345) mod 0x100, 0, "tagged pointer");
+        assertEquals(Data`oid2pointer(Data`invalidOidValue), Data`invalidPointerValue, "invalid OID to invalid pointer");
+        assertEquals(Data`pointer2oid(Data`invalidPointerValue), Data`invalidOidValue, "invalid pointer to invalid OID"));
 
 end DataTest

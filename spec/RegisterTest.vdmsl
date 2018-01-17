@@ -58,7 +58,8 @@ operations
         assertEquals(Register`read_int(1), int1, "int->int");
         assertEquals(Register`read_float(1), Data`invalidFloatValue, "int->float");
         assertEquals(Register`read_char(1), Data`invalidCharValue, "int-char");
-        assertEquals(Register`read_pointer(1), Data`invalidPointerValue, "int->pointer"));
+        assertEquals(
+            Register`read_pointer(1), Data`invalidPointerValue, "int->pointer"));
     
     testWriteBoxedFloatAndUbox : () ==> ()
     testWriteBoxedFloatAndUbox() ==
@@ -66,7 +67,8 @@ operations
         assertEquals(Register`read_int(1), Data`invalidIntValue, "float->int");
         assertEquals(Register`read_float(1), float1, "float->float");
         assertEquals(Register`read_char(1), Data`invalidCharValue, "float->char");
-        assertEquals(Register`read_pointer(1), Data`invalidPointerValue, "float->pointer"));
+        assertEquals(
+            Register`read_pointer(1), Data`invalidPointerValue, "float->pointer"));
     
     testWriteBoxedCharAndUnbox : () ==> ()
     testWriteBoxedCharAndUnbox() ==
@@ -74,7 +76,8 @@ operations
         assertEquals(Register`read_int(1), Data`invalidIntValue, "char->int");
         assertEquals(Register`read_float(1), Data`invalidFloatValue, "char->float");
         assertEquals(Register`read_char(1), char1, "char->char");
-        assertEquals(Register`read_pointer(1), Data`invalidPointerValue, "char->pointer"));
+        assertEquals(
+            Register`read_pointer(1), Data`invalidPointerValue, "char->pointer"));
     
     testWriteBoxedPointerAndUnbox : () ==> ()
     testWriteBoxedPointerAndUnbox() ==

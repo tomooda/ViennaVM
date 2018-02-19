@@ -1,0 +1,50 @@
+module Memory
+imports
+    from Data
+        types
+            byte renamed byte;
+            word renamed word;
+            dword renamed dword;
+            qword renamed qword;
+exports all
+definitions
+types
+     Slot :: address : qword size : qword;
+
+values
+     INITIAL_HEAP_SIZE = 1024;
+
+state State of
+    bytes : seq of nat
+    freeSlots : seq of Slot
+init s ==
+    s
+    = mk_State(
+        [0 | i in set {1, ..., INITIAL_HEAP_SIZE}],
+        [mk_Slot(0, INITIAL_HEAP_SIZE)])
+end
+
+operations
+    alloc : qword ==> [qword]
+    alloc(size) ==
+        (for i = 1 to  len freeSlots
+        do
+            (let
+                newSize = freeSlots(i).size - size, address = freeSlots(i).address
+            in
+                if
+                    newSize >= 0
+                then
+                    (if
+                        newSize = 0
+                    then
+                        (freeSlots
+                            := [freeSlots(i) | i in set {1, ..., i - 1}]
+                            ^ [freeSlots(i) | i in set {i + 1, ..., len freeSlots}])
+                    else
+                        (freeSlots(i) .address := freeSlots(i).address + size;
+                        freeSlots(i) .size := newSize);
+                    return address));
+        return nil);
+
+end Memory

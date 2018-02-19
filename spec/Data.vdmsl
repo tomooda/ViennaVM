@@ -3,14 +3,17 @@ exports all
 definitions
 types
      byte = nat inv b == b < 0x100; -- 8bits unsigned integer
+     word = nat inv w == w < 0x10000; -- 16bits unsigned integer
+     dword = nat inv dw == dw < 0x100000000; -- 32bits unsigned integer
+     qword = nat inv qw == qw < 0x10000000000000000; -- 64bits unsigned integer
      Register :: oid : OID i : [Int] f : [Float] c : [Char] p : [Pointer];
-     OID = nat inv oid == oid < 0x10000000000000000; -- 64 bits unsigned integer
+     OID = qword; -- 64 bits unsigned integer
      Int = int
         inv i == i > -0x8000000000000000 and i < 0x8000000000000000; -- 63 bits signed integer
      Float :: sign : nat exponent : nat fraction : nat
         inv mk_Float(s, e, f) == (s < 2 and e < 0x100) and f < 0x1000000; -- 32 bits floating point
-     Char = nat inv c == c < 0x100000000; -- 32 bits unsigned int
-     Pointer = nat inv p == p < 0x10000000000000000; -- 64 bits address
+     Char = dword; -- 32 bits unsigned int
+     Pointer = nat inv p == p <= 0x100000000000000; -- 56 bits address
 
 values
      /* oid tag flags */
@@ -66,7 +69,7 @@ values
      invalidIntValue = 0x7fffffffffffffff;
      invalidFloatValue = mk_Float(1, 255, 0x7fffff);
      invalidCharValue = 0xffffffff;
-     invalidPointerValue = 0x8000000000000000;
+     invalidPointerValue = 0x100000000000000;
 
 functions
     oid2int : OID -> Int

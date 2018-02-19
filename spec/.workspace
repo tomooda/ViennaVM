@@ -1,5 +1,0 @@
-assert(false, "foo")
-BinaryTest`testAll()Write_oid()
-	
-
-testFail() Runtime: Error 4129: Exit mk_AssertEqualsFailure(1, 2, "should fail") in 'UnitTesting' (/Users/tomohiro/Desktop/ViennaTalk.app/Contents/Resources/VDMPad-spec-.Q08UNJ32..vdm) at line 143:13

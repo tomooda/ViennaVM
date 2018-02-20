@@ -1,0 +1,79 @@
+module MemoryTest
+imports
+    from Memory all,
+    from UnitTesting operations assertEquals renamed assertEquals;
+exports all
+definitions
+operations
+    test_align : () ==> ()
+    test_align() ==
+        (for i = 1 to  Memory`ALIGNMENT
+        do assertEquals(Memory`align(i), Memory`ALIGNMENT, "0");
+        for i = Memory`ALIGNMENT + 1 to  Memory`ALIGNMENT  * 2
+        do assertEquals(Memory`align(i), Memory`ALIGNMENT  * 2, "0"));
+    
+    test_read : () ==> ()
+    test_read() ==
+        (Memory`write(0x12, 0xfedcba9876543210);
+        assertEquals(Memory`read(0x12), 0xfedcba9876543210, "read 64bits immediate");
+        Memory`write_byte(0x10, 0x01);
+        Memory`write_byte(0x11, 0x23);
+        Memory`write_byte(0x12, 0x45);
+        Memory`write_byte(0x13, 0x67);
+        Memory`write_byte(0x14, 0x89);
+        Memory`write_byte(0x15, 0xab);
+        Memory`write_byte(0x16, 0xcd);
+        Memory`write_byte(0x17, 0xef);
+        assertEquals(Memory`read(0x10), 0xefcdab8967452301, "read little endian"));
+    
+    test_write : () ==> ()
+    test_write() ==
+        (for i = 0 to  0x100 do Memory`write_byte(i, 0x00);
+        Memory`write(0x10, 0x0123456789abcdef);
+        assertEquals(Memory`read_byte(0x0f), 0x00, "no write on ptr-1");
+        assertEquals(Memory`read_byte(0x18), 0x00, "no write on ptr+8");
+        assertEquals(Memory`read_byte(0x10), 0xef, "1st byte");
+        assertEquals(Memory`read_byte(0x11), 0xcd, "2nd byte");
+        assertEquals(Memory`read_byte(0x12), 0xab, "3rd byte");
+        assertEquals(Memory`read_byte(0x13), 0x89, "4th byte");
+        assertEquals(Memory`read_byte(0x14), 0x67, "5th byte");
+        assertEquals(Memory`read_byte(0x15), 0x45, "6th byte");
+        assertEquals(Memory`read_byte(0x16), 0x23, "7th byte");
+        assertEquals(Memory`read_byte(0x17), 0x01, "8th byte"));
+    
+    test_read_dword : () ==> ()
+    test_read_dword() ==
+        (Memory`write_dword(0x12, 0x12345678);
+        assertEquals(Memory`read_dword(0x12), 0x12345678, "read 32bits immediate");
+        Memory`write_byte(0x10, 0x21);
+        Memory`write_byte(0x11, 0x43);
+        Memory`write_byte(0x12, 0x65);
+        Memory`write_byte(0x13, 0x87);
+        assertEquals(Memory`read_dword(0x10), 0x87654321, "read little endian"));
+    
+    test_write_dword : () ==> ()
+    test_write_dword() ==
+        (for i = 0 to  0x100 do Memory`write_byte(i, 0x00);
+        Memory`write_dword(0x10, 0x89abcdef);
+        assertEquals(Memory`read_byte(0x0f), 0x00, "no write on ptr-1");
+        assertEquals(Memory`read_byte(0x14), 0x00, "no write on ptr+4");
+        assertEquals(Memory`read_byte(0x10), 0xef, "1st byte");
+        assertEquals(Memory`read_byte(0x11), 0xcd, "2nd byte");
+        assertEquals(Memory`read_byte(0x12), 0xab, "3rd byte");
+        assertEquals(Memory`read_byte(0x13), 0x89, "4th byte"));
+    
+    test_read_byte : () ==> ()
+    test_read_byte() ==
+        (for i = 0 to  0x100 do Memory`write_byte(i, 0x00);
+        Memory`write_byte(0x12, 0xff);
+        assertEquals(Memory`read(0x12), 0xff, "read a byte"));
+    
+    test_write_byte : () ==> ()
+    test_write_byte() ==
+        (for i = 0 to  0x100 do Memory`write_byte(i, 0x00);
+        Memory`write_byte(0x10, 0xff);
+        assertEquals(Memory`read_byte(0x0f), 0x00, "no write on ptr-1");
+        assertEquals(Memory`read_byte(0x11), 0x00, "no write on ptr+8");
+        assertEquals(Memory`read_byte(0x10), 0xff, "the byte"));
+
+end MemoryTest

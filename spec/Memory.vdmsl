@@ -2,21 +2,31 @@ module Memory
 imports
     from Data
         types
-            byte renamed byte;
-            word renamed word;
-            dword renamed dword;
-            qword renamed qword;
+            Byte renamed Byte;
+            Word renamed Word;
+            Dword renamed Dword;
+            Qword renamed Qword;
+            Pointer renamed Pointer;
 exports all
 definitions
 types
-     Slot :: address : qword size : qword;
+     Slot :: address : Pointer size : Qword;
 
 values
      INITIAL_HEAP_SIZE = 1024;
+     ALIGNMENT = 64;
+
+functions
+    align : Qword -> Qword
+    align(x) == ((x - 1) div ALIGNMENT + 1)  * ALIGNMENT;
 
 state State of
-    bytes : seq of nat
+    heap : seq of Byte
     freeSlots : seq of Slot
+inv mk_State(h, f) ==
+    (forall i in set {1, ..., len f - 1} &
+            f(i).address + f(i).size <= f(i + 1).address)
+    and (f <> [] => f(len f).address + f(len f).size <= len h)
 init s ==
     s
     = mk_State(
@@ -25,26 +35,80 @@ init s ==
 end
 
 operations
-    alloc : qword ==> [qword]
-    alloc(size) ==
-        (for i = 1 to  len freeSlots
-        do
-            (let
-                newSize = freeSlots(i).size - size, address = freeSlots(i).address
-            in
-                if
-                    newSize >= 0
-                then
-                    (if
-                        newSize = 0
+    read : Pointer ==> Qword
+    read(address) ==
+        return heap(address + 1)
+            + (heap(address + 2)
+                + (heap(address + 3)
+                    + (heap(address + 4)
+                        + (heap(address + 5)
+                            + +(heap(address + 6)
+                                + (heap(address + 7) + heap(address + 8)  * 0x100)  * 0x100)
+                             * 0x100)
+                         * 0x100)
+                     * 0x100)
+                 * 0x100)
+             * 0x100;
+    
+    write : Pointer * Qword ==> ()
+    write(address, data) ==
+        (dcl d:nat := data;
+        heap(address + 1) := d mod 0x100;
+        d := d div 0x100;
+        heap(address + 2) := d mod 0x100;
+        d := d div 0x100;
+        heap(address + 3) := d mod 0x100;
+        d := d div 0x100;
+        heap(address + 4) := d mod 0x100;
+        d := d div 0x100;
+        heap(address + 5) := d mod 0x100;
+        d := d div 0x100;
+        heap(address + 6) := d mod 0x100;
+        d := d div 0x100;
+        heap(address + 7) := d mod 0x100;
+        d := d div 0x100;
+        heap(address + 8) := d mod 0x100);
+    
+    read_dword : Pointer ==> Dword
+    read_dword(address) ==
+        return heap(address + 1)
+            + (heap(address + 2)
+                + (heap(address + 3) + heap(address + 4)  * 0x100)  * 0x100)
+             * 0x100;
+    
+    write_dword : Pointer * Dword ==> ()
+    write_dword(address, data) ==
+        (dcl d:nat := data;
+        heap(address + 1) := d mod 0x100;
+        d := d div 0x100;
+        heap(address + 2) := d mod 0x100;
+        d := d div 0x100;
+        heap(address + 3) := d mod 0x100;
+        d := d div 0x100;
+        heap(address + 4) := d mod 0x100);
+    
+    read_byte : Pointer ==> Byte
+    read_byte(address) == return heap(address + 1);
+    
+    write_byte : Pointer * Byte ==> ()
+    write_byte(address, data) == heap(address + 1) := data;
+    
+    alloc : Qword ==> [Pointer]
+    alloc(raw_size) ==
+        let size = align(raw_size)
+        in
+            (for i = 1 to  len freeSlots
+            do
+                (let
+                    newSize = freeSlots(i).size - size, address = freeSlots(i).address
+                in
+                    if
+                        newSize >= 0
                     then
-                        (freeSlots
-                            := [freeSlots(i) | i in set {1, ..., i - 1}]
-                            ^ [freeSlots(i) | i in set {i + 1, ..., len freeSlots}])
-                    else
                         (freeSlots(i) .address := freeSlots(i).address + size;
-                        freeSlots(i) .size := newSize);
-                    return address));
-        return nil);
+                        freeSlots(i) .size := newSize;
+                        write(address, size);
+                        return address));
+            return nil);
 
 end Memory

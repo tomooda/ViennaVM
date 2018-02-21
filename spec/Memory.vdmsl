@@ -13,102 +13,160 @@ types
      Slot :: address : Pointer size : Qword;
 
 values
-     INITIAL_HEAP_SIZE = 1024;
      ALIGNMENT = 64;
+     HEAP_PAGE_SIZE = 1024;
+     POOL_PAGE_SIZE = HEAP_PAGE_SIZE div ALIGNMENT div 2;
 
 functions
     align : Qword -> Qword
     align(x) == ((x - 1) div ALIGNMENT + 1)  * ALIGNMENT;
 
 state State of
-    heap : seq of Byte
-    freeSlots : seq of Slot
-inv mk_State(h, f) ==
-    (forall i in set {1, ..., len f - 1} &
-            f(i).address + f(i).size <= f(i + 1).address)
-    and (f <> [] => f(len f).address + f(len f).size <= len h)
+    heapPages : seq of (seq of Byte)
+    poolPages : seq of (seq of Slot)
+inv mk_State(heaps, pools) == len heaps = len pools
 init s ==
     s
     = mk_State(
-        [0 | i in set {1, ..., INITIAL_HEAP_SIZE}],
-        [mk_Slot(0, INITIAL_HEAP_SIZE)])
+        [[0 | i in set {1, ..., HEAP_PAGE_SIZE}]],
+        [[mk_Slot(0, HEAP_PAGE_SIZE)]
+        ^ [mk_Slot(0, 0) | i in set {1, ..., POOL_PAGE_SIZE - 1}]])
 end
 
 operations
+    addPage : () ==> ()
+    addPage() ==
+        atomic(heapPages := heapPages ^ [[0 | i in set {1, ..., HEAP_PAGE_SIZE}]];
+            poolPages
+                := poolPages
+                ^ [[mk_Slot(0, HEAP_PAGE_SIZE)]
+                ^ [mk_Slot(0, 0) | i in set {1, ..., POOL_PAGE_SIZE - 1}]]);
+    
     read : Pointer ==> Qword
-    read(address) ==
-        return heap(address + 1)
-            + (heap(address + 2)
-                + (heap(address + 3)
-                    + (heap(address + 4)
-                        + (heap(address + 5)
-                            + +(heap(address + 6)
-                                + (heap(address + 7) + heap(address + 8)  * 0x100)  * 0x100)
+    read(pointer) ==
+        let
+            heap = heapPages(pointer div HEAP_PAGE_SIZE + 1),
+            address = pointer mod HEAP_PAGE_SIZE + 1
+        in
+            return heap(address)
+                + (heap(address + 1)
+                    + (heap(address + 2)
+                        + (heap(address + 3)
+                            + (heap(address + 4)
+                                + +(heap(address + 5)
+                                    + (heap(address + 6) + heap(address + 7)  * 0x100)  * 0x100)
+                                 * 0x100)
                              * 0x100)
                          * 0x100)
                      * 0x100)
-                 * 0x100)
-             * 0x100;
+                 * 0x100
+    pre 
+        pointer mod HEAP_PAGE_SIZE <= HEAP_PAGE_SIZE - 8
+        and pointer div HEAP_PAGE_SIZE < len heapPages;
     
     write : Pointer * Qword ==> ()
-    write(address, data) ==
-        (dcl d:nat := data;
-        heap(address + 1) := d mod 0x100;
-        d := d div 0x100;
-        heap(address + 2) := d mod 0x100;
-        d := d div 0x100;
-        heap(address + 3) := d mod 0x100;
-        d := d div 0x100;
-        heap(address + 4) := d mod 0x100;
-        d := d div 0x100;
-        heap(address + 5) := d mod 0x100;
-        d := d div 0x100;
-        heap(address + 6) := d mod 0x100;
-        d := d div 0x100;
-        heap(address + 7) := d mod 0x100;
-        d := d div 0x100;
-        heap(address + 8) := d mod 0x100);
+    write(pointer, data) ==
+        let
+            page = pointer div HEAP_PAGE_SIZE + 1,
+            address = pointer mod HEAP_PAGE_SIZE + 1
+        in
+            (dcl d:nat := data;
+            heapPages(page)(address) := d mod 0x100;
+            d := d div 0x100;
+            heapPages(page)(address + 1) := d mod 0x100;
+            d := d div 0x100;
+            heapPages(page)(address + 2) := d mod 0x100;
+            d := d div 0x100;
+            heapPages(page)(address + 3) := d mod 0x100;
+            d := d div 0x100;
+            heapPages(page)(address + 4) := d mod 0x100;
+            d := d div 0x100;
+            heapPages(page)(address + 5) := d mod 0x100;
+            d := d div 0x100;
+            heapPages(page)(address + 6) := d mod 0x100;
+            d := d div 0x100;
+            heapPages(page)(address + 7) := d mod 0x100)
+    pre 
+        pointer mod HEAP_PAGE_SIZE <= HEAP_PAGE_SIZE - 8
+        and pointer div HEAP_PAGE_SIZE < len heapPages;
     
     read_dword : Pointer ==> Dword
-    read_dword(address) ==
-        return heap(address + 1)
-            + (heap(address + 2)
-                + (heap(address + 3) + heap(address + 4)  * 0x100)  * 0x100)
-             * 0x100;
+    read_dword(pointer) ==
+        let
+            heap = heapPages(pointer div HEAP_PAGE_SIZE + 1),
+            address = pointer mod HEAP_PAGE_SIZE + 1
+        in
+            return heap(address)
+                + (heap(address + 1)
+                    + (heap(address + 2) + heap(address + 3)  * 0x100)  * 0x100)
+                 * 0x100
+    pre 
+        pointer mod HEAP_PAGE_SIZE <= HEAP_PAGE_SIZE - 4
+        and pointer div HEAP_PAGE_SIZE < len heapPages;
     
     write_dword : Pointer * Dword ==> ()
-    write_dword(address, data) ==
-        (dcl d:nat := data;
-        heap(address + 1) := d mod 0x100;
-        d := d div 0x100;
-        heap(address + 2) := d mod 0x100;
-        d := d div 0x100;
-        heap(address + 3) := d mod 0x100;
-        d := d div 0x100;
-        heap(address + 4) := d mod 0x100);
+    write_dword(pointer, data) ==
+        let
+            page = pointer div HEAP_PAGE_SIZE + 1,
+            address = pointer mod HEAP_PAGE_SIZE + 1
+        in
+            (dcl d:nat := data;
+            heapPages(page)(address) := d mod 0x100;
+            d := d div 0x100;
+            heapPages(page)(address + 1) := d mod 0x100;
+            d := d div 0x100;
+            heapPages(page)(address + 2) := d mod 0x100;
+            d := d div 0x100;
+            heapPages(page)(address + 3) := d mod 0x100)
+    pre 
+        pointer mod HEAP_PAGE_SIZE <= HEAP_PAGE_SIZE - 4
+        and pointer div HEAP_PAGE_SIZE < len heapPages;
     
     read_byte : Pointer ==> Byte
-    read_byte(address) == return heap(address + 1);
+    read_byte(pointer) ==
+        let
+            heap = heapPages(pointer div HEAP_PAGE_SIZE + 1),
+            address = pointer mod HEAP_PAGE_SIZE + 1
+        in return heap(address)
+    pre  pointer div HEAP_PAGE_SIZE < len heapPages;
     
     write_byte : Pointer * Byte ==> ()
-    write_byte(address, data) == heap(address + 1) := data;
+    write_byte(pointer, data) ==
+        let
+            page = pointer div HEAP_PAGE_SIZE + 1,
+            address = pointer mod HEAP_PAGE_SIZE + 1
+        in heapPages(page)(address) := data
+    pre  pointer div HEAP_PAGE_SIZE < len heapPages;
     
     alloc : Qword ==> [Pointer]
     alloc(raw_size) ==
         let size = align(raw_size)
         in
-            (for i = 1 to  len freeSlots
+            (for page = 1 to  len poolPages
             do
-                (let
-                    newSize = freeSlots(i).size - size, address = freeSlots(i).address
+                let pool = poolPages(page)
                 in
-                    if
-                        newSize >= 0
-                    then
-                        (freeSlots(i) .address := freeSlots(i).address + size;
-                        freeSlots(i) .size := newSize;
-                        write(address, size);
-                        return address));
+                    for i = 1 to  len pool
+                    do
+                        (let newSize = pool(i).size - size
+                        in
+                            if
+                                newSize >= 0
+                            then
+                                let
+                                    address = pool(i).address,
+                                    pointer = (page - 1)  * HEAP_PAGE_SIZE + address
+                                in
+                                    (poolPages(page - 1)(i) .address := pool(i).address + size;
+                                    poolPages(page - 1)(i) .size := newSize;
+                                    write(pointer, size);
+                                    return pointer));
             return nil);
+    
+    free : Pointer ==> ()
+    free(address) == let size = read(address) in (skip);
+    
+    p_current_State : () ==> State
+    p_current_State() == return State;
 
 end Memory

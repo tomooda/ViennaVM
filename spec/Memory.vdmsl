@@ -15,7 +15,8 @@ types
 values
      ALIGNMENT = 64;
      HEAP_PAGE_SIZE = 1024;
-     POOL_PAGE_SIZE = HEAP_PAGE_SIZE div ALIGNMENT div 2;
+     POOL_PAGE_SIZE = HEAP_PAGE_SIZE div ALIGNMENT;
+     SIZE_OFFSET = 0;
 
 functions
     align : Qword -> Qword
@@ -24,16 +25,31 @@ functions
 state State of
     heapPages : seq of (seq of Byte)
     poolPages : seq of (seq of Slot)
-inv mk_State(heaps, pools) == len heaps = len pools
+    poolCleanerPageIndex : nat1
+    poolCleanerIndex : nat1
+inv mk_State(heaps, pools, pageIndex, index) ==
+    (len heaps = len pools and pageIndex <= len pools)
+    and index <= POOL_PAGE_SIZE
 init s ==
     s
     = mk_State(
         [[0 | i in set {1, ..., HEAP_PAGE_SIZE}]],
         [[mk_Slot(0, HEAP_PAGE_SIZE)]
-        ^ [mk_Slot(0, 0) | i in set {1, ..., POOL_PAGE_SIZE - 1}]])
+        ^ [mk_Slot(0, 0) | i in set {1, ..., POOL_PAGE_SIZE - 1}]],
+        1,
+        1)
 end
 
 operations
+    initialize : () ==> ()
+    initialize() ==
+        atomic(heapPages := [[0 | i in set {1, ..., HEAP_PAGE_SIZE}]];
+            poolPages
+                := [[mk_Slot(0, HEAP_PAGE_SIZE)]
+                ^ [mk_Slot(0, 0) | i in set {1, ..., POOL_PAGE_SIZE - 1}]];
+            poolCleanerPageIndex := 1;
+            poolCleanerIndex := 1);
+    
     addPage : () ==> ()
     addPage() ==
         atomic(heapPages := heapPages ^ [[0 | i in set {1, ..., HEAP_PAGE_SIZE}]];
@@ -157,14 +173,72 @@ operations
                                     address = pool(i).address,
                                     pointer = (page - 1)  * HEAP_PAGE_SIZE + address
                                 in
-                                    (poolPages(page - 1)(i) .address := pool(i).address + size;
-                                    poolPages(page - 1)(i) .size := newSize;
-                                    write(pointer, size);
+                                    (poolPages(page)(i) .address := pool(i).address + size;
+                                    poolPages(page)(i) .size := newSize;
+                                    write(pointer + SIZE_OFFSET, size);
                                     return pointer));
             return nil);
     
     free : Pointer ==> ()
-    free(address) == let size = read(address) in (skip);
+    free(pointer) ==
+        let
+            size = read(pointer + SIZE_OFFSET),
+            page = pointer div HEAP_PAGE_SIZE + 1,
+            pool = poolPages(page),
+            address = pointer mod HEAP_PAGE_SIZE
+        in
+            (for i = 1 to  len pool
+            do
+                (if
+                    pool(i).address + pool(i).size = address
+                then
+                    (poolPages(page)(i) .size := pool(i).size + size;
+                    return );
+                if
+                    address + size = pool(i).address
+                then
+                    (atomic(poolPages(page)(i) .address := address;
+                        poolPages(page)(i) .size := pool(i).size + size);
+                    return ));
+            for i = 1 to  len pool
+            do
+                (if
+                    pool(i).size = 0
+                then
+                    (atomic(poolPages(page)(i) .address := address;
+                        poolPages(page)(i) .size := size);
+                    return )));
+    
+    cleanPool : () ==> ()
+    cleanPool() ==
+        (if
+            poolPages(poolCleanerPageIndex)(poolCleanerIndex).size > 0
+        then
+            let
+                pool = poolPages(poolCleanerPageIndex),
+                endAddress =
+                    pool(poolCleanerIndex).address + pool(poolCleanerIndex).size
+            in
+                for index = 1 to  POOL_PAGE_SIZE
+                do
+                    if
+                        pool(index).size > 0 and pool(index).address = endAddress
+                    then
+                        atomic(poolPages(poolCleanerPageIndex)(poolCleanerIndex) .size
+                                := pool(poolCleanerIndex).size + pool(index).size;
+                            poolPages(poolCleanerPageIndex)(index) .size := 0);
+        poolCleanerIndex := poolCleanerIndex mod POOL_PAGE_SIZE + 1;
+        if
+            poolCleanerIndex = 1
+        then
+            (poolCleanerPageIndex := poolCleanerPageIndex mod len poolPages + 1;
+            if
+                poolCleanerPageIndex = 1
+                and (forall i in set {1, ..., POOL_PAGE_SIZE} &
+                        poolPages(len poolPages)(i).size = 0)
+            then
+                atomic(heapPages := reverse (tl (reverse heapPages));
+                    poolPages := reverse (tl (reverse poolPages)))));
     
     p_current_State : () ==> State
     p_current_State() == return State;

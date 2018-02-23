@@ -1,4 +1,10 @@
 write(0, 0x123456789abcdef) 
 write(0x8, 0xffffffffffffffff) 
+initialize()
 addPage()
 pre_read(HEAP_PAGE_SIZE-7, State)
+alloc(10)
+free(0)
+free(64)
+cleanPool()
+ 

@@ -172,5 +172,20 @@ operations
             not Memory`pre_write_byte(
                 Memory`HEAP_PAGE_SIZE  * 3, 0, Memory`p_current_State()),
             "overruns the number of pages"));
+    
+    test_allocate_free : () ==> ()
+    test_allocate_free() ==
+        (dcl p1:[nat] := nil, p2:[nat] := nil, p3:[nat] := nil;
+        Memory`initialize();
+        p1 := Memory`alloc(10);
+        p2 := Memory`alloc(10);
+        assert(p1 <> nil, "p1 allocated");
+        assert(p2 <> nil, "p2 allocated");
+        assert(p1 <> p2, "p1 <> p2");
+        Memory`free(p1);
+        Memory`free(p2);
+        for i = 1 to  Memory`POOL_PAGE_SIZE do Memory`cleanPool();
+        p3 := Memory`alloc(10);
+        assertEquals(p3, p1, "allocated the same memory"));
 
 end MemoryTest

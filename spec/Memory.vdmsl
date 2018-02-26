@@ -13,10 +13,18 @@ types
      Slot :: address : Pointer size : Qword;
 
 values
+     /* CONSTANTS ON MEMORY SPACE */
      ALIGNMENT = 64;
      HEAP_PAGE_SIZE = 1024;
      POOL_PAGE_SIZE = HEAP_PAGE_SIZE div ALIGNMENT;
-     SIZE_OFFSET = 0;
+     /* DATA STRUCTURE OF ALLOCATED MEMORY */
+     SIZE_OFFSET = 0; -- dword
+     FLAGS_OFFSET = 4; -- dword
+     REFERENCE_COUNT_OFFSET = 8; -- qword
+     FORWARDER_OFFSET = 16; -- qword
+     CONTENT_OFFSET = 24;
+     /* FLAGS IN "basic_read_dword(pointer + FLAGS_OFFSET)" */
+     LARGE_OBJECT_FLAG = 1; --- if 1, the object is a large virtual object
 
 functions
     align : Qword -> Qword
@@ -58,8 +66,8 @@ operations
                 ^ [[mk_Slot(0, HEAP_PAGE_SIZE)]
                 ^ [mk_Slot(0, 0) | i in set {1, ..., POOL_PAGE_SIZE - 1}]]);
     
-    read : Pointer ==> Qword
-    read(pointer) ==
+    basic_read : Pointer ==> Qword
+    basic_read(pointer) ==
         let
             heap = heapPages(pointer div HEAP_PAGE_SIZE + 1),
             address = pointer mod HEAP_PAGE_SIZE + 1
@@ -80,8 +88,8 @@ operations
         pointer mod HEAP_PAGE_SIZE <= HEAP_PAGE_SIZE - 8
         and pointer div HEAP_PAGE_SIZE < len heapPages;
     
-    write : Pointer * Qword ==> ()
-    write(pointer, data) ==
+    basic_write : Pointer * Qword ==> ()
+    basic_write(pointer, data) ==
         let
             page = pointer div HEAP_PAGE_SIZE + 1,
             address = pointer mod HEAP_PAGE_SIZE + 1
@@ -106,8 +114,8 @@ operations
         pointer mod HEAP_PAGE_SIZE <= HEAP_PAGE_SIZE - 8
         and pointer div HEAP_PAGE_SIZE < len heapPages;
     
-    read_dword : Pointer ==> Dword
-    read_dword(pointer) ==
+    basic_read_dword : Pointer ==> Dword
+    basic_read_dword(pointer) ==
         let
             heap = heapPages(pointer div HEAP_PAGE_SIZE + 1),
             address = pointer mod HEAP_PAGE_SIZE + 1
@@ -120,8 +128,8 @@ operations
         pointer mod HEAP_PAGE_SIZE <= HEAP_PAGE_SIZE - 4
         and pointer div HEAP_PAGE_SIZE < len heapPages;
     
-    write_dword : Pointer * Dword ==> ()
-    write_dword(pointer, data) ==
+    basic_write_dword : Pointer * Dword ==> ()
+    basic_write_dword(pointer, data) ==
         let
             page = pointer div HEAP_PAGE_SIZE + 1,
             address = pointer mod HEAP_PAGE_SIZE + 1
@@ -138,25 +146,25 @@ operations
         pointer mod HEAP_PAGE_SIZE <= HEAP_PAGE_SIZE - 4
         and pointer div HEAP_PAGE_SIZE < len heapPages;
     
-    read_byte : Pointer ==> Byte
-    read_byte(pointer) ==
+    basic_read_byte : Pointer ==> Byte
+    basic_read_byte(pointer) ==
         let
             heap = heapPages(pointer div HEAP_PAGE_SIZE + 1),
             address = pointer mod HEAP_PAGE_SIZE + 1
         in return heap(address)
     pre  pointer div HEAP_PAGE_SIZE < len heapPages;
     
-    write_byte : Pointer * Byte ==> ()
-    write_byte(pointer, data) ==
+    basic_write_byte : Pointer * Byte ==> ()
+    basic_write_byte(pointer, data) ==
         let
             page = pointer div HEAP_PAGE_SIZE + 1,
             address = pointer mod HEAP_PAGE_SIZE + 1
         in heapPages(page)(address) := data
     pre  pointer div HEAP_PAGE_SIZE < len heapPages;
     
-    alloc : Qword ==> [Pointer]
+    alloc : Dword ==> [Pointer]
     alloc(raw_size) ==
-        let size = align(raw_size)
+        let size = align(CONTENT_OFFSET + raw_size)
         in
             (for page = 1 to  len poolPages
             do
@@ -175,14 +183,14 @@ operations
                                 in
                                     (poolPages(page)(i) .address := pool(i).address + size;
                                     poolPages(page)(i) .size := newSize;
-                                    write(pointer + SIZE_OFFSET, size);
+                                    basic_write_dword(pointer + SIZE_OFFSET, size);
                                     return pointer));
             return nil);
     
     free : Pointer ==> ()
     free(pointer) ==
         let
-            size = read(pointer + SIZE_OFFSET),
+            size = basic_read_dword(pointer + SIZE_OFFSET),
             page = pointer div HEAP_PAGE_SIZE + 1,
             pool = poolPages(page),
             address = pointer mod HEAP_PAGE_SIZE

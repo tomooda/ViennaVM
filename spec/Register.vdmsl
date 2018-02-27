@@ -22,7 +22,13 @@ imports
             oid2int: OID -> Int renamed oid2int;
             oid2float: OID -> Float renamed oid2float;
             oid2char: OID -> Char renamed oid2char;
-            oid2pointer: OID -> Pointer renamed oid2pointer;
+            oid2pointer: OID -> Pointer renamed oid2pointer;,
+    from Memory
+        operations
+            incrementReferenceCount: Pointer ==> ()
+                renamed incrementReferenceCount;
+            decrementReferenceCount: Pointer ==> ()
+                renamed decrementReferenceCount;
 exports all
 definitions
 types
@@ -70,26 +76,32 @@ operations
     
     write_oid : nat * OID ==> ()
     write_oid(r, oid) ==
+        (let p1 = registers(r).p, p2 = oid2pointer(oid)
+        in
+            (if p1 <> invalidPointerValue then decrementReferenceCount(p1);
+            if p2 <> invalidPointerValue then incrementReferenceCount(p2));
         registers(r)
             := mk_Reg(
                 oid,
                 invalidIntValue,
                 invalidFloatValue,
                 invalidCharValue,
-                invalidPointerValue);
+                oid2pointer(oid)));
     
     read_tag : nat ==> OID
     read_tag(r) == return read_oid(r) mod 0x100;
     
     write_tag : nat * OID ==> ()
     write_tag(r, tag) ==
+        (let p = registers(r).p
+        in if p <> invalidPointerValue then decrementReferenceCount(p);
         registers(r)
             := mk_Reg(
                 read_oid(r) + tag,
                 invalidIntValue,
                 invalidFloatValue,
                 invalidCharValue,
-                invalidPointerValue);
+                invalidPointerValue));
     
     read_int : nat ==> Int
     read_int(r) ==
@@ -107,9 +119,11 @@ operations
     
     write_int : nat * Int ==> ()
     write_int(r, i) ==
+        (let p = registers(r).p
+        in if p <> invalidPointerValue then decrementReferenceCount(p);
         registers(r)
             := mk_Reg(
-                invalidTag, i, invalidFloatValue, invalidCharValue, invalidPointerValue);
+                invalidTag, i, invalidFloatValue, invalidCharValue, invalidPointerValue));
     
     read_float : nat ==> Float
     read_float(r) ==
@@ -127,9 +141,11 @@ operations
     
     write_float : nat * Float ==> ()
     write_float(r, f) ==
+        (let p = registers(r).p
+        in if p <> invalidPointerValue then decrementReferenceCount(p);
         registers(r)
             := mk_Reg(
-                invalidTag, invalidIntValue, f, invalidCharValue, invalidPointerValue);
+                invalidTag, invalidIntValue, f, invalidCharValue, invalidPointerValue));
     
     read_char : nat ==> Char
     read_char(r) ==
@@ -147,9 +163,11 @@ operations
     
     write_char : nat * Char ==> ()
     write_char(r, c) ==
+        (let p = registers(r).p
+        in if p <> invalidPointerValue then decrementReferenceCount(p);
         registers(r)
             := mk_Reg(
-                invalidTag, invalidIntValue, invalidFloatValue, c, invalidPointerValue);
+                invalidTag, invalidIntValue, invalidFloatValue, c, invalidPointerValue));
     
     read_pointer : nat ==> Pointer
     read_pointer(r) ==
@@ -167,8 +185,11 @@ operations
     
     write_pointer : nat * Pointer ==> ()
     write_pointer(r, p) ==
+        (let p1 = registers(r).p
+        in if p1 <> invalidPointerValue then decrementReferenceCount(p1);
+        if p <> invalidPointerValue then incrementReferenceCount(p);
         registers(r)
             := mk_Reg(
-                invalidTag, invalidIntValue, invalidFloatValue, invalidCharValue, p);
+                invalidTag, invalidIntValue, invalidFloatValue, invalidCharValue, p));
 
 end Register

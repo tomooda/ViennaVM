@@ -10,7 +10,7 @@ values
      int2 : Data`Int = 0x5678;
      float1 : Data`Float = mk_Data`Float(0, 120, 12345);
      char1 : Data`Char = 0x40;
-     pointer1 : Data`Pointer = 0xabcd;
+     pointer1 : Data`Pointer = 0x100;
      oid1 : Data`OID = Data`int2oid(int1);
      oid2 : Data`OID = Data`int2oid(int2);
 

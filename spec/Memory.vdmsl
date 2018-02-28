@@ -262,7 +262,9 @@ operations
     decrementReferenceCount : Pointer ==> ()
     decrementReferenceCount(pointer) ==
         let p = pointer + REFERENCE_COUNT_OFFSET, c = basic_read(p) - 1
-        in if c > 0 then basic_write(p, c) else free(pointer);
+        in
+            (basic_write(p, c);
+            if c = 0 then free(pointer));
     
     p_current_State : () ==> State
     p_current_State() == return State;

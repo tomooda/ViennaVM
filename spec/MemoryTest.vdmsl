@@ -197,5 +197,41 @@ operations
         for i = 1 to  Memory`POOL_PAGE_SIZE do Memory`cleanPool();
         p3 := Memory`alloc(10);
         assertEquals(p3, p1, "allocated the same memory"));
+    
+    testReferenceCount : () ==> ()
+    testReferenceCount() ==
+        let p = Memory`alloc(0x10)
+        in
+            (assert(Memory`basic_read_dword(p + Memory`SIZE_OFFSET) > 0, "allocated");
+            assertEquals(
+                Memory`basic_read(p + Memory`REFERENCE_COUNT_OFFSET),
+                0,
+                "refCount= 0 at the beginning");
+            Memory`incrementReferenceCount(p);
+            assertEquals(
+                Memory`basic_read(p + Memory`REFERENCE_COUNT_OFFSET),
+                1,
+                "refCount is incremented");
+            assert(
+                Memory`basic_read_dword(p + Memory`SIZE_OFFSET) > 0,
+                "still allocated");
+            Memory`incrementReferenceCount(p);
+            assertEquals(
+                Memory`basic_read(p + Memory`REFERENCE_COUNT_OFFSET),
+                2,
+                "refCount is incremented");
+            assert(
+                Memory`basic_read_dword(p + Memory`SIZE_OFFSET) > 0,
+                "still allocated");
+            Memory`decrementReferenceCount(p);
+            assertEquals(
+                Memory`basic_read(p + Memory`REFERENCE_COUNT_OFFSET),
+                1,
+                "refCount is decremented");
+            assert(
+                Memory`basic_read_dword(p + Memory`SIZE_OFFSET) > 0,
+                "still allocated");
+            Memory`decrementReferenceCount(p);
+            assert(Memory`basic_read_dword(p + Memory`SIZE_OFFSET) = 0, "free"));
 
 end MemoryTest

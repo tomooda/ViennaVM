@@ -1,6 +1,7 @@
 module RegisterTest
 imports
     from Register all,
+    from Memory all,
     from Data all,
     from UnitTesting operations assertEquals renamed assertEquals;
 exports all
@@ -94,5 +95,39 @@ operations
         assertEquals(Register`read_float(1), Data`invalidFloatValue, "->float");
         assertEquals(Register`read_char(1), Data`invalidCharValue, "->char");
         assertEquals(Register`read_pointer(1), Data`invalidPointerValue, "->pointer"));
+    
+    testReferenceCount : () ==> ()
+    testReferenceCount() ==
+        let
+            p1 = Memory`alloc(0x10),
+            p2 = Memory`alloc(0x10),
+            oid1 = Data`pointer2oid(p1),
+            oid2 = Data`pointer2oid(p2)
+        in
+            (assertEquals(
+                Memory`basic_read(p1 + Memory`REFERENCE_COUNT_OFFSET),
+                0,
+                "no referrence to p1");
+            assertEquals(
+                Memory`basic_read(p2 + Memory`REFERENCE_COUNT_OFFSET),
+                0,
+                "no referrence to p2");
+            Register`write_pointer(1, p1);
+            assertEquals(
+                Memory`basic_read(p1 + Memory`REFERENCE_COUNT_OFFSET),
+                1,
+                "1 referrence to p1");
+            assertEquals(
+                Memory`basic_read(p2 + Memory`REFERENCE_COUNT_OFFSET),
+                0,
+                "no referrence to p1");
+            Register`write_oid(1, oid2);
+            assertEquals(Memory`basic_read(p1 + Memory`SIZE_OFFSET), 0, "p1 is free");
+            assertEquals(
+                Memory`basic_read(p2 + Memory`REFERENCE_COUNT_OFFSET),
+                1,
+                "1 referrence to p2");
+            Register`write_int(1, 0);
+            assertEquals(Memory`basic_read(p1 + Memory`SIZE_OFFSET), 0, "p2 is free"));
 
 end RegisterTest

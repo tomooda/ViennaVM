@@ -99,8 +99,8 @@ operations
     testReferenceCount : () ==> ()
     testReferenceCount() ==
         let
-            p1 = Memory`alloc(0x10),
-            p2 = Memory`alloc(0x10),
+            p1 = Memory`alloc(0),
+            p2 = Memory`alloc(0),
             oid1 = Data`pointer2oid(p1),
             oid2 = Data`pointer2oid(p2)
         in

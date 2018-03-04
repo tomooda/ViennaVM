@@ -1,6 +1,7 @@
 module MemoryTest
 imports
     from Memory all,
+    from Data all,
     from UnitTesting
         operations
             assertEquals renamed assertEquals;
@@ -183,23 +184,23 @@ operations
     test_allocate_free() ==
         (dcl p1:[nat] := nil, p2:[nat] := nil, p3:[nat] := nil;
         Memory`initialize();
-        p1 := Memory`alloc(10);
+        p1 := Memory`alloc(0);
         assert(
             not Memory`pre_basic_write_byte(
                 Memory`HEAP_PAGE_SIZE  * 3, 0, Memory`p_current_State()),
             "overruns the number of pages");
-        p2 := Memory`alloc(10);
+        p2 := Memory`alloc(0);
         assert(p1 <> nil, "p1 allocated");
         assert(p2 <> nil, "p2 allocated");
         assert(p1 <> p2, "p1 <> p2");
         Memory`free(p1);
         Memory`free(p2);
         for i = 1 to  Memory`POOL_PAGE_SIZE do Memory`cleanPool();
-        p3 := Memory`alloc(10);
+        p3 := Memory`alloc(0);
         assertEquals(p3, p1, "allocated the same memory"));
     
-    testReferenceCount : () ==> ()
-    testReferenceCount() ==
+    test_referenceCount : () ==> ()
+    test_referenceCount() ==
         let p = Memory`alloc(0x10)
         in
             (assert(Memory`basic_read_dword(p + Memory`SIZE_OFFSET) > 0, "allocated");
@@ -233,5 +234,34 @@ operations
                 "still allocated");
             Memory`decrementReferenceCount(p);
             assert(Memory`basic_read_dword(p + Memory`SIZE_OFFSET) = 0, "free"));
+    
+    test_read_write_slot : () ==> ()
+    test_read_write_slot() ==
+        let
+            p1 = Memory`alloc(2), p2 = Memory`alloc(1), p3 = Memory`alloc(1)
+        in
+            (Memory`write_slot(p1, 1, Data`int2oid(123));
+            Memory`write_slot(p1, 2, Data`char2oid(0x41));
+            assertEquals(
+                Data`oid2int(Memory`read_slot(p1, 1)),
+                123,
+                "read and write 123 to slot");
+            assertEquals(
+                Data`oid2char(Memory`read_slot(p1, 2)), 0x41, "read and write 'A'");
+            Memory`write_slot(p2, 1, Data`pointer2oid(p1));
+            assertEquals(
+                Memory`basic_read(p1 + Memory`REFERENCE_COUNT_OFFSET),
+                1,
+                "refCount of p1 is incremented");
+            Memory`write_slot(p3, 1, Data`pointer2oid(p2));
+            assertEquals(
+                Memory`basic_read(p2 + Memory`REFERENCE_COUNT_OFFSET),
+                1,
+                "refCount of p2 is incremented");
+            Memory`write_slot(p3, 1, Data`int2oid(0));
+            assert(
+                Memory`basic_read_dword(p1 + Memory`SIZE_OFFSET) = 0, "p1 is free");
+            assert(
+                Memory`basic_read_dword(p2 + Memory`SIZE_OFFSET) = 0, "p2 is free"));
 
 end MemoryTest

@@ -539,3 +539,551 @@ module MemoryTest
  BinaryTest`testXor() -> OK
  BinaryTest`testRshift() -> OK
  BinaryTest`testLshift() -> OK
+module Memory
+module Instruction
+module Instruction
+module Instruction
+module Instruction
+module Register
+module Data
+module VDM
+module VDM
+module VDM
+module Data
+ MemoryTest`test_align() -> OK
+ MemoryTest`test_basic_read() -> OK
+ MemoryTest`test_basic_write() -> OK
+ MemoryTest`test_basic_read_dword() -> OK
+ MemoryTest`test_basic_write_dword() -> OK
+ MemoryTest`test_basic_read_byte() -> OK
+ MemoryTest`test_basic_write_byte() -> OK
+ MemoryTest`test_allocate_free() -> OK
+ MemoryTest`test_referenceCount() -> OK
+ MemoryTest`test_read_write_slot() -> OK
+ RegisterTest`testWriteAndReadDifferentRegister() -> OK
+ RegisterTest`testBoxAndReadInt() -> OK
+ RegisterTest`testBoxAndReadFloat() -> OK
+ RegisterTest`testBoxAndReadChar() -> OK
+ RegisterTest`testBoxAndReadPointer() -> OK
+ RegisterTest`testWriteBoxedIntAndUbox() -> OK
+ RegisterTest`testWriteBoxedFloatAndUbox() -> OK
+ RegisterTest`testWriteBoxedCharAndUnbox() -> OK
+ RegisterTest`testWriteBoxedPointerAndUnbox() -> OK
+ RegisterTest`testWriteInvalidOopAndUnbox() -> OK
+ RegisterTest`testReferenceCount() -> OK
+ DataTest`test_oid2int() -> OK
+ DataTest`test_oid2float() -> OK
+ DataTest`test_oid2char() -> OK
+ DataTest`test_oid2pointer() -> OK
+ BinaryTest`testMask() -> OK
+ BinaryTest`testXor() -> OK
+ BinaryTest`testRshift() -> OK
+ BinaryTest`testLshift() -> OK
+module Register
+module Register
+module Register
+module Register
+module Register
+module Register
+module Register
+module Register
+module Register
+module Register
+module RegisterTest
+module RegisterTest
+module RegisterTest
+module RegisterTest
+module RegisterTest
+module RegisterTest
+module RegisterTest
+module RegisterTest
+module RegisterTest
+module RegisterTest
+ RegisterTest`testWriteAndReadDifferentRegister() -> OK
+ RegisterTest`testBoxAndReadInt() -> OK
+ RegisterTest`testBoxAndReadFloat() -> OK
+ RegisterTest`testBoxAndReadChar() -> OK
+ RegisterTest`testBoxAndReadPointer() -> OK
+ RegisterTest`testWriteBoxedIntAndUbox() -> OK
+ RegisterTest`testWriteBoxedFloatAndUbox() -> OK
+ RegisterTest`testWriteBoxedCharAndUnbox() -> OK
+ RegisterTest`testWriteBoxedPointerAndUnbox() -> OK
+ RegisterTest`testWriteInvalidOopAndUnbox() -> OK
+ RegisterTest`testReferenceCount() -> OK
+ RegisterTest`testNamedRegisters() -> OK
+ MemoryTest`test_align() -> OK
+ MemoryTest`test_basic_read() -> OK
+ MemoryTest`test_basic_write() -> OK
+ MemoryTest`test_basic_read_dword() -> OK
+ MemoryTest`test_basic_write_dword() -> OK
+ MemoryTest`test_basic_read_byte() -> OK
+ MemoryTest`test_basic_write_byte() -> OK
+ MemoryTest`test_allocate_free() -> OK
+ MemoryTest`test_referenceCount() -> OK
+ MemoryTest`test_read_write_slot() -> OK
+ DataTest`test_oid2int() -> OK
+ DataTest`test_oid2float() -> OK
+ DataTest`test_oid2char() -> OK
+ DataTest`test_oid2pointer() -> OK
+ BinaryTest`testMask() -> OK
+ BinaryTest`testXor() -> OK
+ BinaryTest`testRshift() -> OK
+ BinaryTest`testLshift() -> OK
+module RegisterTest
+module RegisterTest
+module RegisterTest
+ RegisterTest`testWriteAndReadDifferentRegister() -> OK
+ RegisterTest`testBoxAndReadInt() -> OK
+ RegisterTest`testBoxAndReadFloat() -> OK
+ RegisterTest`testBoxAndReadChar() -> OK
+ RegisterTest`testBoxAndReadPointer() -> OK
+ RegisterTest`testWriteBoxedIntAndUbox() -> OK
+ RegisterTest`testWriteBoxedFloatAndUbox() -> OK
+ RegisterTest`testWriteBoxedCharAndUnbox() -> OK
+ RegisterTest`testWriteBoxedPointerAndUnbox() -> OK
+ RegisterTest`testWriteInvalidOopAndUnbox() -> OK
+ RegisterTest`testReferenceCount() -> OK
+ RegisterTest`testNamedRegisters() -> OK
+ MemoryTest`test_align() -> OK
+ MemoryTest`test_basic_read() -> OK
+ MemoryTest`test_basic_write() -> OK
+ MemoryTest`test_basic_read_dword() -> OK
+ MemoryTest`test_basic_write_dword() -> OK
+ MemoryTest`test_basic_read_byte() -> OK
+ MemoryTest`test_basic_write_byte() -> OK
+ MemoryTest`test_allocate_free() -> OK
+ MemoryTest`test_referenceCount() -> OK
+ MemoryTest`test_read_write_slot() -> OK
+ DataTest`test_oid2int() -> OK
+ DataTest`test_oid2float() -> OK
+ DataTest`test_oid2char() -> OK
+ DataTest`test_oid2pointer() -> OK
+ BinaryTest`testMask() -> OK
+ BinaryTest`testXor() -> OK
+ BinaryTest`testRshift() -> OK
+ BinaryTest`testLshift() -> OK
+module RegisterTest
+ RegisterTest`testWriteAndReadDifferentRegister() -> OK
+ RegisterTest`testBoxAndReadInt() -> OK
+ RegisterTest`testBoxAndReadFloat() -> OK
+ RegisterTest`testBoxAndReadChar() -> OK
+ RegisterTest`testBoxAndReadPointer() -> OK
+ RegisterTest`testWriteBoxedIntAndUbox() -> OK
+ RegisterTest`testWriteBoxedFloatAndUbox() -> OK
+ RegisterTest`testWriteBoxedCharAndUnbox() -> OK
+ RegisterTest`testWriteBoxedPointerAndUnbox() -> OK
+ RegisterTest`testWriteInvalidOopAndUnbox() -> OK
+ RegisterTest`testReferenceCount() -> OK
+ RegisterTest`testNamedRegisters() -> assertion failed: char->oid expected: 129 actual: 16410
+ MemoryTest`test_align() -> OK
+ MemoryTest`test_basic_read() -> OK
+ MemoryTest`test_basic_write() -> OK
+ MemoryTest`test_basic_read_dword() -> OK
+ MemoryTest`test_basic_write_dword() -> OK
+ MemoryTest`test_basic_read_byte() -> OK
+ MemoryTest`test_basic_write_byte() -> OK
+ MemoryTest`test_allocate_free() -> OK
+ MemoryTest`test_referenceCount() -> OK
+ MemoryTest`test_read_write_slot() -> OK
+ DataTest`test_oid2int() -> OK
+ DataTest`test_oid2float() -> OK
+ DataTest`test_oid2char() -> OK
+ DataTest`test_oid2pointer() -> OK
+ BinaryTest`testMask() -> OK
+ BinaryTest`testXor() -> OK
+ BinaryTest`testRshift() -> OK
+ BinaryTest`testLshift() -> OK
+module RegisterTest
+ RegisterTest`testWriteAndReadDifferentRegister() -> OK
+ RegisterTest`testBoxAndReadInt() -> OK
+ RegisterTest`testBoxAndReadFloat() -> OK
+ RegisterTest`testBoxAndReadChar() -> OK
+ RegisterTest`testBoxAndReadPointer() -> OK
+ RegisterTest`testWriteBoxedIntAndUbox() -> OK
+ RegisterTest`testWriteBoxedFloatAndUbox() -> OK
+ RegisterTest`testWriteBoxedCharAndUnbox() -> OK
+ RegisterTest`testWriteBoxedPointerAndUnbox() -> OK
+ RegisterTest`testWriteInvalidOopAndUnbox() -> OK
+ RegisterTest`testReferenceCount() -> OK
+ RegisterTest`testNamedRegisters() -> assertion failed: pointer->oid expected: 31488 actual: 247
+ MemoryTest`test_align() -> OK
+ MemoryTest`test_basic_read() -> OK
+ MemoryTest`test_basic_write() -> OK
+ MemoryTest`test_basic_read_dword() -> OK
+ MemoryTest`test_basic_write_dword() -> OK
+ MemoryTest`test_basic_read_byte() -> OK
+ MemoryTest`test_basic_write_byte() -> OK
+ MemoryTest`test_allocate_free() -> OK
+ MemoryTest`test_referenceCount() -> OK
+ MemoryTest`test_read_write_slot() -> OK
+ DataTest`test_oid2int() -> OK
+ DataTest`test_oid2float() -> OK
+ DataTest`test_oid2char() -> OK
+ DataTest`test_oid2pointer() -> OK
+ BinaryTest`testMask() -> OK
+ BinaryTest`testXor() -> OK
+ BinaryTest`testRshift() -> OK
+ BinaryTest`testLshift() -> OK
+module RegisterTest
+ RegisterTest`testWriteAndReadDifferentRegister() -> OK
+ RegisterTest`testBoxAndReadInt() -> OK
+ RegisterTest`testBoxAndReadFloat() -> OK
+ RegisterTest`testBoxAndReadChar() -> OK
+ RegisterTest`testBoxAndReadPointer() -> OK
+ RegisterTest`testWriteBoxedIntAndUbox() -> OK
+ RegisterTest`testWriteBoxedFloatAndUbox() -> OK
+ RegisterTest`testWriteBoxedCharAndUnbox() -> OK
+ RegisterTest`testWriteBoxedPointerAndUnbox() -> OK
+ RegisterTest`testWriteInvalidOopAndUnbox() -> OK
+ RegisterTest`testReferenceCount() -> OK
+ RegisterTest`testNamedRegisters() -> OK
+ MemoryTest`test_align() -> OK
+ MemoryTest`test_basic_read() -> OK
+ MemoryTest`test_basic_write() -> OK
+ MemoryTest`test_basic_read_dword() -> OK
+ MemoryTest`test_basic_write_dword() -> OK
+ MemoryTest`test_basic_read_byte() -> OK
+ MemoryTest`test_basic_write_byte() -> OK
+ MemoryTest`test_allocate_free() -> OK
+ MemoryTest`test_referenceCount() -> OK
+ MemoryTest`test_read_write_slot() -> OK
+ DataTest`test_oid2int() -> OK
+ DataTest`test_oid2float() -> OK
+ DataTest`test_oid2char() -> OK
+ DataTest`test_oid2pointer() -> OK
+ BinaryTest`testMask() -> OK
+ BinaryTest`testXor() -> OK
+ BinaryTest`testRshift() -> OK
+ BinaryTest`testLshift() -> OK
+module Memory
+module Memory
+module Memory
+module Memory
+module MemoryTest
+
+ MemoryTest`test_align() -> OK
+ MemoryTest`test_basic_read() -> OK
+ MemoryTest`test_basic_write() -> OK
+ MemoryTest`test_basic_read_dword() -> OK
+ MemoryTest`test_basic_write_dword() -> OK
+ MemoryTest`test_basic_read_byte() -> OK
+ MemoryTest`test_basic_write_byte() -> OK
+ MemoryTest`test_allocate_free() -> OK
+ MemoryTest`test_referenceCount() -> OK
+ MemoryTest`test_read_write_slot() -> OK
+ RegisterTest`testWriteAndReadDifferentRegister() -> OK
+ RegisterTest`testBoxAndReadInt() -> OK
+ RegisterTest`testBoxAndReadFloat() -> OK
+ RegisterTest`testBoxAndReadChar() -> OK
+ RegisterTest`testBoxAndReadPointer() -> OK
+ RegisterTest`testWriteBoxedIntAndUbox() -> OK
+ RegisterTest`testWriteBoxedFloatAndUbox() -> OK
+ RegisterTest`testWriteBoxedCharAndUnbox() -> OK
+ RegisterTest`testWriteBoxedPointerAndUnbox() -> OK
+ RegisterTest`testWriteInvalidOopAndUnbox() -> OK
+ RegisterTest`testReferenceCount() -> OK
+ RegisterTest`testNamedRegisters() -> OK
+ DataTest`test_oid2int() -> OK
+ DataTest`test_oid2float() -> OK
+ DataTest`test_oid2char() -> OK
+ DataTest`test_oid2pointer() -> OK
+ BinaryTest`testMask() -> OK
+ BinaryTest`testXor() -> OK
+ BinaryTest`testRshift() -> OK
+ BinaryTest`testLshift() -> OK
+module MemoryTest
+ MemoryTest`test_align() -> OK
+ MemoryTest`test_basic_read() -> OK
+ MemoryTest`test_basic_write() -> OK
+ MemoryTest`test_basic_read_dword() -> OK
+ MemoryTest`test_basic_write_dword() -> OK
+ MemoryTest`test_basic_read_byte() -> OK
+ MemoryTest`test_basic_write_byte() -> OK
+ MemoryTest`test_allocate_free() -> OK
+ MemoryTest`test_referenceCount() -> OK
+ MemoryTest`test_read_write_slot() -> OK
+ RegisterTest`testWriteAndReadDifferentRegister() -> OK
+ RegisterTest`testBoxAndReadInt() -> OK
+ RegisterTest`testBoxAndReadFloat() -> OK
+ RegisterTest`testBoxAndReadChar() -> OK
+module Memory
+ RegisterTest`testBoxAndReadPointer() -> OK
+ MemoryTest`test_align() -> OK
+ MemoryTest`test_basic_read() -> OK
+ MemoryTest`test_basic_write() -> OK
+ MemoryTest`test_basic_read_dword() -> OK
+ MemoryTest`test_basic_write_dword() -> OK
+ MemoryTest`test_basic_read_byte() -> OK
+ MemoryTest`test_basic_write_byte() -> OK
+ MemoryTest`test_allocate_free() -> OK
+ MemoryTest`test_referenceCount() -> OK
+ MemoryTest`test_read_write_slot() -> OK
+ RegisterTest`testWriteAndReadDifferentRegister() -> OK
+ RegisterTest`testBoxAndReadInt() -> OK
+ RegisterTest`testBoxAndReadFloat() -> OK
+ RegisterTest`testBoxAndReadChar() -> OK
+ RegisterTest`testBoxAndReadPointer() -> OK
+ RegisterTest`testWriteBoxedIntAndUbox() -> OK
+ RegisterTest`testWriteBoxedFloatAndUbox() -> OK
+ RegisterTest`testWriteBoxedCharAndUnbox() -> OK
+ RegisterTest`testWriteBoxedPointerAndUnbox() -> OK
+ RegisterTest`testWriteInvalidOopAndUnbox() -> OK
+ RegisterTest`testReferenceCount() -> OK
+ RegisterTest`testNamedRegisters() -> OK
+ DataTest`test_oid2int() -> OK
+ DataTest`test_oid2float() -> OK
+ DataTest`test_oid2char() -> OK
+ DataTest`test_oid2pointer() -> OK
+ BinaryTest`testMask() -> OK
+ BinaryTest`testXor() -> OK
+ BinaryTest`testRshift() -> OK
+ BinaryTest`testLshift() -> OK
+module Memory
+ MemoryTest`test_align() -> OK
+ MemoryTest`test_basic_read() -> OK
+ MemoryTest`test_basic_write() -> OK
+ MemoryTest`test_basic_read_dword() -> OK
+ MemoryTest`test_basic_write_dword() -> OK
+ MemoryTest`test_basic_read_byte() -> OK
+ MemoryTest`test_basic_write_byte() -> OK
+ MemoryTest`test_allocate_free() -> OK
+ MemoryTest`test_referenceCount() -> OK
+ MemoryTest`test_read_write_slot() -> assertion failed: p1 is free
+ RegisterTest`testWriteAndReadDifferentRegister() -> OK
+ RegisterTest`testBoxAndReadInt() -> OK
+ RegisterTest`testBoxAndReadFloat() -> OK
+ RegisterTest`testBoxAndReadChar() -> OK
+ RegisterTest`testBoxAndReadPointer() -> OK
+ RegisterTest`testWriteBoxedIntAndUbox() -> OK
+ RegisterTest`testWriteBoxedFloatAndUbox() -> OK
+ RegisterTest`testWriteBoxedCharAndUnbox() -> OK
+ RegisterTest`testWriteBoxedPointerAndUnbox() -> OK
+ RegisterTest`testWriteInvalidOopAndUnbox() -> OK
+ RegisterTest`testReferenceCount() -> OK
+ RegisterTest`testNamedRegisters() -> OK
+ DataTest`test_oid2int() -> OK
+ DataTest`test_oid2float() -> OK
+ DataTest`test_oid2char() -> OK
+ DataTest`test_oid2pointer() -> OK
+ BinaryTest`testMask() -> OK
+ BinaryTest`testXor() -> OK
+ BinaryTest`testRshift() -> OK
+ BinaryTest`testLshift() -> OK
+module MemoryTest
+ MemoryTest`test_align() -> OK
+ MemoryTest`test_basic_read() -> OK
+ MemoryTest`test_basic_write() -> OK
+ MemoryTest`test_basic_read_dword() -> OK
+ MemoryTest`test_basic_write_dword() -> OK
+ MemoryTest`test_basic_read_byte() -> OK
+ MemoryTest`test_basic_write_byte() -> OK
+ MemoryTest`test_allocate_free() -> OK
+ MemoryTest`test_referenceCount() -> OK
+ MemoryTest`test_read_write_slot() -> assertion failed: p1 is free expected: 0 actual: 64
+ RegisterTest`testWriteAndReadDifferentRegister() -> OK
+ RegisterTest`testBoxAndReadInt() -> OK
+ RegisterTest`testBoxAndReadFloat() -> OK
+ RegisterTest`testBoxAndReadChar() -> OK
+ RegisterTest`testBoxAndReadPointer() -> OK
+ RegisterTest`testWriteBoxedIntAndUbox() -> OK
+ RegisterTest`testWriteBoxedFloatAndUbox() -> OK
+ RegisterTest`testWriteBoxedCharAndUnbox() -> OK
+ RegisterTest`testWriteBoxedPointerAndUnbox() -> OK
+ RegisterTest`testWriteInvalidOopAndUnbox() -> OK
+ RegisterTest`testReferenceCount() -> OK
+ RegisterTest`testNamedRegisters() -> OK
+ DataTest`test_oid2int() -> OK
+ DataTest`test_oid2float() -> OK
+ DataTest`test_oid2char() -> OK
+ DataTest`test_oid2pointer() -> OK
+ BinaryTest`testMask() -> OK
+ BinaryTest`testXor() -> OK
+ BinaryTest`testRshift() -> OK
+ BinaryTest`testLshift() -> OK
+module MemoryTest
+ MemoryTest`test_align() -> OK
+ MemoryTest`test_basic_read() -> OK
+ MemoryTest`test_basic_write() -> OK
+ MemoryTest`test_basic_read_dword() -> OK
+ MemoryTest`test_basic_write_dword() -> OK
+ MemoryTest`test_basic_read_byte() -> OK
+ MemoryTest`test_basic_write_byte() -> OK
+ MemoryTest`test_allocate_free() -> OK
+ MemoryTest`test_referenceCount() -> OK
+ MemoryTest`test_read_write_slot() -> assertion failed: p1 count is zero expected: 0 actual: 1
+ RegisterTest`testWriteAndReadDifferentRegister() -> OK
+ RegisterTest`testBoxAndReadInt() -> OK
+ RegisterTest`testBoxAndReadFloat() -> OK
+ RegisterTest`testBoxAndReadChar() -> OK
+ RegisterTest`testBoxAndReadPointer() -> OK
+ RegisterTest`testWriteBoxedIntAndUbox() -> OK
+ RegisterTest`testWriteBoxedFloatAndUbox() -> OK
+ RegisterTest`testWriteBoxedCharAndUnbox() -> OK
+ RegisterTest`testWriteBoxedPointerAndUnbox() -> OK
+ RegisterTest`testWriteInvalidOopAndUnbox() -> OK
+ RegisterTest`testReferenceCount() -> OK
+ RegisterTest`testNamedRegisters() -> OK
+ DataTest`test_oid2int() -> OK
+ DataTest`test_oid2float() -> OK
+ DataTest`test_oid2char() -> OK
+ DataTest`test_oid2pointer() -> OK
+ BinaryTest`testMask() -> OK
+ BinaryTest`testXor() -> OK
+ BinaryTest`testRshift() -> OK
+ BinaryTest`testLshift() -> OK
+module MemoryTest
+ MemoryTest`test_align() -> OK
+ MemoryTest`test_basic_read() -> OK
+ MemoryTest`test_basic_write() -> OK
+ MemoryTest`test_basic_read_dword() -> OK
+ MemoryTest`test_basic_write_dword() -> OK
+ MemoryTest`test_basic_read_byte() -> OK
+ MemoryTest`test_basic_write_byte() -> OK
+ MemoryTest`test_allocate_free() -> OK
+ MemoryTest`test_referenceCount() -> OK
+ MemoryTest`test_read_write_slot() -> assertion failed: p1 is free expected: 0 actual: 64
+ RegisterTest`testWriteAndReadDifferentRegister() -> OK
+ RegisterTest`testBoxAndReadInt() -> OK
+ RegisterTest`testBoxAndReadFloat() -> OK
+ RegisterTest`testBoxAndReadChar() -> OK
+ RegisterTest`testBoxAndReadPointer() -> OK
+ RegisterTest`testWriteBoxedIntAndUbox() -> OK
+ RegisterTest`testWriteBoxedFloatAndUbox() -> OK
+ RegisterTest`testWriteBoxedCharAndUnbox() -> OK
+ RegisterTest`testWriteBoxedPointerAndUnbox() -> OK
+ RegisterTest`testWriteInvalidOopAndUnbox() -> OK
+ RegisterTest`testReferenceCount() -> OK
+ RegisterTest`testNamedRegisters() -> OK
+ DataTest`test_oid2int() -> OK
+ DataTest`test_oid2float() -> OK
+ DataTest`test_oid2char() -> OK
+ DataTest`test_oid2pointer() -> OK
+ BinaryTest`testMask() -> OK
+ BinaryTest`testXor() -> OK
+ BinaryTest`testRshift() -> OK
+ BinaryTest`testLshift() -> OK
+module Memory
+module Memory
+ MemoryTest`test_align() -> OK
+ MemoryTest`test_basic_read() -> OK
+ MemoryTest`test_basic_write() -> OK
+ MemoryTest`test_basic_read_dword() -> OK
+ MemoryTest`test_basic_write_dword() -> OK
+ MemoryTest`test_basic_read_byte() -> OK
+ MemoryTest`test_basic_write_byte() -> OK
+ MemoryTest`test_allocate_free() -> OK
+ MemoryTest`test_referenceCount() -> OK
+ MemoryTest`test_read_write_slot() -> assertion failed: p1 is free expected: 0 actual: 64
+ RegisterTest`testWriteAndReadDifferentRegister() -> OK
+ RegisterTest`testBoxAndReadInt() -> OK
+ RegisterTest`testBoxAndReadFloat() -> OK
+ RegisterTest`testBoxAndReadChar() -> OK
+ RegisterTest`testBoxAndReadPointer() -> OK
+ RegisterTest`testWriteBoxedIntAndUbox() -> OK
+ RegisterTest`testWriteBoxedFloatAndUbox() -> OK
+ RegisterTest`testWriteBoxedCharAndUnbox() -> OK
+ RegisterTest`testWriteBoxedPointerAndUnbox() -> OK
+ RegisterTest`testWriteInvalidOopAndUnbox() -> OK
+ RegisterTest`testReferenceCount() -> OK
+ RegisterTest`testNamedRegisters() -> OK
+ DataTest`test_oid2int() -> OK
+ DataTest`test_oid2float() -> OK
+ DataTest`test_oid2char() -> OK
+ DataTest`test_oid2pointer() -> OK
+ BinaryTest`testMask() -> OK
+ BinaryTest`testXor() -> OK
+ BinaryTest`testRshift() -> OK
+ BinaryTest`testLshift() -> OK
+module Memory
+ MemoryTest`test_align() -> OK
+ MemoryTest`test_basic_read() -> OK
+ MemoryTest`test_basic_write() -> OK
+ MemoryTest`test_basic_read_dword() -> OK
+ MemoryTest`test_basic_write_dword() -> OK
+ MemoryTest`test_basic_read_byte() -> OK
+ MemoryTest`test_basic_write_byte() -> OK
+ MemoryTest`test_allocate_free() -> OK
+ MemoryTest`test_referenceCount() -> OK
+ MemoryTest`test_read_write_slot() -> OK
+ RegisterTest`testWriteAndReadDifferentRegister() -> OK
+ RegisterTest`testBoxAndReadInt() -> OK
+ RegisterTest`testBoxAndReadFloat() -> OK
+ RegisterTest`testBoxAndReadChar() -> OK
+ RegisterTest`testBoxAndReadPointer() -> OK
+ RegisterTest`testWriteBoxedIntAndUbox() -> OK
+ RegisterTest`testWriteBoxedFloatAndUbox() -> OK
+ RegisterTest`testWriteBoxedCharAndUnbox() -> OK
+ RegisterTest`testWriteBoxedPointerAndUnbox() -> OK
+ RegisterTest`testWriteInvalidOopAndUnbox() -> OK
+ RegisterTest`testReferenceCount() -> OK
+ RegisterTest`testNamedRegisters() -> OK
+ DataTest`test_oid2int() -> OK
+ DataTest`test_oid2float() -> OK
+ DataTest`test_oid2char() -> OK
+ DataTest`test_oid2pointer() -> OK
+ BinaryTest`testMask() -> OK
+ BinaryTest`testXor() -> OK
+ BinaryTest`testRshift() -> OK
+ BinaryTest`testLshift() -> OK
+module MemoryTest
+ MemoryTest`test_align() -> OK
+ MemoryTest`test_basic_read() -> OK
+ MemoryTest`test_basic_write() -> OK
+ MemoryTest`test_basic_read_dword() -> OK
+ MemoryTest`test_basic_write_dword() -> OK
+ MemoryTest`test_basic_read_byte() -> OK
+ MemoryTest`test_basic_write_byte() -> OK
+ MemoryTest`test_allocate_free() -> OK
+ MemoryTest`test_referenceCount() -> OK
+ MemoryTest`test_read_write_slot() -> OK
+ RegisterTest`testWriteAndReadDifferentRegister() -> OK
+ RegisterTest`testBoxAndReadInt() -> OK
+ RegisterTest`testBoxAndReadFloat() -> OK
+ RegisterTest`testBoxAndReadChar() -> OK
+ RegisterTest`testBoxAndReadPointer() -> OK
+ RegisterTest`testWriteBoxedIntAndUbox() -> OK
+ RegisterTest`testWriteBoxedFloatAndUbox() -> OK
+ RegisterTest`testWriteBoxedCharAndUnbox() -> OK
+ RegisterTest`testWriteBoxedPointerAndUnbox() -> OK
+ RegisterTest`testWriteInvalidOopAndUnbox() -> OK
+ RegisterTest`testReferenceCount() -> OK
+ RegisterTest`testNamedRegisters() -> OK
+ DataTest`test_oid2int() -> OK
+ DataTest`test_oid2float() -> OK
+ DataTest`test_oid2char() -> OK
+ DataTest`test_oid2pointer() -> OK
+ BinaryTest`testMask() -> OK
+ BinaryTest`testXor() -> OK
+ BinaryTest`testRshift() -> OK
+ BinaryTest`testLshift() -> OK
+module MemoryTest
+ MemoryTest`test_align() -> OK
+ MemoryTest`test_basic_read() -> OK
+ MemoryTest`test_basic_write() -> OK
+ MemoryTest`test_basic_read_dword() -> OK
+ MemoryTest`test_basic_write_dword() -> OK
+ MemoryTest`test_basic_read_byte() -> OK
+ MemoryTest`test_basic_write_byte() -> OK
+ MemoryTest`test_allocate_free() -> OK
+ MemoryTest`test_referenceCount() -> OK
+ MemoryTest`test_read_write_slot() -> OK
+ RegisterTest`testWriteAndReadDifferentRegister() -> OK
+ RegisterTest`testBoxAndReadInt() -> OK
+ RegisterTest`testBoxAndReadFloat() -> OK
+ RegisterTest`testBoxAndReadChar() -> OK
+ RegisterTest`testBoxAndReadPointer() -> OK
+ RegisterTest`testWriteBoxedIntAndUbox() -> OK
+ RegisterTest`testWriteBoxedFloatAndUbox() -> OK
+ RegisterTest`testWriteBoxedCharAndUnbox() -> OK
+ RegisterTest`testWriteBoxedPointerAndUnbox() -> OK
+ RegisterTest`testWriteInvalidOopAndUnbox() -> OK
+ RegisterTest`testReferenceCount() -> OK
+ RegisterTest`testNamedRegisters() -> OK
+ DataTest`test_oid2int() -> OK
+ DataTest`test_oid2float() -> OK
+ DataTest`test_oid2char() -> OK
+ DataTest`test_oid2pointer() -> OK
+ BinaryTest`testMask() -> OK
+ BinaryTest`testXor() -> OK
+ BinaryTest`testRshift() -> OK
+ BinaryTest`testLshift() -> OK

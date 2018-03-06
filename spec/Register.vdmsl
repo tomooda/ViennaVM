@@ -36,6 +36,7 @@ types
 
 state State of
     registers : seq of Reg
+    namedRegisters : map seq of char to Reg
 init s ==
     s
     = mk_State(
@@ -45,7 +46,10 @@ init s ==
             invalidFloatValue,
             invalidCharValue,
             invalidPointerValue)
-            | i in set {1, ..., 16}])
+            | i in set {1, ..., 16}],
+        {"zero"
+        |-> mk_Reg(
+            int2oid(0), 0, invalidFloatValue, invalidCharValue, invalidPointerValue)})
 end
 
 operations
@@ -191,5 +195,105 @@ operations
         registers(r)
             := mk_Reg(
                 invalidTag, invalidIntValue, invalidFloatValue, invalidCharValue, p));
+    
+    read_named_oid : seq of char ==> OID
+    read_named_oid(name) ==
+        return if
+                name in set dom namedRegisters
+            then
+                namedRegisters(name).oid
+            else
+                invalidOidValue;
+    
+    read_named_int : seq of char ==> Int
+    read_named_int(name) ==
+        return if
+                name in set dom namedRegisters
+            then
+                namedRegisters(name).i
+            else
+                invalidIntValue;
+    
+    read_named_float : seq of char ==> Float
+    read_named_float(name) ==
+        return if
+                name in set dom namedRegisters
+            then
+                namedRegisters(name).f
+            else
+                invalidFloatValue;
+    
+    read_named_char : seq of char ==> Char
+    read_named_char(name) ==
+        return if
+                name in set dom namedRegisters
+            then
+                namedRegisters(name).c
+            else
+                invalidCharValue;
+    
+    read_named_pointer : seq of char ==> Pointer
+    read_named_pointer(name) ==
+        return if
+                name in set dom namedRegisters
+            then
+                namedRegisters(name).p
+            else
+                invalidPointerValue;
+    
+    define_named_oid : seq of char * OID ==> ()
+    define_named_oid(name, oid) ==
+        if
+            name in set dom namedRegisters
+        then
+            skip
+        else
+            namedRegisters(name)
+                := mk_Reg(
+                    oid, oid2int(oid), oid2float(oid), oid2char(oid), oid2pointer(oid));
+    
+    define_named_int : seq of char * Int ==> ()
+    define_named_int(name, i) ==
+        if
+            name in set dom namedRegisters
+        then
+            skip
+        else
+            namedRegisters(name)
+                := mk_Reg(
+                    int2oid(i), i, invalidFloatValue, invalidCharValue, invalidPointerValue);
+    
+    define_named_float : seq of char * Float ==> ()
+    define_named_float(name, f) ==
+        if
+            name in set dom namedRegisters
+        then
+            skip
+        else
+            namedRegisters(name)
+                := mk_Reg(
+                    float2oid(f), invalidIntValue, f, invalidCharValue, invalidPointerValue);
+    
+    define_named_char : seq of char * Char ==> ()
+    define_named_char(name, c) ==
+        if
+            name in set dom namedRegisters
+        then
+            skip
+        else
+            namedRegisters(name)
+                := mk_Reg(
+                    char2oid(c), invalidIntValue, invalidFloatValue, c, invalidPointerValue);
+    
+    define_named_pointer : seq of char * Pointer ==> ()
+    define_named_pointer(name, p) ==
+        if
+            name in set dom namedRegisters
+        then
+            skip
+        else
+            namedRegisters(name)
+                := mk_Reg(
+                    pointer2oid(p), invalidIntValue, invalidFloatValue, invalidCharValue, p);
 
 end Register

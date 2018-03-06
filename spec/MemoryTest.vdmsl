@@ -35,27 +35,7 @@ operations
         assertEquals(
             Memory`basic_read(0x10),
             0xefcdab8967452301,
-            "basic_read little endian");
-        assert(
-            Memory`pre_basic_read(
-                Memory`HEAP_PAGE_SIZE - 8, Memory`p_current_State()),
-            "just fit in the page");
-        assert(
-            not Memory`pre_basic_read(
-                Memory`HEAP_PAGE_SIZE - 7, Memory`p_current_State()),
-            "overruns the page limit");
-        assert(
-            Memory`pre_basic_read(
-                Memory`HEAP_PAGE_SIZE  * 2 - 8, Memory`p_current_State()),
-            "just fit in the 2nd page");
-        assert(
-            not Memory`pre_basic_read(
-                Memory`HEAP_PAGE_SIZE  * 2 - 7, Memory`p_current_State()),
-            "overruns the 2nd page limit");
-        assert(
-            not Memory`pre_basic_read(
-                Memory`HEAP_PAGE_SIZE  * 3, Memory`p_current_State()),
-            "overruns the number of pages"));
+            "basic_read little endian"));
     
     test_basic_write : () ==> ()
     test_basic_write() ==
@@ -71,27 +51,7 @@ operations
         assertEquals(Memory`basic_read_byte(0x14), 0x67, "5th byte");
         assertEquals(Memory`basic_read_byte(0x15), 0x45, "6th byte");
         assertEquals(Memory`basic_read_byte(0x16), 0x23, "7th byte");
-        assertEquals(Memory`basic_read_byte(0x17), 0x01, "8th byte");
-        assert(
-            Memory`pre_basic_write(
-                Memory`HEAP_PAGE_SIZE - 8, 0, Memory`p_current_State()),
-            "just fit in the page");
-        assert(
-            not Memory`pre_basic_write(
-                Memory`HEAP_PAGE_SIZE - 7, 0, Memory`p_current_State()),
-            "overruns the page limit");
-        assert(
-            Memory`pre_basic_write(
-                Memory`HEAP_PAGE_SIZE  * 2 - 8, 0, Memory`p_current_State()),
-            "just fit in the 2nd page");
-        assert(
-            not Memory`pre_basic_write(
-                Memory`HEAP_PAGE_SIZE  * 2 - 7, 0, Memory`p_current_State()),
-            "overruns the 2nd page limit");
-        assert(
-            not Memory`pre_basic_write(
-                Memory`HEAP_PAGE_SIZE  * 3, 0, Memory`p_current_State()),
-            "overruns the number of pages"));
+        assertEquals(Memory`basic_read_byte(0x17), 0x01, "8th byte"));
     
     test_basic_read_dword : () ==> ()
     test_basic_read_dword() ==
@@ -111,26 +71,6 @@ operations
     test_basic_write_dword : () ==> ()
     test_basic_write_dword() ==
         (Memory`addPage();
-        assert(
-            Memory`pre_basic_read_dword(
-                Memory`HEAP_PAGE_SIZE - 4, Memory`p_current_State()),
-            "just fit in the page");
-        assert(
-            not Memory`pre_basic_read_dword(
-                Memory`HEAP_PAGE_SIZE - 3, Memory`p_current_State()),
-            "overruns the page limit");
-        assert(
-            Memory`pre_basic_read_dword(
-                Memory`HEAP_PAGE_SIZE  * 2 - 4, Memory`p_current_State()),
-            "just fit in the 2nd page");
-        assert(
-            not Memory`pre_basic_read_dword(
-                Memory`HEAP_PAGE_SIZE  * 2 - 3, Memory`p_current_State()),
-            "overruns the 2nd page limit");
-        assert(
-            not Memory`pre_basic_read_dword(
-                Memory`HEAP_PAGE_SIZE  * 3, Memory`p_current_State()),
-            "overruns the number of pages");
         for i = 0 to  0x100 do Memory`basic_write_byte(i, 0x00);
         Memory`basic_write_dword(0x10, 0x89abcdef);
         assertEquals(Memory`basic_read_byte(0x0f), 0x00, "no basic_write on ptr-1");
@@ -143,26 +83,6 @@ operations
     test_basic_read_byte : () ==> ()
     test_basic_read_byte() ==
         (Memory`addPage();
-        assert(
-            Memory`pre_basic_write_dword(
-                Memory`HEAP_PAGE_SIZE - 4, 0, Memory`p_current_State()),
-            "just fit in the page");
-        assert(
-            not Memory`pre_basic_write_dword(
-                Memory`HEAP_PAGE_SIZE - 3, 0, Memory`p_current_State()),
-            "overruns the page limit");
-        assert(
-            Memory`pre_basic_write_dword(
-                Memory`HEAP_PAGE_SIZE  * 2 - 4, 0, Memory`p_current_State()),
-            "just fit in the 2nd page");
-        assert(
-            not Memory`pre_basic_write_dword(
-                Memory`HEAP_PAGE_SIZE  * 2 - 3, 0, Memory`p_current_State()),
-            "overruns the 2nd page limit");
-        assert(
-            not Memory`pre_basic_write_dword(
-                Memory`HEAP_PAGE_SIZE  * 3, 0, Memory`p_current_State()),
-            "overruns the number of pages");
         for i = 0 to  0x100 do Memory`basic_write_byte(i, 0x00);
         Memory`basic_write_byte(0x12, 0xff);
         assertEquals(Memory`basic_read(0x12), 0xff, "basic_read a byte"));
@@ -171,10 +91,6 @@ operations
     test_basic_write_byte() ==
         (Memory`addPage();
         for i = 0 to  0x100 do Memory`basic_write_byte(i, 0x00);
-        assert(
-            not Memory`pre_basic_read_byte(
-                Memory`HEAP_PAGE_SIZE  * 3, Memory`p_current_State()),
-            "overruns the number of pages");
         Memory`basic_write_byte(0x10, 0xff);
         assertEquals(Memory`basic_read_byte(0x0f), 0x00, "no basic_write on ptr-1");
         assertEquals(Memory`basic_read_byte(0x11), 0x00, "no basic_write on ptr+8");
@@ -183,12 +99,8 @@ operations
     test_allocate_free : () ==> ()
     test_allocate_free() ==
         (dcl p1:[nat] := nil, p2:[nat] := nil, p3:[nat] := nil;
-        Memory`initialize();
+        Memory`reset();
         p1 := Memory`alloc(0);
-        assert(
-            not Memory`pre_basic_write_byte(
-                Memory`HEAP_PAGE_SIZE  * 3, 0, Memory`p_current_State()),
-            "overruns the number of pages");
         p2 := Memory`alloc(0);
         assert(p1 <> nil, "p1 allocated");
         assert(p2 <> nil, "p2 allocated");

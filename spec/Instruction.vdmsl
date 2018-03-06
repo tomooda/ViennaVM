@@ -1,0 +1,28 @@
+module Instruction
+imports
+    from Data
+        types
+            Byte renamed Byte;
+            Word renamed Word;
+            Dword renamed Dword;
+            Qword renamed Qword;
+            OID renamed OID;
+            Int renamed Int;
+            Float renamed Float;
+            Char renamed Char;
+            Pointer renamed Pointer;
+        values
+            invalidPointerValue renamed invalidPointerValue;
+            invalidOidValue renamed invalidOidValue;,
+    from Memory
+        operations
+            read_slot: Pointer * Dword ==> OID renamed read_slot;
+            write_slot: Pointer * Dword * OID ==> () renamed write_slot;
+            alloc: Dword ==> Pointer renamed alloc;
+exports all
+definitions
+operations
+    nop : () ==> ()
+    nop() == skip;
+
+end Instruction

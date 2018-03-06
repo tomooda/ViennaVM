@@ -6,7 +6,6 @@ types
      Word = nat inv w == w < 0x10000; -- 16bits unsigned integer
      Dword = nat inv dw == dw < 0x100000000; -- 32bits unsigned integer
      Qword = nat inv qw == qw < 0x10000000000000000; -- 64bits unsigned integer
-     Register :: oid : OID i : [Int] f : [Float] c : [Char] p : [Pointer];
      OID = Qword; -- 64 bits unsigned integer
      Int = int
         inv i == i > -0x8000000000000000 and i < 0x8000000000000000; -- 63 bits signed integer
@@ -19,51 +18,11 @@ values
      /* oid tag flags */
      smallIntegerFlag = 1;
      immediateFlag = 2;
-     typeFlag = 4;
-     optionTypeFlag = 8;
      /* immediate value oid tags */
      smallIntegerTag = 1;
      invalidTag = 0x0a;
      floatTag = 0x12;
      charTag = 0x1a;
-     nilTag = 0x22;
-     trueTag = 0x2a;
-     falseTag = 0x32;
-     undefinedTag = 0x3a;
-     emptySeqTag = 0x82;
-     emptySetTag = 0x8a;
-     emptyMapTag = 0x92;
-     /* immediate type oid defs */
-     unitType = 0x06;
-     boolType = 0x16;
-     charType = 0x26;
-     realType = 0x36;
-     intType = 0x46;
-     natType = 0x56;
-     nat1Type = 0x66;
-     tokenType = 0x76;
-     anyType = 0xf6;
-     /* heap value oid defs */
-     tupleRecordTag = 0x10;
-     tokenTag = 0x20;
-     seqTag = 0x30;
-     setTag = 0x40;
-     mapTag = 0x50;
-     quoteTag = 0x60;
-     functionTag = 0x70;
-     operationTag = 0x80;
-     largePositiveIntTag = 0x90;
-     largeNegativeIntTag = 0xa0;
-     /* heap type oid defs */
-     tupleRecordType = 0x04;
-     seqType = 0x24;
-     setType = 0x34;
-     mapType = 0x44;
-     quoteType = 0x54;
-     functionType = 0x64;
-     operationType = 0x74;
-     productType = 0x84;
-     unionType = 0x94;
 	/* default values */
      invalidOidValue = invalidTag;
      invalidIntValue = 0x7fffffffffffffff;

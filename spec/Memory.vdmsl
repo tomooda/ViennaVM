@@ -58,8 +58,8 @@ init s ==
 end
 
 operations
-    initialize : () ==> ()
-    initialize() ==
+    reset : () ==> ()
+    reset() ==
         atomic(heapPages := [[0 | i in set {1, ..., HEAP_PAGE_SIZE}]];
             poolPages
                 := [[mk_Slot(0, HEAP_PAGE_SIZE)]
@@ -92,6 +92,7 @@ operations
                                     basic_write_dword(pointer + FLAGS_OFFSET, 0);
                                     basic_write(pointer + REFERENCE_COUNT_OFFSET, 0);
                                     basic_write(pointer + FORWARDER_OFFSET, invalidPointerValue);
+                                    basic_write(pointer + SLOTS_SIZE_OFFSET, num_slots);
                                     for i = 0 to  num_slots - 1
                                     do basic_write(pointer + CONTENT_OFFSET + i  * 8, invalidOidValue);
                                     return pointer));
@@ -106,10 +107,10 @@ operations
             address = pointer mod HEAP_PAGE_SIZE
         in
             (basic_write_dword(pointer + SIZE_OFFSET, 0);
-            for i = 0 to  basic_read(pointer + SLOTS_SIZE_OFFSET)
+            for i = 0 to  basic_read(pointer + SLOTS_SIZE_OFFSET) - 1
             do
                 let p = oid2pointer(basic_read(pointer + CONTENT_OFFSET + i  * 8))
-                in if p <> invalidPointerValue then free(p);
+                in if p <> invalidPointerValue then decrementReferenceCount(p);
             for i = 1 to  len pool
             do
                 (if
@@ -301,8 +302,5 @@ operations
         in
             (basic_write(p, c);
             if c = 0 then free(pointer));
-    
-    p_current_State : () ==> State
-    p_current_State() == return State;
 
 end Memory

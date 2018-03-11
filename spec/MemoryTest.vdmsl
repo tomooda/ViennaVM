@@ -14,7 +14,7 @@ operations
         (for i = 1 to  Memory`ALIGNMENT
         do assertEquals(Memory`align(i), Memory`ALIGNMENT, "0");
         for i = Memory`ALIGNMENT + 1 to  Memory`ALIGNMENT  * 2
-        do assertEquals(Memory`align(i), Memory`ALIGNMENT  * 2, "0"));
+        do assertEquals(Memory`align(i), Memory`ALIGNMENT  * 2, "1"));
     
     test_basic_read : () ==> ()
     test_basic_read() ==

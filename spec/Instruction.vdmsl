@@ -1,28 +1,80 @@
 module Instruction
 imports
-    from Data
-        types
-            Byte renamed Byte;
-            Word renamed Word;
-            Dword renamed Dword;
-            Qword renamed Qword;
-            OID renamed OID;
-            Int renamed Int;
-            Float renamed Float;
-            Char renamed Char;
-            Pointer renamed Pointer;
-        values
-            invalidPointerValue renamed invalidPointerValue;
-            invalidOidValue renamed invalidOidValue;,
-    from Memory
-        operations
-            read_slot: Pointer * Dword ==> OID renamed read_slot;
-            write_slot: Pointer * Dword * OID ==> () renamed write_slot;
-            alloc: Dword ==> Pointer renamed alloc;
+    from Data all,
+    from Memory all,
+    from Register all
 exports all
 definitions
 operations
     nop : () ==> ()
     nop() == skip;
+    
+    alloc : Register`GeneralRegister * Data`Qword ==> ()
+    alloc(r, size) == Register`write_pointer(r, Memory`alloc(size));
+    
+    tag : Register`GeneralRegister * Data`Byte ==> ()
+    tag(r, tag) == Register`write_tag(r, tag);
+    
+    reset : Register`GeneralRegister ==> ()
+    reset(reg) == Register`write_oid(reg, Data`invalidOidValue);
+    
+    move : Register`GeneralRegister * Register`Register ==> ()
+    move(dst, src) == Register`move(dst, src);
+    
+    load : Register`GeneralRegister * Register`Register * Register`Register *
+    Data`Byte ==> ()
+    load(dst, src, intReg, imm) ==
+        Register`write_oid(
+            dst,
+            Memory`read_slot(
+                Register`read_pointer(src), Register`read_int(intReg) + imm));
+    
+    store : Register`Register * Register`Register * Data`Byte *
+    Register`Register ==> ()
+    store(dst, intReg, imm, src) ==
+        Memory`write_slot(
+            Register`read_pointer(dst),
+            Register`read_int(intReg) + imm,
+            Register`read_oid(src));
+    
+    add : Register`GeneralRegister * Register`Register * Register`Register ==> ()
+    add(dst, src1, src2) ==
+        Register`write_int(dst, Register`read_int(src1) + Register`read_int(src2));
+    
+    addi : Register`GeneralRegister * Register`Register * Data`Byte ==> ()
+    addi(dst, src, imm) ==
+        Register`write_int(dst, Register`read_int(src) + Data`byte2int(imm));
+    
+    sub : Register`GeneralRegister * Register`Register * Register`Register ==> ()
+    sub(dst, src1, src2) ==
+        Register`write_int(dst, Register`read_int(src1) - Register`read_int(src2));
+    
+    subi : Register`GeneralRegister * Register`Register * Data`Byte ==> ()
+    subi(dst, src, imm) ==
+        Register`write_int(dst, Register`read_int(src) - Data`byte2int(imm));
+    
+    mul : Register`GeneralRegister * Register`Register * Register`Register ==> ()
+    mul(dst, src1, src2) ==
+        Register`write_int(dst, Register`read_int(src1)  * Register`read_int(src2));
+    
+    muli : Register`GeneralRegister * Register`Register * Data`Byte ==> ()
+    muli(dst, src, imm) ==
+        Register`write_int(dst, Register`read_int(src)  * Data`byte2int(imm));
+    
+    idiv : Register`GeneralRegister * Register`Register * Register`Register ==> ()
+    idiv(dst, src1, src2) ==
+        Register`write_int(dst, Register`read_int(src1) div Register`read_int(src2));
+    
+    idivi : Register`GeneralRegister * Register`Register * Data`Byte ==> ()
+    idivi(dst, src, imm) ==
+        Register`write_int(dst, Register`read_int(src) div Data`byte2int(imm));
+    
+    imod : Register`GeneralRegister * Register`Register * Register`Register ==> ()
+    imod(dst, src1, src2) ==
+        Register`write_int(dst, Register`read_int(src1) mod Register`read_int(src2));
+    
+    imodi : Register`GeneralRegister * Register`Register * Data`Byte ==> ()
+    imodi(dst, src, imm) ==
+        Register`write_int(dst, Register`read_int(src) mod Data`byte2int(imm));
 
 end Instruction

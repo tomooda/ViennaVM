@@ -12,3 +12,19 @@ alloc(0x100)
 write_pointer(1, 0)
 write_pointer(1, invalidPointerValue)
 free(0)
+ 
+read_float("zero")
+
+100 mod -20
+100 div -40
+
+reset()
+ 
+(1024-32) / 8
+
+mk_Slot(0, 1).size
+
+
+    FLAGS_OFFSET = 4; -- dword
+    LARGE_OBJECT_FLAG = 1; --- if 1, the object is a large virtual object
+

@@ -23,8 +23,9 @@ types
 values
      /* CONSTANTS ON MEMORY SPACE */
      ALIGNMENT = 64;
-     HEAP_PAGE_SIZE = 1024;
+     HEAP_PAGE_SIZE = 4  * 1024;
      POOL_PAGE_SIZE = HEAP_PAGE_SIZE div ALIGNMENT;
+     MAX_OBJECT_SIZE = 1024;
      /* DATA STRUCTURE OF ALLOCATED MEMORY */
      SIZE_OFFSET = 0; -- dword
      FLAGS_OFFSET = 4; -- dword
@@ -67,7 +68,7 @@ operations
             poolCleanerPageIndex := 1;
             poolCleanerIndex := 1);
     
-    alloc : Dword ==> [Pointer]
+    alloc : Qword ==> [Pointer]
     alloc(num_slots) ==
         let size = align(CONTENT_OFFSET + num_slots  * 8)
         in

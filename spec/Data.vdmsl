@@ -31,6 +31,16 @@ values
      invalidPointerValue = 0x100000000000000;
 
 functions
+    qword2int : Qword -> Int
+    qword2int(x) ==
+        if x < 0x8000000000000000 then x else x - 0x10000000000000000;
+    
+    dword2int : Dword -> Int
+    dword2int(x) == if x < 0x80000000 then x else x - 0x100000000;
+    
+    byte2int : Byte -> Int
+    byte2int(x) == if x < 0x80 then x else x - 0x100;
+    
     oid2int : OID -> Int
     oid2int(oid) ==
         if

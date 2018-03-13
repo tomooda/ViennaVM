@@ -5,7 +5,63 @@ imports
     from Register all
 exports all
 definitions
+values
+     NOP = 0;
+     ALLOC = 1;
+     RESET = 2;
+     MOVE = 3;
+     MOVEI = 4;
+     LOAD = 5;
+     STORE = 6;
+
 operations
+    step : () ==> ()
+    step() ==
+        let
+            code =
+                Memory`read_slot(Register`read_cr(), Register`read_ip() - 1),
+            opcode = code div 0x100000000000000,
+            operand = code mod 0x100000000000000
+        in
+            (Register`write_ip(Register`read_ip() + 1);
+            cases opcode:
+                NOP -> nop(),
+                ALLOC ->
+                    let
+                        dst = operand div 0x10000000000, size = operand div 0x10000000000
+                    in alloc(dst, size),
+                RESET -> let dst = operand mod 0x10000 in reset(dst),
+                MOVE ->
+                    let
+                        r = operand mod 0x100000000, dst = r div 0x10000, src = r mod 0x10000
+                    in move(dst, src),
+                MOVEI ->
+                    let
+                        r = operand mod 0x1000000000000,
+                        dst = r div 0x100000000,
+                        imm = operand div 0x100000000
+                    in movei(dst, imm),
+                LOAD ->
+                    let
+                        dst = operand div 0x10000000000,
+                        r1 = operand mod 0x10000000000,
+                        src = r1 div 0x1000000,
+                        r2 = r1 mod 0x1000000,
+                        intreg = r2 div 0x100,
+                        imm = r2 div 0x100
+                    in load(dst, src, intreg, imm),
+                STORE ->
+                    let
+                        dst = operand div 0x10000000000,
+                        r1 = operand mod 0x10000000000,
+                        intreg = r1 div 0x1000000,
+                        r2 = r1 mod 0x1000000,
+                        src = r2 div 0x100,
+                        imm = r2 div 0x100
+                    in store(dst, intreg, imm, src),
+                others -> exit <INVALID_INSTRUCTION>
+                end);
+    
     nop : () ==> ()
     nop() == skip;
     
@@ -20,6 +76,9 @@ operations
     
     move : Register`GeneralRegister * Register`Register ==> ()
     move(dst, src) == Register`move(dst, src);
+    
+    movei : Register`GeneralRegister * Data`Dword ==> ()
+    movei(dst, imm) == Register`write_int(dst, Data`dword2int(imm));
     
     load : Register`GeneralRegister * Register`Register * Register`Register *
     Data`Byte ==> ()
@@ -39,42 +98,160 @@ operations
     
     add : Register`GeneralRegister * Register`Register * Register`Register ==> ()
     add(dst, src1, src2) ==
-        Register`write_int(dst, Register`read_int(src1) + Register`read_int(src2));
+        let int1 = Register`read_int(src1), int2 = Register`read_int(src2)
+        in
+            if
+                int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue
+            then
+                Register`write_int(dst, int1 + int2)
+            else
+                Register`write_int(dst, Data`invalidIntValue);
     
     addi : Register`GeneralRegister * Register`Register * Data`Byte ==> ()
     addi(dst, src, imm) ==
-        Register`write_int(dst, Register`read_int(src) + Data`byte2int(imm));
+        let int1 = Register`read_int(src)
+        in
+            if
+                int1 <> Data`invalidIntValue
+            then
+                Register`write_int(dst, Register`read_int(src) + Data`byte2int(imm))
+            else
+                Register`write_int(dst, Data`invalidIntValue);
     
     sub : Register`GeneralRegister * Register`Register * Register`Register ==> ()
     sub(dst, src1, src2) ==
-        Register`write_int(dst, Register`read_int(src1) - Register`read_int(src2));
+        let int1 = Register`read_int(src1), int2 = Register`read_int(src2)
+        in
+            if
+                int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue
+            then
+                Register`write_int(dst, int1 - int2)
+            else
+                Register`write_int(dst, Data`invalidIntValue);
     
     subi : Register`GeneralRegister * Register`Register * Data`Byte ==> ()
     subi(dst, src, imm) ==
-        Register`write_int(dst, Register`read_int(src) - Data`byte2int(imm));
+        let int1 = Register`read_int(src)
+        in
+            if
+                int1 <> Data`invalidIntValue
+            then
+                Register`write_int(dst, Register`read_int(src) - Data`byte2int(imm))
+            else
+                Register`write_int(dst, Data`invalidIntValue);
     
     mul : Register`GeneralRegister * Register`Register * Register`Register ==> ()
     mul(dst, src1, src2) ==
-        Register`write_int(dst, Register`read_int(src1)  * Register`read_int(src2));
+        let int1 = Register`read_int(src1), int2 = Register`read_int(src2)
+        in
+            if
+                int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue
+            then
+                Register`write_int(dst, int1  * int2)
+            else
+                Register`write_int(dst, Data`invalidIntValue);
     
     muli : Register`GeneralRegister * Register`Register * Data`Byte ==> ()
     muli(dst, src, imm) ==
-        Register`write_int(dst, Register`read_int(src)  * Data`byte2int(imm));
+        let int1 = Register`read_int(src)
+        in
+            if
+                int1 <> Data`invalidIntValue
+            then
+                Register`write_int(dst, Register`read_int(src)  * Data`byte2int(imm))
+            else
+                Register`write_int(dst, Data`invalidIntValue);
     
     idiv : Register`GeneralRegister * Register`Register * Register`Register ==> ()
     idiv(dst, src1, src2) ==
-        Register`write_int(dst, Register`read_int(src1) div Register`read_int(src2));
+        let int1 = Register`read_int(src1), int2 = Register`read_int(src2)
+        in
+            if
+                (int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue)
+                and int2 <> 0
+            then
+                Register`write_int(dst, int1 div int2)
+            else
+                Register`write_int(dst, Data`invalidIntValue);
     
     idivi : Register`GeneralRegister * Register`Register * Data`Byte ==> ()
     idivi(dst, src, imm) ==
-        Register`write_int(dst, Register`read_int(src) div Data`byte2int(imm));
+        let int1 = Register`read_int(src)
+        in
+            if
+                int1 <> Data`invalidIntValue
+            then
+                Register`write_int(dst, Register`read_int(src) div Data`byte2int(imm))
+            else
+                Register`write_int(dst, Data`invalidIntValue);
     
     imod : Register`GeneralRegister * Register`Register * Register`Register ==> ()
     imod(dst, src1, src2) ==
-        Register`write_int(dst, Register`read_int(src1) mod Register`read_int(src2));
+        let int1 = Register`read_int(src1), int2 = Register`read_int(src2)
+        in
+            if
+                (int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue)
+                and int2 <> 0
+            then
+                Register`write_int(dst, int1 mod int2)
+            else
+                Register`write_int(dst, Data`invalidIntValue);
     
     imodi : Register`GeneralRegister * Register`Register * Data`Byte ==> ()
     imodi(dst, src, imm) ==
-        Register`write_int(dst, Register`read_int(src) mod Data`byte2int(imm));
+        let int1 = Register`read_int(src)
+        in
+            if
+                int1 <> Data`invalidIntValue
+            then
+                Register`write_int(dst, Register`read_int(src) mod Data`byte2int(imm))
+            else
+                Register`write_int(dst, Data`invalidIntValue);
+    
+    jump_lessthan : Register`Register * Register`Register * Data`Dword ==> ()
+    jump_lessthan(reg1, reg2, ip) ==
+        let int1 = Register`read_int(reg1), int2 = Register`read_int(reg2)
+        in
+            if
+                (int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue)
+                and int1 < int2
+            then
+                Register`write_ip(ip);
+    
+    jump_lessequal : Register`Register * Register`Register * Data`Dword ==> ()
+    jump_lessequal(reg1, reg2, ip) ==
+        let int1 = Register`read_int(reg1), int2 = Register`read_int(reg2)
+        in
+            if
+                (int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue)
+                and int1 <= int2
+            then
+                Register`write_ip(ip);
+    
+    jump_equal : Register`Register * Register`Register * Data`Dword ==> ()
+    jump_equal(reg1, reg2, ip) ==
+        let int1 = Register`read_int(reg1), int2 = Register`read_int(reg2)
+        in
+            if int1 <> Data`invalidIntValue and int1 = int2 then Register`write_ip(ip);
+    
+    jump_greaterequal : Register`Register * Register`Register * Data`Dword ==> ()
+    jump_greaterequal(reg1, reg2, ip) ==
+        let int1 = Register`read_int(reg1), int2 = Register`read_int(reg2)
+        in
+            if
+                (int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue)
+                and int1 >= int2
+            then
+                Register`write_ip(ip);
+    
+    jump_greaterthan : Register`Register * Register`Register * Data`Dword ==> ()
+    jump_greaterthan(reg1, reg2, ip) ==
+        let int1 = Register`read_int(reg1), int2 = Register`read_int(reg2)
+        in
+            if
+                (int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue)
+                and int1 > int2
+            then
+                Register`write_ip(ip);
 
 end Instruction

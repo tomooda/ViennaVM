@@ -8,6 +8,8 @@ free(0)
 free(64)
 cleanPool()
 
+1/0
+
 alloc(0x100)
 write_pointer(1, 0)
 write_pointer(1, invalidPointerValue)
@@ -19,9 +21,6 @@ read_float("zero")
 100 div -40
 
 reset()
- 
-(1024-32) / 8
-
 mk_Slot(0, 1).size
 
 

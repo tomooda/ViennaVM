@@ -2,6 +2,7 @@ module Register
 imports
     from Data
         types
+            Dword renamed Dword;
             OID renamed OID;
             Int renamed Int;
             Float renamed Float;
@@ -38,12 +39,14 @@ types
      Register = GeneralRegister| NamedRegister;
 
 state State of
-    instructionPointer : Pointer
+    codeRecord : Pointer
+    instructionPointer : Dword
     registers : seq of Reg
     namedRegisters : map NamedRegister to Reg
 init s ==
     s
     = mk_State(
+        invalidPointerValue,
         0,
         [mk_Reg(
             invalidOidValue,
@@ -58,8 +61,20 @@ init s ==
 end
 
 operations
-    jump : Pointer ==> ()
-    jump(p) == instructionPointer := p;
+    read_cr : () ==> Pointer
+    read_cr() == return codeRecord;
+    
+    write_cr : Pointer ==> ()
+    write_cr(pointer) == codeRecord := pointer;
+    
+    read_ip : () ==> Dword
+    read_ip() == return instructionPointer;
+    
+    write_ip : Dword ==> ()
+    write_ip(i) == instructionPointer := i;
+    
+    jump : Dword ==> ()
+    jump(index) == instructionPointer := index;
     
     jump_relative : int ==> ()
     jump_relative(offset) ==

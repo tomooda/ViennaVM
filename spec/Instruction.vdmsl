@@ -6,9 +6,9 @@ imports
 exports all
 definitions
 values
-     NOP = 0;
-     ALLOC = 1;
-     RESET = 2;
+     ERR = 0;
+     NOP = 1;
+     ALLOC = 2;
      MOVE = 3;
      MOVEI = 4;
      LOAD = 5;
@@ -19,128 +19,188 @@ operations
     step() ==
         let
             code =
-                Memory`read_slot(Register`read_cr(), Register`read_ip() - 1),
-            opcode = code div 0x100000000000000,
-            operand = code mod 0x100000000000000
+                Memory`read_slot(Register`read_cr(), Register`read_ip() + 1),
+            opcode = code div 0x1000000000000,
+            operand = code mod 0x1000000000000,
+            reg1 = operand div 0x100000000,
+            operand32 = operand mod 0x100000000,
+            reg2 = operand32 div 0x10000,
+            reg3 = operand32 mod 0x10000
         in
             (Register`write_ip(Register`read_ip() + 1);
             cases opcode:
+                ERR -> err(),
                 NOP -> nop(),
                 ALLOC ->
                     let
-                        dst = operand div 0x10000000000, size = operand div 0x10000000000
-                    in alloc(dst, size),
-                RESET -> let dst = operand mod 0x10000 in reset(dst),
-                MOVE ->
-                    let
-                        r = operand mod 0x100000000, dst = r div 0x10000, src = r mod 0x10000
-                    in move(dst, src),
+                        size =
+                            Memory`read_slot(Register`read_cr(), Register`read_ip() + 1)
+                    in
+                        (Register`write_ip(Register`read_ip() + 1);
+                        alloc(reg1, reg2, reg3, size)),
+                RESET -> reset(reg1, reg2, reg3),
+                MOVE -> move(reg1, reg2, reg3),
                 MOVEI ->
                     let
-                        r = operand mod 0x1000000000000,
-                        dst = r div 0x100000000,
-                        imm = operand div 0x100000000
-                    in movei(dst, imm),
+                        imm = Memory`read_slot(Register`read_cr(), Register`read_ip() + 1)
+                    in
+                        (Register`write_ip(Register`read_ip() + 1);
+                        movei(reg1, reg2, reg3, imm)),
                 LOAD ->
                     let
-                        dst = operand div 0x10000000000,
-                        r1 = operand mod 0x10000000000,
-                        src = r1 div 0x1000000,
-                        r2 = r1 mod 0x1000000,
-                        intreg = r2 div 0x100,
-                        imm = r2 div 0x100
-                    in load(dst, src, intreg, imm),
+                        imm = Memory`read_slot(Register`read_cr(), Register`read_ip() + 1)
+                    in
+                        (Register`write_ip(Register`read_ip() + 1);
+                        load(reg1, reg2, reg3, imm)),
                 STORE ->
                     let
-                        dst = operand div 0x10000000000,
-                        r1 = operand mod 0x10000000000,
-                        intreg = r1 div 0x1000000,
-                        r2 = r1 mod 0x1000000,
-                        src = r2 div 0x100,
-                        imm = r2 div 0x100
-                    in store(dst, intreg, imm, src),
+                        imm = Memory`read_slot(Register`read_cr(), Register`read_ip() + 1)
+                    in
+                        (Register`write_ip(Register`read_ip() + 1);
+                        store(reg1, reg2, imm, reg3)),
                 others -> exit <INVALID_INSTRUCTION>
                 end);
+    
+    err : () ==> ()
+    err() == error;
     
     nop : () ==> ()
     nop() == skip;
     
-    alloc : Register`GeneralRegister * Data`Qword ==> ()
-    alloc(r, size) == Register`write_pointer(r, Memory`alloc(size));
-    
-    tag : Register`GeneralRegister * Data`Byte ==> ()
-    tag(r, tag) == Register`write_tag(r, tag);
-    
-    reset : Register`GeneralRegister ==> ()
-    reset(reg) == Register`write_oid(reg, Data`invalidOidValue);
-    
-    move : Register`GeneralRegister * Register`Register ==> ()
-    move(dst, src) == Register`move(dst, src);
-    
-    movei : Register`GeneralRegister * Data`Dword ==> ()
-    movei(dst, imm) == Register`write_int(dst, Data`dword2int(imm));
-    
-    load : Register`GeneralRegister * Register`Register * Register`Register *
-    Data`Byte ==> ()
-    load(dst, src, intReg, imm) ==
-        Register`write_oid(
-            dst,
-            Memory`read_slot(
-                Register`read_pointer(src), Register`read_int(intReg) + imm));
-    
-    store : Register`Register * Register`Register * Data`Byte *
-    Register`Register ==> ()
-    store(dst, intReg, imm, src) ==
-        Memory`write_slot(
-            Register`read_pointer(dst),
-            Register`read_int(intReg) + imm,
-            Register`read_oid(src));
-    
-    add : Register`GeneralRegister * Register`Register * Register`Register ==> ()
-    add(dst, src1, src2) ==
-        let int1 = Register`read_int(src1), int2 = Register`read_int(src2)
+    alloc : Register`Register * Register`Register * Register`Register *
+    Data`Int ==> ()
+    alloc(reg1, reg2, reg3, size) ==
+        let p = Memory`alloc(size)
         in
             if
-                int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue
+                p <> Data`invalidPointerValue
+            then
+                (if reg1 > 0 then Register`write_pointer(reg1, p);
+                if reg2 > 0 then Register`write_pointer(reg2, p);
+                if reg3 > 0 then Register`write_pointer(reg3, p))
+            else
+                err();
+    
+    reset : Register`Register * Register`Register * Register`Register ==> ()
+    reset(reg1, reg2, reg3) ==
+        (if reg1 > 0 then Register`write_oid(reg1, Data`invalidOidValue);
+        if reg2 > 0 then Register`write_oid(reg2, Data`invalidOidValue);
+        if reg3 > 0 then Register`write_oid(reg3, Data`invalidOidValue));
+    
+    move : Register`Register * Register`Register * Register`Register ==> ()
+    move(dst1, dst2, src) ==
+        if
+            src > 0
+        then
+            (if dst1 > 0 then Register`move(dst1, src);
+            if dst2 > 0 then Register`move(dst2, src))
+        else
+            err();
+    
+    movei : Register`Register * Register`Register * Register`Register *
+    Data`OID ==> ()
+    movei(dst1, dst2, dst3, imm) ==
+        if
+            imm <> Data`invalidOidValue
+        then
+            (if dst1 > 0 then Register`write_oid(dst1, imm);
+            if dst2 > 0 then Register`write_oid(dst2, imm);
+            if dst3 > 0 then Register`write_oid(dst3, imm))
+        else
+            err();
+    
+    load : Register`Register * Register`Register * Register`Register *
+    Data`OID ==> ()
+    load(dst, src, intReg, imm) ==
+        let offset = Data`oid2int(imm)
+        in
+            if
+                ((offset <> Data`invalidIntValue and dst > 0) and dst > 0) and src > 0
+            then
+                Register`write_oid(
+                    dst,
+                    Memory`read_slot(
+                        Register`read_pointer(src),
+                        (if intReg > 0 then Register`read_int(intReg) else 0) + offset))
+            else
+                err();
+    
+    store : Register`Register * Register`Register * Data`OID *
+    Register`Register ==> ()
+    store(dst, intReg, imm, src) ==
+        let offset = Data`oid2int(imm)
+        in
+            if
+                ((offset <> Data`invalidIntValue and dst > 0) and dst > 0) and src > 0
+            then
+                Memory`write_slot(
+                    Register`read_pointer(dst),
+                    (if intReg > 0 then Register`read_int(intReg) else 0) + offset,
+                    Register`read_oid(src))
+            else
+                err();
+    
+    add : Register`Register * Register`Register * Register`Register ==> ()
+    add(dst, src1, src2) ==
+        let
+            int1 = if src1 > 0 then Register`read_int(src1) else 0,
+            int2 = if src2 > 0 then Register`read_int(src2) else 0
+        in
+            if
+                (dst > 0 and int1 <> Data`invalidIntValue)
+                and int2 <> Data`invalidIntValue
             then
                 Register`write_int(dst, int1 + int2)
             else
-                Register`write_int(dst, Data`invalidIntValue);
+                err();
     
-    addi : Register`GeneralRegister * Register`Register * Data`Byte ==> ()
-    addi(dst, src, imm) ==
-        let int1 = Register`read_int(src)
+    addi : Register`Register * Register`Register * Register`Register *
+    Data`OID ==> ()
+    addi(dst, src1, src2, imm) ==
+        let
+            num1 : Data`Int = if src1 > 0 then Register`read_int(src1) else 0,
+            num2 : Data`Int = if src2 > 0 then Register`read_int(src2) else 0,
+            num3 : Data`Int = Data`oid2int(imm)
         in
             if
-                int1 <> Data`invalidIntValue
+                num3 <> Data`invalidIntValue and dst > 0
             then
-                Register`write_int(dst, Register`read_int(src) + Data`byte2int(imm))
+                Register`write_int(dst, num1 + num2 + num3)
             else
-                Register`write_int(dst, Data`invalidIntValue);
+                err();
     
-    sub : Register`GeneralRegister * Register`Register * Register`Register ==> ()
+    sub : Register`Register * Register`Register * Register`Register ==> ()
     sub(dst, src1, src2) ==
-        let int1 = Register`read_int(src1), int2 = Register`read_int(src2)
+        let
+            int1 = if src1 > 0 then Register`read_int(src1) else 0,
+            int2 = if src2 > 0 then Register`read_int(src2) else 0
         in
             if
-                int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue
+                (dst > 0 and int1 <> Data`invalidIntValue)
+                and int2 <> Data`invalidIntValue
             then
                 Register`write_int(dst, int1 - int2)
             else
-                Register`write_int(dst, Data`invalidIntValue);
+                err();
     
-    subi : Register`GeneralRegister * Register`Register * Data`Byte ==> ()
-    subi(dst, src, imm) ==
-        let int1 = Register`read_int(src)
+    subi : Register`Register * Register`Register * Register`Register *
+    Data`OID ==> ()
+    subi(dst, src1, src2, imm) ==
+        let
+            int1 : Data`Int = if src1 > 0 then Register`read_int(src1) else 0,
+            int2 : Data`Int = if src2 > 0 then Register`read_int(src2) else 0,
+            int3 : Data`Int = Data`oid2int(imm)
         in
             if
-                int1 <> Data`invalidIntValue
+                ((int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue)
+                    and int3 <> Data`invalidIntValue)
+                and dst > 0
             then
-                Register`write_int(dst, Register`read_int(src) - Data`byte2int(imm))
+                Register`write_int(dst, int1 - int2 - int3)
             else
-                Register`write_int(dst, Data`invalidIntValue);
+                err();
     
-    mul : Register`GeneralRegister * Register`Register * Register`Register ==> ()
+    mul : Register`Register * Register`Register * Register`Register ==> ()
     mul(dst, src1, src2) ==
         let int1 = Register`read_int(src1), int2 = Register`read_int(src2)
         in
@@ -151,7 +211,7 @@ operations
             else
                 Register`write_int(dst, Data`invalidIntValue);
     
-    muli : Register`GeneralRegister * Register`Register * Data`Byte ==> ()
+    muli : Register`Register * Register`Register * Data`Byte ==> ()
     muli(dst, src, imm) ==
         let int1 = Register`read_int(src)
         in
@@ -162,7 +222,7 @@ operations
             else
                 Register`write_int(dst, Data`invalidIntValue);
     
-    idiv : Register`GeneralRegister * Register`Register * Register`Register ==> ()
+    idiv : Register`Register * Register`Register * Register`Register ==> ()
     idiv(dst, src1, src2) ==
         let int1 = Register`read_int(src1), int2 = Register`read_int(src2)
         in
@@ -174,7 +234,7 @@ operations
             else
                 Register`write_int(dst, Data`invalidIntValue);
     
-    idivi : Register`GeneralRegister * Register`Register * Data`Byte ==> ()
+    idivi : Register`Register * Register`Register * Data`Byte ==> ()
     idivi(dst, src, imm) ==
         let int1 = Register`read_int(src)
         in
@@ -185,7 +245,7 @@ operations
             else
                 Register`write_int(dst, Data`invalidIntValue);
     
-    imod : Register`GeneralRegister * Register`Register * Register`Register ==> ()
+    imod : Register`Register * Register`Register * Register`Register ==> ()
     imod(dst, src1, src2) ==
         let int1 = Register`read_int(src1), int2 = Register`read_int(src2)
         in
@@ -197,7 +257,7 @@ operations
             else
                 Register`write_int(dst, Data`invalidIntValue);
     
-    imodi : Register`GeneralRegister * Register`Register * Data`Byte ==> ()
+    imodi : Register`Register * Register`Register * Data`Byte ==> ()
     imodi(dst, src, imm) ==
         let int1 = Register`read_int(src)
         in

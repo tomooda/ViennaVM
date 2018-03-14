@@ -34,15 +34,12 @@ exports all
 definitions
 types
      Reg :: oid : OID i : Int f : Float c : Char p : Pointer;
-     GeneralRegister = nat;
-     NamedRegister = seq of char;
-     Register = GeneralRegister| NamedRegister;
+     Register = nat;
 
 state State of
     codeRecord : Pointer
     instructionPointer : Dword
     registers : seq of Reg
-    namedRegisters : map NamedRegister to Reg
 init s ==
     s
     = mk_State(
@@ -54,10 +51,7 @@ init s ==
             invalidFloatValue,
             invalidCharValue,
             invalidPointerValue)
-            | i in set {1, ..., 16}],
-        {"zero"
-        |-> mk_Reg(
-            int2oid(0), 0, invalidFloatValue, invalidCharValue, invalidPointerValue)})
+            | i in set {1, ..., 16}])
 end
 
 operations
@@ -80,12 +74,9 @@ operations
     jump_relative(offset) ==
         instructionPointer := instructionPointer + offset;
     
-    move : GeneralRegister * Register ==> ()
+    move : Register * Register ==> ()
     move(dst, src) ==
-        (let
-            reg =
-                if is_(src, GeneralRegister) then registers(src) else namedRegisters(src),
-            p1 = reg.p
+        (let reg = registers(src), p1 = reg.p
         in
             (if
                 p1 = invalidPointerValue
@@ -103,14 +94,11 @@ operations
             else
                 let p2 = oid2pointer(registers(dst).oid)
                 in if p2 <> invalidPointerValue then decrementReferenceCount(p2));
-        registers(dst)
-            := if is_(src, GeneralRegister) then registers(src) else namedRegisters(src));
+        registers(dst) := registers(src));
     
     read_oid : Register ==> OID
     read_oid(r) ==
-        let
-            register : Reg =
-                if is_(r, GeneralRegister) then registers(r) else namedRegisters(r)
+        let register : Reg = registers(r)
         in
             if register.oid <> invalidTag
                 then return register.oid
@@ -133,7 +121,7 @@ operations
             else
                 return invalidTag;
     
-    write_oid : GeneralRegister * OID ==> ()
+    write_oid : Register * OID ==> ()
     write_oid(r, oid) ==
         (let p1 = registers(r).p, p2 = oid2pointer(oid)
         in
@@ -150,7 +138,7 @@ operations
     read_tag : Register ==> OID
     read_tag(r) == return read_oid(r) mod 0x100;
     
-    write_tag : GeneralRegister * OID ==> ()
+    write_tag : Register * OID ==> ()
     write_tag(r, tag) ==
         (let p = registers(r).p
         in if p <> invalidPointerValue then decrementReferenceCount(p);
@@ -164,25 +152,19 @@ operations
     
     read_int : Register ==> Int
     read_int(r) ==
-        let
-            reg : Reg =
-                if is_(r, GeneralRegister) then registers(r) else namedRegisters(r),
-            i : [Int] = reg.i
+        let reg : Reg = registers(r), i : [Int] = reg.i
         in
             if
-                i = invalidIntValue and is_(r, GeneralRegister)
+                i = invalidIntValue and is_(r, Register)
             then
                 let i2 : Int = oid2int(reg.oid)
                 in
-                    (if
-                        i2 <> invalidIntValue and is_(r, GeneralRegister)
-                    then
-                        registers(r) .i := i2;
+                    (if i2 <> invalidIntValue and is_(r, Register) then registers(r) .i := i2;
                     return i2)
             else
                 return i;
     
-    write_int : GeneralRegister * Int ==> ()
+    write_int : Register * Int ==> ()
     write_int(r, i) ==
         (let p = registers(r).p
         in if p <> invalidPointerValue then decrementReferenceCount(p);
@@ -192,13 +174,10 @@ operations
     
     read_float : Register ==> Float
     read_float(r) ==
-        let
-            reg : Reg =
-                if is_(r, GeneralRegister) then registers(r) else namedRegisters(r),
-            f : [Float] = reg.f
+        let reg : Reg = registers(r), f : [Float] = reg.f
         in
             if
-                f = invalidFloatValue and is_(r, GeneralRegister)
+                f = invalidFloatValue and is_(r, Register)
             then
                 let f2 : Float = oid2float(reg.oid)
                 in
@@ -207,7 +186,7 @@ operations
             else
                 return f;
     
-    write_float : GeneralRegister * Float ==> ()
+    write_float : Register * Float ==> ()
     write_float(r, f) ==
         (let p = registers(r).p
         in if p <> invalidPointerValue then decrementReferenceCount(p);
@@ -217,13 +196,10 @@ operations
     
     read_char : Register ==> Char
     read_char(r) ==
-        let
-            reg : Reg =
-                if is_(r, GeneralRegister) then registers(r) else namedRegisters(r),
-            c : [Char] = reg.c
+        let reg : Reg = registers(r), c : [Char] = reg.c
         in
             if
-                c = invalidCharValue and is_(r, GeneralRegister)
+                c = invalidCharValue and is_(r, Register)
             then
                 let c2 : Char = oid2char(reg.oid)
                 in
@@ -232,7 +208,7 @@ operations
             else
                 return c;
     
-    write_char : GeneralRegister * Char ==> ()
+    write_char : Register * Char ==> ()
     write_char(r, c) ==
         (let p = registers(r).p
         in if p <> invalidPointerValue then decrementReferenceCount(p);
@@ -242,13 +218,10 @@ operations
     
     read_pointer : Register ==> Pointer
     read_pointer(r) ==
-        let
-            reg : Reg =
-                if is_(r, GeneralRegister) then registers(r) else namedRegisters(r),
-            p : [Pointer] = reg.p
+        let reg : Reg = registers(r), p : [Pointer] = reg.p
         in
             if
-                p = invalidPointerValue and is_(r, GeneralRegister)
+                p = invalidPointerValue and is_(r, Register)
             then
                 let p2 : Pointer = oid2pointer(reg.oid)
                 in
@@ -257,7 +230,7 @@ operations
             else
                 return p;
     
-    write_pointer : GeneralRegister * Pointer ==> ()
+    write_pointer : Register * Pointer ==> ()
     write_pointer(r, p) ==
         (let p1 = registers(r).p
         in if p1 <> invalidPointerValue then decrementReferenceCount(p1);
@@ -265,60 +238,5 @@ operations
         registers(r)
             := mk_Reg(
                 invalidTag, invalidIntValue, invalidFloatValue, invalidCharValue, p));
-    
-    define_named_oid : seq of char * OID ==> ()
-    define_named_oid(name, oid) ==
-        if
-            name in set dom namedRegisters
-        then
-            skip
-        else
-            namedRegisters(name)
-                := mk_Reg(
-                    oid, oid2int(oid), oid2float(oid), oid2char(oid), oid2pointer(oid));
-    
-    define_named_int : seq of char * Int ==> ()
-    define_named_int(name, i) ==
-        if
-            name in set dom namedRegisters
-        then
-            skip
-        else
-            namedRegisters(name)
-                := mk_Reg(
-                    int2oid(i), i, invalidFloatValue, invalidCharValue, invalidPointerValue);
-    
-    define_named_float : seq of char * Float ==> ()
-    define_named_float(name, f) ==
-        if
-            name in set dom namedRegisters
-        then
-            skip
-        else
-            namedRegisters(name)
-                := mk_Reg(
-                    float2oid(f), invalidIntValue, f, invalidCharValue, invalidPointerValue);
-    
-    define_named_char : seq of char * Char ==> ()
-    define_named_char(name, c) ==
-        if
-            name in set dom namedRegisters
-        then
-            skip
-        else
-            namedRegisters(name)
-                := mk_Reg(
-                    char2oid(c), invalidIntValue, invalidFloatValue, c, invalidPointerValue);
-    
-    define_named_pointer : seq of char * Pointer ==> ()
-    define_named_pointer(name, p) ==
-        if
-            name in set dom namedRegisters
-        then
-            skip
-        else
-            namedRegisters(name)
-                := mk_Reg(
-                    pointer2oid(p), invalidIntValue, invalidFloatValue, invalidCharValue, p);
 
 end Register

@@ -13,31 +13,30 @@ definitions
 operations
     test_reset : () ==> ()
     test_reset() ==
-        (Instruction`move(1, "zero");
+        (Instruction`movei(1, 0, 0, Data`int2oid(0));
         assertEquals(Register`read_int(1), 0, "r1 is now set to 0");
-        Instruction`reset(1);
+        Instruction`reset(1, 0, 0);
         assertEquals(
             Register`read_oid(1), Data`invalidOidValue, "reset r1 to invalid oid"));
     
     test_move : () ==> ()
     test_move() ==
-        (Instruction`reset(1);
-        Instruction`reset(2);
-        Instruction`move(1, "zero");
+        (Instruction`reset(1, 2, 0);
+        Instruction`movei(1, 0, 0, Data`int2oid(0));
         assertEquals(Register`read_int(1), 0, "r1 is now set to 0");
-        Instruction`move(2, 1);
+        Instruction`move(2, 0, 1);
         assertEquals(Register`read_int(2), 0, "r2 is now set to 0"));
     
     test_alloc : () ==> ()
     test_alloc() ==
         (dcl p:Data`Pointer;
-        Instruction`alloc(1, 0);
+        Instruction`alloc(1, 0, 0, 0);
         p := Register`read_pointer(1);
         assert(p <> Data`invalidPointerValue, "r1 is set to allocated heap");
         assert(
             Memory`basic_read(p + Memory`REFERENCE_COUNT_OFFSET) > 0,
             "the allocated heap is valid");
-        Instruction`move(1, "zero");
+        Instruction`movei(1, 0, 0, Data`int2oid(0));
         assert(
             Memory`basic_read(p + Memory`REFERENCE_COUNT_OFFSET) = 0,
             "the allocated heap is free"));
@@ -45,8 +44,8 @@ operations
     test_store_load : () ==> ()
     test_store_load() ==
         (dcl p1:Data`Pointer, p2:Data`Pointer;
-        Instruction`alloc(1, 1);
-        Instruction`alloc(2, 0);
+        Instruction`alloc(1, 0, 0, 1);
+        Instruction`alloc(2, 0, 0, 0);
         p1 := Register`read_pointer(1);
         p2 := Register`read_pointer(2);
         assertEquals(
@@ -57,7 +56,7 @@ operations
             Memory`basic_read(p2 + Memory`REFERENCE_COUNT_OFFSET),
             1,
             "(r2).refCount = 1");
-        Instruction`store(1, "zero", 1, 2);
+        Instruction`store(1, 0, Data`int2oid(1), 2);
         assertEquals(
             Memory`read_slot(Register`read_pointer(1), 1),
             Register`read_oid(2),
@@ -70,8 +69,7 @@ operations
             Memory`basic_read(p2 + Memory`REFERENCE_COUNT_OFFSET),
             2,
             "(r2).refCount = 2");
-        Instruction`reset(1);
-        Instruction`reset(2);
+        Instruction`reset(1, 2, 0);
         assertEquals(
             Memory`basic_read(p1 + Memory`REFERENCE_COUNT_OFFSET),
             0,
@@ -83,61 +81,60 @@ operations
     
     test_addi_add : () ==> ()
     test_addi_add() ==
-        (Instruction`move(1, "zero"); -- "r1 <- zero"
+        (Instruction`movei(1, 2, 0, Data`int2oid(0)); -- "r1, r2 <- 0"
         assertEquals(Register`read_int(1), 0, "r1 is set to 0");
-        Instruction`addi(1, 1, 3); -- "r1 <- r1 + 3
+        Instruction`addi(1, 1, 0, Data`int2oid(3)); -- "r1 <- r1 + 3
         assertEquals(Register`read_int(1), 3, "r1 is set to 3");
-        Instruction`addi(2, "zero", 4); -- "r1 <- zero + 3"
+        Instruction`addi(2, 2, 0, Data`int2oid(4)); -- "r2 <- r2 + 3"
         assertEquals(Register`read_int(2), 4, "r2 is set to 4");
         Instruction`add(3, 1, 2); -- "r3 <- r1 + r2"
         assertEquals(Register`read_int(3), 7, "r3 is set to 7"));
     
     test_subi_sub : () ==> ()
     test_subi_sub() ==
-        (Instruction`move(1, "zero"); -- "r1 <- zero"
+        (Instruction`movei(1, 2, 0, Data`int2oid(0)); -- "r1 <- 0"
         assertEquals(Register`read_int(1), 0, "r1 is set to 0");
-        Instruction`subi(1, 1, 0x100 - 3); -- "r1 <- r1 - -3
+        Instruction`subi(1, 1, 0, Data`int2oid(-3)); -- "r1 <- r1 - -3
         assertEquals(Register`read_int(1), 3, "r1 is set to 3");
-        Instruction`subi(2, "zero", 0x100 - 4); -- "r1 <- zero - -3"
+        Instruction`subi(2, 2, 0, Data`int2oid(-4)); -- "r2 <- r2 - -4"
         assertEquals(Register`read_int(2), 4, "r2 is set to 4");
         Instruction`sub(3, 1, 2); -- "r3 <- r1 - r2"
         assertEquals(Register`read_int(3), -1, "r3 is set to -1"));
     
     test_muli_mul : () ==> ()
     test_muli_mul() ==
-        (Register`define_named_int("one", 1);
-        Instruction`move(1, "one"); -- "r1 <- one"
+        (Instruction`movei(1, 2, 0, Data`int2oid(1)); -- "r1, r2 <- 1"
         assertEquals(Register`read_int(1), 1, "r1 is set to 1");
         Instruction`muli(1, 1, 3); -- "r1 <- r1 * 3
         assertEquals(Register`read_int(1), 3, "r1 is set to 3");
-        Instruction`muli(2, "one", 0x100 - 4); -- "r1 <- one * -4"
+        Instruction`muli(2, 2, 0x100 - 4); -- "r1 <- one * -4"
         assertEquals(Register`read_int(2), -4, "r2 is set to -4");
         Instruction`mul(3, 1, 2); -- "r3 <- r1 * r2"
         assertEquals(Register`read_int(3), -12, "r3 is set to -12"));
     
     test_idiv : () ==> ()
     test_idiv() ==
-        (Register`write_int(1, 100);
-        Register`write_int(2, 35);
+        (Instruction`movei(1, 0, 0, Data`int2oid(100));
+        Instruction`movei(2, 0, 0, Data`int2oid(35));
         Instruction`idiv(3, 1, 2); -- "r3 <- r1 div r2"
         assertEquals(Register`read_int(3), 2, "r3 is set to 2"));
     
     test_idivi : () ==> ()
     test_idivi() ==
-        (Register`write_int(1, 100);
+        (Instruction`movei(1, 0, 0, Data`int2oid(100));
         Instruction`idivi(2, 1, 0x100 - 40); -- "r2 <- r1 div -20"
         assertEquals(Register`read_int(2), -2, "r3 is set to -2"));
     
     test_imod : () ==> ()
     test_imod() ==
-        (Register`write_int(1, 100);
-        Register`write_int(2, 35);
+        (Instruction`movei(1, 0, 0, Data`int2oid(100));
+        Instruction`movei(2, 0, 0, Data`int2oid(35));
         Instruction`imod(3, 1, 2); -- "r3 <- r1 div r2"
         assertEquals(Register`read_int(3), 30, "r3 is set to 30"));
     
     test_imodi : () ==> ()
     test_imodi() ==
-        (Register`write_int(1, 100);
+        (Instruction`movei(1, 0, 0, Data`int2oid(100));
         Instruction`imodi(2, 1, 0x100 - 8); -- "r2 <- r1 mod -8"
         assertEquals(Register`read_int(2), -4, "r3 is set to -4"));
 

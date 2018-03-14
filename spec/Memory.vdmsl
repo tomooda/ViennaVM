@@ -1,5 +1,6 @@
 module Memory
 imports
+    from Instruction operations err;,
     from Data
         types
             Byte renamed Byte;
@@ -25,16 +26,16 @@ values
      ALIGNMENT = 64;
      HEAP_PAGE_SIZE = 4  * 1024;
      POOL_PAGE_SIZE = HEAP_PAGE_SIZE div ALIGNMENT;
-     MAX_OBJECT_SIZE = 1024;
      /* DATA STRUCTURE OF ALLOCATED MEMORY */
+     MAX_OBJECT_SIZE = 1024; -- dword
      SIZE_OFFSET = 0; -- dword
-     FLAGS_OFFSET = 4; -- dword
+     FLAGS_OFFSET = 4; -- qword
      REFERENCE_COUNT_OFFSET = 8; -- qword
-     FORWARDER_OFFSET = 16; -- qword
+     FORWARDER_OFFSET = 16;
      SLOTS_SIZE_OFFSET = 24;
-     CONTENT_OFFSET = 32;
      /* FLAGS IN "basic_read_dword(pointer + FLAGS_OFFSET)" */
-     LARGE_OBJECT_FLAG = 1; --- if 1, the object is a large virtual object
+     CONTENT_OFFSET = 32; --- if 1, the object is a large virtual object
+     LARGE_OBJECT_FLAG = 1;
 
 functions
     align : Qword -> Qword
@@ -134,9 +135,14 @@ operations
                         poolPages(page)(i) .size := size);
                     return )));
     
+    pure slots_size : Pointer ==> Dword
+    slots_size(pointer) ==
+        return basic_read(pointer + SLOTS_SIZE_OFFSET);
+    
     read_slot : Pointer * Int ==> OID
     read_slot(pointer, index) ==
-        return basic_read(pointer + CONTENT_OFFSET + (index - 1)  * 8);
+        return basic_read(pointer + CONTENT_OFFSET + (index - 1)  * 8)
+    pre  index > 0 and index <= slots_size(pointer);
     
     write_slot : Pointer * Int * OID ==> ()
     write_slot(pointer, index, oid) ==
@@ -154,7 +160,8 @@ operations
                 oldPointer <> invalidPointerValue
             then
                 decrementReferenceCount(oldPointer);
-            basic_write(address, oid)));
+            basic_write(address, oid)))
+    pre  index > 0 and index <= slots_size(pointer);
     
     addPage : () ==> ()
     addPage() ==
@@ -164,7 +171,7 @@ operations
                 ^ [[mk_Slot(0, HEAP_PAGE_SIZE)]
                 ^ [mk_Slot(0, 0) | i in set {1, ..., POOL_PAGE_SIZE - 1}]]);
     
-    basic_read : Pointer ==> Qword
+    pure basic_read : Pointer ==> Qword
     basic_read(pointer) ==
         let
             heap = heapPages(pointer div HEAP_PAGE_SIZE + 1),
@@ -212,7 +219,7 @@ operations
         pointer mod HEAP_PAGE_SIZE <= HEAP_PAGE_SIZE - 8
         and pointer div HEAP_PAGE_SIZE < len heapPages;
     
-    basic_read_dword : Pointer ==> Dword
+    pure basic_read_dword : Pointer ==> Dword
     basic_read_dword(pointer) ==
         let
             heap = heapPages(pointer div HEAP_PAGE_SIZE + 1),
@@ -244,7 +251,7 @@ operations
         pointer mod HEAP_PAGE_SIZE <= HEAP_PAGE_SIZE - 4
         and pointer div HEAP_PAGE_SIZE < len heapPages;
     
-    basic_read_byte : Pointer ==> Byte
+    pure basic_read_byte : Pointer ==> Byte
     basic_read_byte(pointer) ==
         let
             heap = heapPages(pointer div HEAP_PAGE_SIZE + 1),

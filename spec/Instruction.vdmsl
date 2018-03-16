@@ -12,7 +12,19 @@ values
      MOVE = 3;
      MOVEI = 4;
      LOAD = 5;
-     STORE = 6;
+     LOADI = 6;
+     STORE = 7;
+     STOREI = 8;
+     ADD = 9;
+     ADDI = 10;
+     SUB = 11;
+     SUBI = 12;
+     MUL = 13;
+     MULI = 14;
+     IDIV = 15;
+     IDIVI = 16;
+     IMOD = 17;
+     IMODI = 18;
 
 operations
     step : () ==> ()
@@ -202,71 +214,98 @@ operations
     
     mul : Register`Register * Register`Register * Register`Register ==> ()
     mul(dst, src1, src2) ==
-        let int1 = Register`read_int(src1), int2 = Register`read_int(src2)
+        let
+            int1 = if src1 > 0 then Register`read_int(src1) else 1,
+            int2 = if src2 > 0 then Register`read_int(src2) else 1
         in
             if
-                int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue
+                (int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue)
+                and dst > 0
             then
                 Register`write_int(dst, int1  * int2)
             else
-                Register`write_int(dst, Data`invalidIntValue);
+                err();
     
-    muli : Register`Register * Register`Register * Data`Byte ==> ()
-    muli(dst, src, imm) ==
-        let int1 = Register`read_int(src)
+    muli : Register`Register * Register`Register * Register`Register *
+    Data`OID ==> ()
+    muli(dst, src1, src2, imm) ==
+        let
+            int1 : Data`Int = if src1 > 0 then Register`read_int(src1) else 1,
+            int2 : Data`Int = if src2 > 0 then Register`read_int(src2) else 1,
+            int3 : Data`Int = Data`oid2int(imm)
         in
             if
-                int1 <> Data`invalidIntValue
+                ((int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue)
+                    and int3 <> Data`invalidIntValue)
+                and dst > 0
             then
-                Register`write_int(dst, Register`read_int(src)  * Data`byte2int(imm))
+                Register`write_int(dst, int1  * int2  * int3)
             else
-                Register`write_int(dst, Data`invalidIntValue);
+                err();
     
     idiv : Register`Register * Register`Register * Register`Register ==> ()
     idiv(dst, src1, src2) ==
-        let int1 = Register`read_int(src1), int2 = Register`read_int(src2)
+        let
+            int1 : Data`Int = if src1 > 0 then Register`read_int(src1) else 1,
+            int2 : Data`Int = if src2 > 0 then Register`read_int(src2) else 1
         in
             if
                 (int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue)
-                and int2 <> 0
+                and dst > 0
             then
                 Register`write_int(dst, int1 div int2)
             else
-                Register`write_int(dst, Data`invalidIntValue);
+                err();
     
-    idivi : Register`Register * Register`Register * Data`Byte ==> ()
-    idivi(dst, src, imm) ==
-        let int1 = Register`read_int(src)
+    idivi : Register`Register * Register`Register * Register`Register *
+    Data`OID ==> ()
+    idivi(dst, src1, src2, imm) ==
+        let
+            int1 : Data`Int =
+                if src1 > 0 then Register`read_int(src1) else Data`invalidIntValue,
+            int2 : Data`Int = Data`oid2int(imm)
         in
             if
-                int1 <> Data`invalidIntValue
+                ((int1 <> Data`invalidIntValue and src2 = 0)
+                    and int2 <> Data`invalidIntValue)
+                and dst > 0
             then
-                Register`write_int(dst, Register`read_int(src) div Data`byte2int(imm))
+                Register`write_int(dst, int1 div int2)
             else
-                Register`write_int(dst, Data`invalidIntValue);
+                err();
     
     imod : Register`Register * Register`Register * Register`Register ==> ()
     imod(dst, src1, src2) ==
-        let int1 = Register`read_int(src1), int2 = Register`read_int(src2)
+        let
+            int1 : Data`Int =
+                if src1 > 0 then Register`read_int(src1) else Data`invalidIntValue,
+            int2 : Data`Int =
+                if src2 > 0 then Register`read_int(src2) else Data`invalidIntValue
         in
             if
                 (int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue)
-                and int2 <> 0
+                and dst > 0
             then
                 Register`write_int(dst, int1 mod int2)
             else
-                Register`write_int(dst, Data`invalidIntValue);
+                err();
     
-    imodi : Register`Register * Register`Register * Data`Byte ==> ()
-    imodi(dst, src, imm) ==
-        let int1 = Register`read_int(src)
+    imodi : Register`Register * Register`Register * Register`Register *
+    Data`OID ==> ()
+    imodi(dst, src1, src2, imm) ==
+        let
+            int1 : Data`Int =
+                if src1 > 0 then Register`read_int(src1) else Data`invalidIntValue,
+            int2 : Data`Int = Data`oid2int(imm)
         in
             if
-                int1 <> Data`invalidIntValue
+                ((int1 <> Data`invalidIntValue and src2 = 0)
+                    and int2 <> Data`invalidIntValue)
+                and dst > 0
             then
-                Register`write_int(dst, Register`read_int(src) mod Data`byte2int(imm))
+                Register`write_int(dst, int1 mod int2)
             else
-                Register`write_int(dst, Data`invalidIntValue);
+                err();
     
     jump_lessthan : Register`Register * Register`Register * Data`Dword ==> ()
     jump_lessthan(reg1, reg2, ip) ==

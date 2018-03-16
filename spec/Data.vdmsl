@@ -31,6 +31,20 @@ values
      invalidPointerValue = 0x100000000000000;
 
 functions
+    qword2words : Qword -> Word * Word * Word * Word
+    qword2words(i) ==
+        let
+            byte1 = i mod 0x10000,
+            i1 = i div 0x10000,
+            byte2 = i1 mod 0x10000,
+            i2 = i1 div 0x10000,
+            byte3 = i2 mod 0x10000,
+            byte4 = i2 div 0x10000
+        in mk_(byte1, byte2, byte3, byte4);
+    
+    int2qword : Int -> Qword
+    int2qword(x) == if x < 0 then x + 0x10000000000000000 else x;
+    
     qword2int : Qword -> Int
     qword2int(x) ==
         if x < 0x8000000000000000 then x else x - 0x10000000000000000;

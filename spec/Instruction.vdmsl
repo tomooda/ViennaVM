@@ -29,49 +29,37 @@ values
 operations
     step : () ==> ()
     step() ==
-        let
-            code =
-                Memory`read_slot(Register`read_cr(), Register`read_ip() + 1),
-            opcode = code div 0x1000000000000,
-            operand = code mod 0x1000000000000,
-            reg1 = operand div 0x100000000,
-            operand32 = operand mod 0x100000000,
-            reg2 = operand32 div 0x10000,
-            reg3 = operand32 mod 0x10000
+        let i = Data`oid2int(fetch())
         in
-            (Register`write_ip(Register`read_ip() + 1);
-            cases opcode:
-                ERR -> err(),
-                NOP -> nop(),
-                ALLOC ->
-                    let
-                        size =
-                            Memory`read_slot(Register`read_cr(), Register`read_ip() + 1)
-                    in
-                        (Register`write_ip(Register`read_ip() + 1);
-                        alloc(reg1, reg2, reg3, size)),
-                RESET -> reset(reg1, reg2, reg3),
-                MOVE -> move(reg1, reg2, reg3),
-                MOVEI ->
-                    let
-                        imm = Memory`read_slot(Register`read_cr(), Register`read_ip() + 1)
-                    in
-                        (Register`write_ip(Register`read_ip() + 1);
-                        movei(reg1, reg2, reg3, imm)),
-                LOAD ->
-                    let
-                        imm = Memory`read_slot(Register`read_cr(), Register`read_ip() + 1)
-                    in
-                        (Register`write_ip(Register`read_ip() + 1);
-                        load(reg1, reg2, reg3, imm)),
-                STORE ->
-                    let
-                        imm = Memory`read_slot(Register`read_cr(), Register`read_ip() + 1)
-                    in
-                        (Register`write_ip(Register`read_ip() + 1);
-                        store(reg1, reg2, imm, reg3)),
-                others -> exit <INVALID_INSTRUCTION>
-                end);
+            if
+                i <> Data`invalidIntValue
+            then
+                let
+                    code = Data`int2qword(i),
+                    mk_(opcode, reg1, reg2, reg3) = Data`qword2words(code)
+                in
+                    (cases opcode:
+                        ERR -> err(),
+                        NOP -> nop(),
+                        ALLOC -> alloc(reg1, reg2, reg3, fetch()),
+                        RESET -> reset(reg1, reg2, reg3),
+                        MOVE -> move(reg1, reg2, reg3),
+                        MOVEI -> movei(reg1, reg2, reg3, fetch()),
+                        LOAD -> load(reg1, reg2, reg3),
+                        LOADI -> loadi(reg1, reg2, reg3, fetch()),
+                        STORE -> store(reg1, reg2, reg3),
+                        STOREI -> storei(reg1, reg2, fetch(), reg3),
+                        others -> err()
+                        end)
+            else
+                err();
+    
+    fetch : () ==> Data`OID
+    fetch() ==
+        let ip = Register`read_ip() + 1
+        in
+            (Register`write_ip(ip);
+            return Memory`read_slot(Register`read_cr(), ip));
     
     err : () ==> ()
     err() == error;
@@ -121,34 +109,83 @@ operations
         else
             err();
     
-    load : Register`Register * Register`Register * Register`Register *
+    load : Register`Register * Register`Register * Register`Register ==> ()
+    load(dst, src, intReg) ==
+        if
+            (dst > 0 and src > 0) and intReg > 0
+        then
+            let
+                pointer = Register`read_pointer(src),
+                slot = Register`read_int(intReg)
+            in
+                if
+                    Memory`basic_read(pointer + Memory`SLOTS_SIZE_OFFSET) >= slot
+                then
+                    Register`write_oid(dst, Memory`read_slot(pointer, slot))
+                else
+                    err()
+        else
+            err();
+    
+    loadi : Register`Register * Register`Register * Register`Register *
     Data`OID ==> ()
-    load(dst, src, intReg, imm) ==
-        let offset = Data`oid2int(imm)
+    loadi(dst, src, intReg, imm) ==
+        let slot1 = Data`oid2int(imm)
         in
             if
-                ((offset <> Data`invalidIntValue and dst > 0) and dst > 0) and src > 0
+                (slot1 <> Data`invalidIntValue and dst > 0) and src > 0
             then
-                Register`write_oid(
-                    dst,
-                    Memory`read_slot(
-                        Register`read_pointer(src),
-                        (if intReg > 0 then Register`read_int(intReg) else 0) + offset))
+                let
+                    pointer = Register`read_pointer(src),
+                    slot =
+                        slot1 + (if intReg > 0 then Register`read_int(intReg) else 0)
+                in
+                    if
+                        Memory`basic_read(pointer + Memory`SLOTS_SIZE_OFFSET) >= slot
+                    then
+                        Register`write_oid(dst, Memory`read_slot(pointer, slot))
+                    else
+                        err()
             else
                 err();
     
-    store : Register`Register * Register`Register * Data`OID *
+    store : Register`Register * Register`Register * Register`Register ==> ()
+    store(dst, intReg, src) ==
+        if
+            (dst > 0 and src > 0) and intReg > 0
+        then
+            let
+                pointer = Register`read_pointer(dst),
+                slot = Register`read_int(intReg)
+            in
+                if
+                    Memory`basic_read(pointer + Memory`SLOTS_SIZE_OFFSET) >= slot
+                then
+                    Memory`write_slot(pointer, slot, Register`read_oid(src))
+                else
+                    err()
+        else
+            err();
+    
+    storei : Register`Register * Register`Register * Data`OID *
     Register`Register ==> ()
-    store(dst, intReg, imm, src) ==
-        let offset = Data`oid2int(imm)
+    storei(dst, intReg, imm, src) ==
+        let slot1 = Data`oid2int(imm)
         in
             if
-                ((offset <> Data`invalidIntValue and dst > 0) and dst > 0) and src > 0
+                (slot1 <> Data`invalidIntValue and dst > 0) and src > 0
             then
-                Memory`write_slot(
-                    Register`read_pointer(dst),
-                    (if intReg > 0 then Register`read_int(intReg) else 0) + offset,
-                    Register`read_oid(src))
+                let
+                    pointer = Register`read_pointer(dst),
+                    slot =
+                        slot1 + (if intReg > 0 then Register`read_int(intReg) else 0)
+                in
+                    if
+                        Memory`basic_read(pointer + Memory`SLOTS_SIZE_OFFSET) >= slot
+                    then
+                        Memory`write_slot(pointer, slot, Register`read_oid(src))
+                    else
+                        err()
             else
                 err();
     

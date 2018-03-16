@@ -8,6 +8,17 @@ imports
 exports all
 definitions
 operations
+    test_qword2words : () ==> ()
+    test_qword2words() ==
+        (assertEquals(
+            Data`qword2words(0x1122334455667788),
+            mk_(0x7788, 0x5566, 0x3344, 0x1122),
+            "MSB=0");
+        assertEquals(
+            Data`qword2words(0xfedcba9876543210),
+            mk_(0x3210, 0x7654, 0xba98, 0xfedc),
+            "MSB=1"));
+    
     test_qword2int : () ==> ()
     test_qword2int() ==
         (assertEquals(

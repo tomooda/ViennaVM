@@ -8,6 +8,26 @@ imports
 exports all
 definitions
 operations
+    test_real2float_float2real : () ==> ()
+    test_real2float_float2real() ==
+        (assertEquals(
+            Data`real2float(Data`float2real(mk_Data`Float(0, 12, 3456))),
+            mk_Data`Float(0, 12, 3456),
+            "normalized positive");
+        assertEquals(
+            Data`real2float(Data`float2real(mk_Data`Float(1, 234, 56789))),
+            mk_Data`Float(1, 234, 56789),
+            "normalized positive");
+        assertEquals(
+            Data`real2float(Data`float2real(mk_Data`Float(0, 0, 3456))),
+            mk_Data`Float(0, 0, 3456),
+            "denormalized positive");
+        assertEquals(
+            Data`real2float(Data`float2real(mk_Data`Float(1, 0, 1234))),
+            mk_Data`Float(1, 0, 1234),
+            "denormalized positive");
+        assertEquals(Data`float2real(Data`real2float(0)), 0, "zero"));
+    
     test_qword2words : () ==> ()
     test_qword2words() ==
         (assertEquals(

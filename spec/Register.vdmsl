@@ -16,6 +16,7 @@ imports
             invalidCharValue: Char renamed invalidCharValue;
             invalidPointerValue: Pointer renamed invalidPointerValue;
         functions
+            real2float: real -> Float renamed real2float;
             int2oid: Int -> OID renamed int2oid;
             float2oid: Float -> OID renamed float2oid;
             char2oid: Char -> OID renamed char2oid;
@@ -66,13 +67,6 @@ operations
     
     write_ip : Dword ==> ()
     write_ip(i) == instructionPointer := i;
-    
-    jump : Dword ==> ()
-    jump(index) == instructionPointer := index;
-    
-    jump_relative : int ==> ()
-    jump_relative(offset) ==
-        instructionPointer := instructionPointer + offset;
     
     move : Register * Register ==> ()
     move(dst, src) ==
@@ -135,31 +129,16 @@ operations
                 invalidCharValue,
                 oid2pointer(oid)));
     
-    read_tag : Register ==> OID
-    read_tag(r) == return read_oid(r) mod 0x100;
-    
-    write_tag : Register * OID ==> ()
-    write_tag(r, tag) ==
-        (let p = registers(r).p
-        in if p <> invalidPointerValue then decrementReferenceCount(p);
-        registers(r)
-            := mk_Reg(
-                read_oid(r) div 0x100  * 0x100 + tag,
-                invalidIntValue,
-                invalidFloatValue,
-                invalidCharValue,
-                invalidPointerValue));
-    
     read_int : Register ==> Int
     read_int(r) ==
         let reg : Reg = registers(r), i : [Int] = reg.i
         in
             if
-                i = invalidIntValue and is_(r, Register)
+                i = invalidIntValue
             then
                 let i2 : Int = oid2int(reg.oid)
                 in
-                    (if i2 <> invalidIntValue and is_(r, Register) then registers(r) .i := i2;
+                    (if i2 <> invalidIntValue then registers(r) .i := i2;
                     return i2)
             else
                 return i;
@@ -177,12 +156,27 @@ operations
         let reg : Reg = registers(r), f : [Float] = reg.f
         in
             if
-                f = invalidFloatValue and is_(r, Register)
+                f = invalidFloatValue
             then
                 let f2 : Float = oid2float(reg.oid)
                 in
-                    (if f2 <> invalidFloatValue then registers(r) .f := f2;
-                    return f2)
+                    if
+                        f2 <> invalidFloatValue
+                    then
+                        (registers(r) .f := f2;
+                        return f2)
+                    else
+                        let i : Int = read_int(r)
+                        in
+                            if
+                                i <> invalidIntValue
+                            then
+                                let f3 : Float = real2float(i)
+                                in
+                                    (registers(r) .f := f3;
+                                    return f3)
+                            else
+                                return invalidFloatValue
             else
                 return f;
     
@@ -199,7 +193,7 @@ operations
         let reg : Reg = registers(r), c : [Char] = reg.c
         in
             if
-                c = invalidCharValue and is_(r, Register)
+                c = invalidCharValue
             then
                 let c2 : Char = oid2char(reg.oid)
                 in
@@ -221,7 +215,7 @@ operations
         let reg : Reg = registers(r), p : [Pointer] = reg.p
         in
             if
-                p = invalidPointerValue and is_(r, Register)
+                p = invalidPointerValue
             then
                 let p2 : Pointer = oid2pointer(reg.oid)
                 in

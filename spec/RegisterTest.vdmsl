@@ -84,7 +84,7 @@ operations
     testWriteBoxedIntAndUbox() ==
         (Register`write_oid(1, Data`int2oid(int1));
         assertEquals(Register`read_int(1), int1, "int->int");
-        assertEquals(Register`read_float(1), Data`invalidFloatValue, "int->float");
+        assertEquals(Register`read_float(1), Data`real2float(int1), "int->float");
         assertEquals(Register`read_char(1), Data`invalidCharValue, "int-char");
         assertEquals(
             Register`read_pointer(1), Data`invalidPointerValue, "int->pointer"));

@@ -23,6 +23,10 @@ values
      invalidTag = 0x0a;
      floatTag = 0x12;
      charTag = 0x1a;
+	  /* common value oids */
+     nilValue = 0x22;
+     trueValue = 0x2a;
+     falseValue = 0x32;
 	/* default values */
      invalidOidValue = invalidTag;
      invalidIntValue = 0x7fffffffffffffff;
@@ -31,6 +35,44 @@ values
      invalidPointerValue = 0x100000000000000;
 
 functions
+    float2real : Float -> real
+    float2real(x) ==
+        (if x.sign = 0 then 1 else -1)
+         * (if
+                x.exponent = 0
+            then
+                x.fraction / 2 ** 149
+            else
+                (1 + x.fraction / 2 ** 23)  * exp(2, x.exponent - 127));
+    
+    real2float : real -> Float
+    real2float(x) ==
+        let
+            a = abs x,
+            f =
+                if a < exp(2, -126) then denormalized_r2f(a) else normalized_r2f(a)
+        in mk_Float(if x >= 0 then 0 else 1, f.exponent, f.fraction);
+    
+    normalized_r2f : real -> Float
+    normalized_r2f(x) ==
+        if x >= 2.0
+            then (let f = normalized_r2f(x / 2.0)
+                in mk_Float(f.sign, f.exponent + 1, f.fraction))
+        elseif x < 1.0
+            then let f = normalized_r2f(x  * 2.0)
+            in mk_Float(f.sign, f.exponent - 1, f.fraction)
+        else
+            mk_Float(0, 127, floor ((x - 1)  * 2 ** 23))
+    pre x >= 0;
+    
+    denormalized_r2f : real -> Float
+    denormalized_r2f(x) ==
+        mk_Float(0, 0, floor (x  * 2 ** (126 + 23)))
+    pre x >= 0;
+    
+    exp : real * real -> real
+    exp(x, y) == if y >= 0 then x ** y else 1.0 / x ** (abs y);
+    
     qword2words : Qword -> Word * Word * Word * Word
     qword2words(i) ==
         let

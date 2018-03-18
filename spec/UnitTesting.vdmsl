@@ -15,5 +15,12 @@ operations
             actual <> expected
         then
             exit mk_AssertEqualsFailure(actual, expected, msg);
+    
+    assertApproxEquals : real * real * real * seq of char ==> ()
+    assertApproxEquals(actual, expected, accuracy, msg) ==
+        if
+            abs (actual - expected) > accuracy
+        then
+            exit mk_AssertEqualsFailure(actual, expected, msg);
 
 end UnitTesting

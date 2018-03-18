@@ -5,14 +5,14 @@ values
      /* oid tag flags */
      typeFlag = 4;
      optionTypeFlag = 8;
-     /* immediate value oid tags */
-     nilTag = 0x22;
-     trueTag = 0x2a;
-     falseTag = 0x32;
-     undefinedTag = 0x3a;
-     emptySeqTag = 0x82;
-     emptySetTag = 0x8a;
-     emptyMapTag = 0x92;
+     /* immediate value oid defs */
+     nilValue = 0x22;
+     trueValue = 0x2a;
+     falseValue = 0x32;
+     undefinedValue = 0x3a;
+     emptySeqValue = 0x82;
+     emptySetValue = 0x8a;
+     emptyMapValue = 0x92;
      /* immediate type oid defs */
      unitType = 0x06;
      boolType = 0x16;

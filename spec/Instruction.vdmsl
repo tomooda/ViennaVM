@@ -419,5 +419,92 @@ operations
                     err()
         else
             err();
+    
+    equal : Register`Register * Register`Register * Register`Register ==> ()
+    equal(dst, src1, src2) ==
+        if
+            (dst > 0 and src1 > 0) and src2 > 0
+        then
+            let
+                int1 = Register`read_int(src1),
+                num1 : [real] =
+                    if
+                        int1 <> Data`invalidIntValue
+                    then
+                        int1
+                    else
+                        (let float1 = Register`read_float(src1)
+                            in
+                                (if float1 <> Data`invalidFloatValue then Data`float2real(float1) else nil)),
+                int2 = Register`read_int(src2),
+                num2 : [real] =
+                    if
+                        int2 <> Data`invalidIntValue
+                    then
+                        int2
+                    else
+                        (let float2 = Register`read_float(src2)
+                            in
+                                (if float2 <> Data`invalidFloatValue then Data`float2real(float2) else nil))
+            in
+                if
+                    num1 <> nil and num2 <> nil
+                then
+                    Register`write_oid(dst, if num1 = num2 then Data`trueValue else Data`falseValue)
+                else
+                    err()
+        else
+            err();
+    
+    jump : Register`Register ==> ()
+    jump(intReg) ==
+        if
+            intReg > 0
+        then
+            let ip = Register`read_int(intReg)
+            in
+                if ip <> Data`invalidIntValue then Register`write_ip(ip) else err()
+        else
+            err();
+    
+    jumptrue : Register`Register * Register`Register ==> ()
+    jumptrue(boolReg, intReg) ==
+        if
+            boolReg > 0 and intReg > 0
+        then
+            let b = Register`read_oid(boolReg), ip = Register`read_int(intReg)
+            in
+                if
+                    ip <> Data`invalidIntValue
+                then
+                    cases b:
+                        (Data`trueValue) -> Register`write_ip(ip),
+                        (Data`falseValue) -> skip,
+                        others -> err()
+                        end
+                else
+                    err()
+        else
+            err();
+    
+    jumpfalse : Register`Register * Register`Register ==> ()
+    jumpfalse(boolReg, intReg) ==
+        if
+            boolReg > 0 and intReg > 0
+        then
+            let b = Register`read_oid(boolReg), ip = Register`read_int(intReg)
+            in
+                if
+                    ip <> Data`invalidIntValue
+                then
+                    cases b:
+                        (Data`trueValue) -> skip,
+                        (Data`falseValue) -> Register`write_ip(ip),
+                        others -> err()
+                        end
+                else
+                    err()
+        else
+            err();
 
 end Instruction

@@ -165,5 +165,60 @@ operations
         assertEquals(Register`read_int(2), -4, "r2 is set to -4"); -- "r3 <- r1 + r2"
         Instruction`imod(3, 1, 2);
         assertEquals(Register`read_int(3), -3, "r3 is set to -3"));
+    
+    test_lessthan : () ==> ()
+    test_lessthan() ==
+        (Instruction`movei(1, 0, 0, Data`int2oid(4));
+        Instruction`movei(2, 0, 0, Data`float2oid(Data`real2float(3.14)));
+        Instruction`lessthan(3, 1, 2);
+        assertEquals(Register`read_oid(3), Data`falseValue, "r3 is false");
+        Instruction`lessthan(3, 2, 1);
+        assertEquals(Register`read_oid(3), Data`trueValue, "r3 is true"));
+    
+    test_equal : () ==> ()
+    test_equal() ==
+        (Instruction`movei(1, 0, 0, Data`int2oid(4));
+        Instruction`movei(2, 0, 0, Data`float2oid(Data`real2float(3.14)));
+        Instruction`equal(3, 1, 2);
+        assertEquals(Register`read_oid(3), Data`falseValue, "r3 is false");
+        Instruction`movei(1, 2, 0, Data`int2oid(-3));
+        Instruction`equal(3, 1, 2);
+        assertEquals(Register`read_oid(3), Data`trueValue, "r3 is true");
+        Instruction`movei(1, 2, 0, Data`float2oid(Data`real2float(1.732)));
+        Instruction`equal(3, 1, 2);
+        assertEquals(Register`read_oid(3), Data`trueValue, "r3 is true"));
+    
+    test_jumptrue : () ==> ()
+    test_jumptrue() ==
+        (Register`write_ip(0);
+        Instruction`movei(1, 0, 0, Data`trueValue);
+        Instruction`movei(2, 0, 0, Data`int2oid(100));
+        Instruction`jumptrue(1, 2);
+        assertEquals(Register`read_ip(), 100, "jumped with true");
+        Register`write_ip(0);
+        Instruction`movei(1, 0, 0, Data`falseValue);
+        Instruction`movei(2, 0, 0, Data`int2oid(100));
+        Instruction`jumptrue(1, 2);
+        assertEquals(Register`read_ip(), 0, "not jumped with false"));
+    
+    test_jumpfalse : () ==> ()
+    test_jumpfalse() ==
+        (Register`write_ip(0);
+        Instruction`movei(1, 0, 0, Data`trueValue);
+        Instruction`movei(2, 0, 0, Data`int2oid(100));
+        Instruction`jumpfalse(1, 2);
+        assertEquals(Register`read_ip(), 0, "not jumped with true");
+        Register`write_ip(0);
+        Instruction`movei(1, 0, 0, Data`falseValue);
+        Instruction`movei(2, 0, 0, Data`int2oid(100));
+        Instruction`jumpfalse(1, 2);
+        assertEquals(Register`read_ip(), 100, "jumped with false"));
+    
+    test_jump : () ==> ()
+    test_jump() ==
+        (Register`write_ip(0);
+        Instruction`movei(1, 0, 0, Data`int2oid(100));
+        Instruction`jump(1);
+        assertEquals(Register`read_ip(), 100, "jumped"));
 
 end InstructionTest

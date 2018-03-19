@@ -6,25 +6,30 @@ imports
 exports all
 definitions
 values
-     ERR = 0;
-     NOP = 1;
-     ALLOC = 2;
-     MOVE = 3;
-     MOVEI = 4;
-     LOAD = 5;
-     LOADI = 6;
-     STORE = 7;
-     STOREI = 8;
-     ADD = 9;
-     ADDI = 10;
-     SUB = 11;
-     SUBI = 12;
-     MUL = 13;
-     MULI = 14;
-     IDIV = 15;
-     IDIVI = 16;
-     IMOD = 17;
-     IMODI = 18;
+     ERR = 0x0000;
+     NOP = 0x0001;
+     ALLOC = 0x0002;
+     MOVE = 0x0003;
+     MOVEI = 0x0004;
+     LOAD = 0x0005;
+     LOADI = 0x0006;
+     STORE = 0x0007;
+     STOREI = 0x0008;
+     ADD = 0x0009;
+     ADDI = 0x0010;
+     SUB = 0x0011;
+     SUBI = 0x0012;
+     MUL = 0x0013;
+     MULI = 0x0014;
+     IDIV = 0x0015;
+     IDIVI = 0x0016;
+     IMOD = 0x0017;
+     IMODI = 0x0018;
+     LESSTHAN = 0x0032;
+     EQUAL = 0x0035;
+     JUMP = 0x0048;
+     JUMPTRUE = 0x0049;
+     JUMPFALSE = 0x0050;
 
 operations
     step : () ==> ()
@@ -54,6 +59,11 @@ operations
                         MUL -> store(reg1, reg2, reg3),
                         IDIV -> store(reg1, reg2, reg3),
                         IMOD -> store(reg1, reg2, reg3),
+                        LESSTHAN -> lessthan(reg1, reg2, reg3),
+                        EQUAL -> equal(reg1, reg2, reg3),
+                        JUMP -> jump(reg1),
+                        JUMPTRUE -> jumptrue(reg1, reg2),
+                        JUMPFALSE -> jumpfalse(reg1, reg2),
                         others -> err()
                         end)
             else

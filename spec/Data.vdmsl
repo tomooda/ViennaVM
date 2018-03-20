@@ -73,6 +73,10 @@ functions
     exp : real * real -> real
     exp(x, y) == if y >= 0 then x ** y else 1.0 / x ** (abs y);
     
+    words2qword : Word * Word * Word * Word -> Qword
+    words2qword(w1, w2, w3, w4) ==
+        w4  * 0x1000000000000 + w3  * 0x100000000 + w2  * 0x10000 + w1;
+    
     qword2words : Qword -> Word * Word * Word * Word
     qword2words(i) ==
         let
@@ -84,17 +88,17 @@ functions
             byte4 = i2 div 0x10000
         in mk_(byte1, byte2, byte3, byte4);
     
-    int2qword : Int -> Qword
+    int2qword : int -> Qword
     int2qword(x) == if x < 0 then x + 0x10000000000000000 else x;
     
-    qword2int : Qword -> Int
+    qword2int : Qword -> int
     qword2int(x) ==
         if x < 0x8000000000000000 then x else x - 0x10000000000000000;
     
-    dword2int : Dword -> Int
+    dword2int : Dword -> int
     dword2int(x) == if x < 0x80000000 then x else x - 0x100000000;
     
-    byte2int : Byte -> Int
+    byte2int : Byte -> int
     byte2int(x) == if x < 0x80 then x else x - 0x100;
     
     oid2int : OID -> Int

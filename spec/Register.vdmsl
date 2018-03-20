@@ -60,7 +60,12 @@ operations
     read_cr() == return codeRecord;
     
     write_cr : Pointer ==> ()
-    write_cr(pointer) == codeRecord := pointer;
+    write_cr(pointer) ==
+        let old_cr = codeRecord
+        in
+            (codeRecord := pointer;
+            incrementReferenceCount(codeRecord);
+            if old_cr <> invalidPointerValue then decrementReferenceCount(old_cr));
     
     read_ip : () ==> Dword
     read_ip() == return instructionPointer;

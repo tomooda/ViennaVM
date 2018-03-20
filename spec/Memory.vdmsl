@@ -109,7 +109,7 @@ operations
             address = pointer mod HEAP_PAGE_SIZE
         in
             (basic_write_dword(pointer + SIZE_OFFSET, 0);
-            for i = 0 to  basic_read(pointer + SLOTS_SIZE_OFFSET) - 1
+            for i = 0 to  slots_size(pointer) - 1
             do
                 let p = oid2pointer(basic_read(pointer + CONTENT_OFFSET + i  * 8))
                 in if p <> invalidPointerValue then decrementReferenceCount(p);
@@ -139,7 +139,28 @@ operations
     slots_size(pointer) ==
         return basic_read(pointer + SLOTS_SIZE_OFFSET);
     
-    read_slot : Pointer * Int ==> OID
+    insert_slot : Pointer * Int * OID ==> ()
+    insert_slot(pointer, index, oid) ==
+        let
+            size = basic_read_dword(pointer + SIZE_OFFSET),
+            old_slots_size = slots_size(pointer),
+            new_slots_size = old_slots_size + 1
+        in
+            (if
+                CONTENT_OFFSET + new_slots_size  * 8 <= size
+            then
+                (basic_write(pointer + SLOTS_SIZE_OFFSET, new_slots_size);
+                for i = index to  old_slots_size
+                do
+                    basic_write(
+                        pointer + CONTENT_OFFSET + i  * 8,
+                        basic_read(pointer + CONTENT_OFFSET + (i - 1)  * 8));
+                basic_write(pointer + CONTENT_OFFSET + (index - 1)  * 8, oid))
+            else
+                error)
+    pre  index > 0 and index <= slots_size(pointer) + 1;
+    
+    pure read_slot : Pointer * Int ==> OID
     read_slot(pointer, index) ==
         return basic_read(pointer + CONTENT_OFFSET + (index - 1)  * 8)
     pre  index > 0 and index <= slots_size(pointer);

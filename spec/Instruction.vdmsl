@@ -9,22 +9,23 @@ values
      ERR = 0x0000;
      NOP = 0x0001;
      ALLOC = 0x0002;
-     MOVE = 0x0003;
-     MOVEI = 0x0004;
-     LOAD = 0x0005;
-     LOADI = 0x0006;
-     STORE = 0x0007;
-     STOREI = 0x0008;
-     ADD = 0x0009;
-     ADDI = 0x0010;
-     SUB = 0x0011;
-     SUBI = 0x0012;
-     MUL = 0x0013;
-     MULI = 0x0014;
-     IDIV = 0x0015;
-     IDIVI = 0x0016;
-     IMOD = 0x0017;
-     IMODI = 0x0018;
+     RESET = 0x0003;
+     MOVE = 0x0004;
+     MOVEI = 0x0005;
+     LOAD = 0x0006;
+     LOADI = 0x0007;
+     STORE = 0x0008;
+     STOREI = 0x0009;
+     ADD = 0x00010;
+     ADDI = 0x0011;
+     SUB = 0x0012;
+     SUBI = 0x0013;
+     MUL = 0x0014;
+     MULI = 0x0015;
+     IDIV = 0x0016;
+     IDIVI = 0x0017;
+     IMOD = 0x0018;
+     IMODI = 0x0019;
      LESSTHAN = 0x0032;
      EQUAL = 0x0035;
      JUMP = 0x0048;
@@ -44,26 +45,26 @@ operations
                     mk_(opcode, reg1, reg2, reg3) = Data`qword2words(code)
                 in
                     (cases opcode:
-                        ERR -> err(),
-                        NOP -> nop(),
-                        ALLOC -> alloc(reg1, reg2, reg3, fetch()),
-                        RESET -> reset(reg1, reg2, reg3),
-                        MOVE -> move(reg1, reg2, reg3),
-                        MOVEI -> movei(reg1, reg2, reg3, fetch()),
-                        LOAD -> load(reg1, reg2, reg3),
-                        LOADI -> loadi(reg1, reg2, reg3, fetch()),
-                        STORE -> store(reg1, reg2, reg3),
-                        STOREI -> storei(reg1, reg2, fetch(), reg3),
-                        ADD -> store(reg1, reg2, reg3),
-                        SUB -> store(reg1, reg2, reg3),
-                        MUL -> store(reg1, reg2, reg3),
-                        IDIV -> store(reg1, reg2, reg3),
-                        IMOD -> store(reg1, reg2, reg3),
-                        LESSTHAN -> lessthan(reg1, reg2, reg3),
-                        EQUAL -> equal(reg1, reg2, reg3),
-                        JUMP -> jump(reg1),
-                        JUMPTRUE -> jumptrue(reg1, reg2),
-                        JUMPFALSE -> jumpfalse(reg1, reg2),
+                        (ERR) -> err(),
+                        (NOP) -> nop(),
+                        (ALLOC) -> alloc(reg1, reg2, reg3, fetch()),
+                        (RESET) -> reset(reg1, reg2, reg3),
+                        (MOVE) -> move(reg1, reg2, reg3),
+                        (MOVEI) -> movei(reg1, reg2, reg3, fetch()),
+                        (LOAD) -> load(reg1, reg2, reg3),
+                        (LOADI) -> loadi(reg1, reg2, reg3, fetch()),
+                        (STORE) -> store(reg1, reg2, reg3),
+                        (STOREI) -> storei(reg1, reg2, fetch(), reg3),
+                        (ADD) -> add(reg1, reg2, reg3),
+                        (SUB) -> sub(reg1, reg2, reg3),
+                        (MUL) -> mul(reg1, reg2, reg3),
+                        (IDIV) -> idiv(reg1, reg2, reg3),
+                        (IMOD) -> imod(reg1, reg2, reg3),
+                        (LESSTHAN) -> lessthan(reg1, reg2, reg3),
+                        (EQUAL) -> equal(reg1, reg2, reg3),
+                        (JUMP) -> jump(reg1),
+                        (JUMPTRUE) -> jumptrue(reg1, reg2),
+                        (JUMPFALSE) -> jumpfalse(reg1, reg2),
                         others -> err()
                         end)
             else
@@ -71,10 +72,16 @@ operations
     
     fetch : () ==> Data`OID
     fetch() ==
-        let ip = Register`read_ip() + 1
+        let ip = Register`read_ip() + 1, cr = Register`read_cr()
         in
             (Register`write_ip(ip);
-            return Memory`read_slot(Register`read_cr(), ip));
+            if
+                ip > 0 and ip <= Memory`slots_size(cr)
+            then
+                return Memory`read_slot(cr, ip)
+            else
+                (err();
+                return Data`invalidOidValue));
     
     err : () ==> ()
     err() == error;
@@ -141,7 +148,7 @@ operations
                 slot = Register`read_int(intReg)
             in
                 if
-                    Memory`basic_read(pointer + Memory`SLOTS_SIZE_OFFSET) >= slot
+                    Memory`slots_size(pointer) >= slot
                 then
                     Register`write_oid(dst, Memory`read_slot(pointer, slot))
                 else
@@ -163,7 +170,7 @@ operations
                         slot1 + (if intReg > 0 then Register`read_int(intReg) else 0)
                 in
                     if
-                        Memory`basic_read(pointer + Memory`SLOTS_SIZE_OFFSET) >= slot
+                        Memory`slots_size(pointer) >= slot
                     then
                         Register`write_oid(dst, Memory`read_slot(pointer, slot))
                     else
@@ -181,7 +188,7 @@ operations
                 slot = Register`read_int(intReg)
             in
                 if
-                    Memory`basic_read(pointer + Memory`SLOTS_SIZE_OFFSET) >= slot
+                    Memory`slots_size(pointer) >= slot
                 then
                     Memory`write_slot(pointer, slot, Register`read_oid(src))
                 else
@@ -203,7 +210,7 @@ operations
                         slot1 + (if intReg > 0 then Register`read_int(intReg) else 0)
                 in
                     if
-                        Memory`basic_read(pointer + Memory`SLOTS_SIZE_OFFSET) >= slot
+                        Memory`slots_size(pointer) >= slot
                     then
                         Memory`write_slot(pointer, slot, Register`read_oid(src))
                     else

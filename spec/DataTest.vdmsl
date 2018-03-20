@@ -39,6 +39,17 @@ operations
             mk_(0x3210, 0x7654, 0xba98, 0xfedc),
             "MSB=1"));
     
+    test_words2qword : () ==> ()
+    test_words2qword() ==
+        (assertEquals(
+            Data`words2qword(0x0011, 0x2233, 0x4455, 0x6677),
+            0x6677445522330011,
+            "little endian");
+        assertEquals(
+            Data`qword2words(Data`words2qword(0x0123, 0x4567, 0x89ab, 0xcdef)),
+            mk_(0x0123, 0x4567, 0x89ab, 0xcdef),
+            "words->qword->words"));
+    
     test_qword2int : () ==> ()
     test_qword2int() ==
         (assertEquals(

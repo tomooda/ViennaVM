@@ -16,12 +16,14 @@ types
 state State of
     codeRecord : Data`Pointer
     instructionPointer : Data`Dword
+    activationRecord : Data`Pointer
     registers : seq of Reg
 init s ==
     s
     = mk_State(
         Data`invalidPointerValue,
         0,
+        Data`invalidPointerValue,
         [mk_Reg(
             Data`invalidOidValue,
             Data`invalidIntValue,
@@ -51,6 +53,20 @@ operations
     
     write_ip : Data`Dword ==> ()
     write_ip(i) == instructionPointer := i;
+    
+    read_ar : () ==> Data`Pointer
+    read_ar() == return activationRecord;
+    
+    write_ar : Data`Pointer ==> ()
+    write_ar(ar) ==
+        let old_ar = activationRecord
+        in
+            (activationRecord := ar;
+            Memory`incrementReferenceCount(ar);
+            if
+                old_ar <> Data`invalidPointerValue
+            then
+                Memory`decrementReferenceCount(old_ar));
     
     move : Register * Register ==> ()
     move(dst, src) ==

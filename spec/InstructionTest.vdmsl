@@ -8,7 +8,8 @@ imports
     from Instruction all,
     from Data all,
     from Register all,
-    from Memory all
+    from Memory all,
+    from CodeRecord all
 exports all
 definitions
 operations
@@ -224,25 +225,25 @@ operations
     test_step : () ==> ()
     test_step() ==
 			/* r1: sum, r2: loop variant=1,...,10, r3: stop=10, r4: step=1, r5: jump label=6 */
-        (dcl cr:Data`Pointer := Memory`alloc(13);
+        (dcl cr:Data`Pointer := CodeRecord`allocRoot(13);
         Register`write_cr(cr);
-        Memory`write_slot(cr, 1, Data`int2oid(Data`words2qword(Instruction`MOVEI, 1, 0, 0)));
-        Memory`write_slot(cr, 2, Data`int2oid(0));
-        Memory`write_slot(cr, 3, Data`int2oid(Data`words2qword(Instruction`MOVEI, 3, 0, 0)));
-        Memory`write_slot(cr, 4, Data`int2oid(10));
-        Memory`write_slot(cr, 5, Data`int2oid(Data`words2qword(Instruction`MOVEI, 2, 4, 0)));
-        Memory`write_slot(cr, 6, Data`int2oid(1));
-        Memory`write_slot(cr, 7, Data`int2oid(Data`words2qword(Instruction`MOVEI, 5, 0, 0)));
-        Memory`write_slot(cr, 8, Data`int2oid(8));
-        Memory`write_slot(cr, 9, Data`int2oid(Data`words2qword(Instruction`ADD, 1, 1, 2)));
-        Memory`write_slot(cr, 10, Data`int2oid(Data`words2qword(Instruction`ADD, 2, 2, 4)));
-        Memory`write_slot(
-            cr, 11, Data`int2oid(Data`words2qword(Instruction`LESSTHAN, 6, 3, 2)));
-        Memory`write_slot(
+        CodeRecord`write_code(cr, 0, Data`int2oid(Data`words2qword(Instruction`MOVEI, 1, 0, 0)));
+        CodeRecord`write_code(cr, 1, Data`int2oid(0));
+        CodeRecord`write_code(cr, 2, Data`int2oid(Data`words2qword(Instruction`MOVEI, 3, 0, 0)));
+        CodeRecord`write_code(cr, 3, Data`int2oid(10));
+        CodeRecord`write_code(cr, 4, Data`int2oid(Data`words2qword(Instruction`MOVEI, 2, 4, 0)));
+        CodeRecord`write_code(cr, 5, Data`int2oid(1));
+        CodeRecord`write_code(cr, 6, Data`int2oid(Data`words2qword(Instruction`MOVEI, 5, 0, 0)));
+        CodeRecord`write_code(cr, 7, Data`int2oid(8));
+        CodeRecord`write_code(cr, 8, Data`int2oid(Data`words2qword(Instruction`ADD, 1, 1, 2)));
+        CodeRecord`write_code(cr, 9, Data`int2oid(Data`words2qword(Instruction`ADD, 2, 2, 4)));
+        CodeRecord`write_code(
+            cr, 10, Data`int2oid(Data`words2qword(Instruction`LESSTHAN, 6, 3, 2)));
+        CodeRecord`write_code(
             cr,
-            12,
+            11,
             Data`int2oid(Data`words2qword(Instruction`JUMPFALSE, 6, 5, 0)));
-        Memory`write_slot(cr, 13, Data`int2oid(Data`words2qword(Instruction`ERR, 0, 0, 0)));
+        CodeRecord`write_code(cr, 12, Data`int2oid(Data`words2qword(Instruction`ERR, 0, 0, 0)));
         Register`write_ip(0);
         while Register`read_ip() < 12 do Instruction`step();
         assertEquals(Register`read_int(2), 11, "r2 = 11 (just over the stop value=10)");

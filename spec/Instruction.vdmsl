@@ -2,7 +2,9 @@ module Instruction
 imports
     from Data all,
     from Memory all,
-    from Register all
+    from Register all,
+    from ActivationRecord all,
+    from CodeRecord all
 exports all
 definitions
 values
@@ -91,13 +93,13 @@ operations
     
     fetch : () ==> Data`OID
     fetch() ==
-        let ip = Register`read_ip() + 1, cr = Register`read_cr()
+        let ip = Register`read_ip(), cr = Register`read_cr()
         in
-            (Register`write_ip(ip);
+            (Register`write_ip(ip + 1);
             if
-                ip > 0 and ip <= Memory`slots_size(cr)
+                ip >= 0 and ip < CodeRecord`code_size(cr)
             then
-                return Memory`read_slot(cr, ip)
+                return CodeRecord`read_code(cr, ip)
             else
                 (err();
                 return Data`invalidOidValue));

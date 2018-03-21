@@ -1,0 +1,28 @@
+module CodeRecord
+imports
+    from Data all,
+    from Memory all
+exports all
+definitions
+values
+     NUM_REGS_SLOT = 1;
+     ARGTYPES_SLOT = 2;
+     RETTYPES_SLOT = 3;
+     IP_SLOT_OFFSET = 4;
+
+operations
+    code_size : Data`Pointer ==> Data`Dword
+    code_size(cr) == return Memory`slots_size(cr) - IP_SLOT_OFFSET + 1;
+    
+    allocRoot : Data`Dword ==> Data`Pointer
+    allocRoot(size) == return Memory`alloc(size + IP_SLOT_OFFSET - 1);
+    
+    read_code : Data`Pointer * Data`Dword ==> Data`OID
+    read_code(cr, ip) ==
+        return Memory`read_slot(cr, IP_SLOT_OFFSET + ip);
+    
+    write_code : Data`Pointer * Data`Dword * Data`OID ==> ()
+    write_code(cr, ip, code) ==
+        Memory`write_slot(cr, IP_SLOT_OFFSET + ip, code);
+
+end CodeRecord

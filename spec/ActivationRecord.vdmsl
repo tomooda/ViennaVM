@@ -1,0 +1,67 @@
+module ActivationRecord
+imports
+    from Data all,
+    from Memory all
+exports all
+definitions
+values
+     DYNAMIC_LINK_SLOT = 1;
+     ARGS_SLOT = 2;
+     RETURN_IP_REG_SLOT = 3;
+     RETURN_CR_SLOT = 4;
+     LOCAL_SLOT_OFFSET = 4;
+
+operations
+    alloc_ar0 : Data`Pointer * Data`Word * Data`Dword * Data`Pointer * nat ==> Data`Pointer
+    alloc_ar0(caller, ret_reg, ret_ip, ret_cr, num_locals) ==
+        return alloc_ar(
+                caller, Data`invalidPointerValue, ret_reg, ret_ip, ret_cr, num_locals);
+    
+    alloc_ar1 : Data`Pointer * Data`OID * Data`Word * Data`Dword * Data`Pointer *
+    nat ==> Data`Pointer
+    alloc_ar1(caller, arg, ret_reg, ret_ip, ret_cr, num_locals) ==
+        let args = Memory`alloc(1)
+        in
+            (Memory`write_slot(args, 1, arg);
+            return alloc_ar(caller, args, ret_reg, ret_ip, ret_cr, num_locals));
+    
+    alloc_ar : Data`Pointer * Data`Pointer * Data`Word * Data`Dword *
+    Data`Pointer * nat ==> Data`Pointer
+    alloc_ar(caller, args, ret_reg, ret_ip, ret_cr, num_locals) ==
+        let pointer = Memory`alloc(LOCAL_SLOT_OFFSET + num_locals)
+        in
+            (Memory`write_slot(pointer, DYNAMIC_LINK_SLOT, Data`pointer2oid(caller));
+            Memory`write_slot(pointer, ARGS_SLOT, Data`pointer2oid(args));
+            Memory`write_slot(
+                pointer,
+                RETURN_IP_REG_SLOT,
+                Data`int2oid(ret_ip + ret_reg  * 0x100000000));
+            Memory`write_slot(pointer, RETURN_CR_SLOT, Data`pointer2oid(ret_cr));
+            return pointer);
+    
+    read_ret_reg : Data`Pointer ==> Data`Word
+    read_ret_reg(pointer) ==
+        return Memory`read_slot(pointer, RETURN_IP_REG_SLOT) div 0x100000000;
+    
+    read_return_ip : Data`Pointer ==> Data`Dword
+    read_return_ip(pointer) ==
+        return Memory`read_slot(pointer, RETURN_IP_REG_SLOT) mod 0x100000000;
+    
+    read_return_cr : Data`Pointer ==> Data`Pointer
+    read_return_cr(pointer) ==
+        return Memory`read_slot(pointer, RETURN_CR_SLOT);
+    
+    read_arg : Data`Pointer * Data`Dword ==> Data`OID
+    read_arg(pointer, i) ==
+        return Memory`read_slot(
+                Data`oid2pointer(Memory`read_slot(pointer, ARGS_SLOT)), i);
+    
+    read_local : Data`Pointer * Data`Dword ==> Data`OID
+    read_local(pointer, i) ==
+        return Memory`read_slot(pointer, LOCAL_SLOT_OFFSET + i);
+    
+    write_local : Data`Pointer * Data`Dword * Data`OID ==> ()
+    write_local(pointer, i, oid) ==
+        return Memory`write_slot(pointer, LOCAL_SLOT_OFFSET + i, oid);
+
+end ActivationRecord

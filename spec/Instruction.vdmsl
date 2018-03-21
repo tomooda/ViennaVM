@@ -54,7 +54,7 @@ operations
                     mk_(opcode, reg1, reg2, reg3) = Data`qword2words(code)
                 in
                     (cases opcode:
-                        (ERR) -> err(),
+                        (ERR) -> err("error instruction invoked"),
                         (NOP) -> nop(),
                         (ALLOC) -> alloc(reg1, reg2, reg3, fetch()),
                         (RESET) -> reset(reg1, reg2, reg3),
@@ -86,10 +86,10 @@ operations
                         (JUMP) -> jump(reg1),
                         (JUMPTRUE) -> jumptrue(reg1, reg2),
                         (JUMPFALSE) -> jumpfalse(reg1, reg2),
-                        others -> err()
+                        others -> err("decode error: unknown instruction")
                         end)
             else
-                err();
+                err("decoder error: instruction is not integer");
     
     fetch : () ==> Data`OID
     fetch() ==
@@ -101,11 +101,11 @@ operations
             then
                 return CodeRecord`read_code(cr, ip)
             else
-                (err();
+                (err("fetch error: ip out of bounds");
                 return Data`invalidOidValue));
     
-    err : () ==> ()
-    err() == error;
+    err : seq of char ==> ()
+    err(msg) == exit msg;
     
     nop : () ==> ()
     nop() == skip;
@@ -127,9 +127,9 @@ operations
                         if reg2 > 0 then Register`write_pointer(reg2, p);
                         if reg3 > 0 then Register`write_pointer(reg3, p))
                     else
-                        err()
+                        err("alloc instruction error: allocator returned invalid pointer")
             else
-                err();
+                err("alloc instruction error: size is not integer");
     
     reset : Register`Register * Register`Register * Register`Register ==> ()
     reset(reg1, reg2, reg3) ==
@@ -145,7 +145,7 @@ operations
             (if dst1 > 0 then Register`move(dst1, src);
             if dst2 > 0 then Register`move(dst2, src))
         else
-            err();
+            err("move instruction error: src register not specified");
     
     movei : Register`Register * Register`Register * Register`Register *
     Data`OID ==> ()
@@ -157,7 +157,7 @@ operations
             if dst2 > 0 then Register`write_oid(dst2, imm);
             if dst3 > 0 then Register`write_oid(dst3, imm))
         else
-            err();
+            err("movei instruction error: invalid immediate value");
     
     loadi : Register`Register * Register`Register * Register`Register * int ==> ()
     loadi(dst, src, intReg, offset) ==
@@ -174,9 +174,9 @@ operations
                 then
                     Register`write_oid(dst, Memory`read_slot(pointer, slot))
                 else
-                    err()
+                    err("load instruction error: index out of bounds")
         else
-            err();
+            err("load instruction error: operands not specified");
     
     load : Register`Register * Register`Register * Register`Register ==> ()
     load(dst, src, intReg) == loadi(dst, src, intReg, 0);
@@ -217,9 +217,9 @@ operations
                 then
                     Memory`write_slot(pointer, slot, Register`read_oid(src))
                 else
-                    err()
+                    err("store instruction error: index out of bounds")
         else
-            err();
+            err("store instruction error: operands not specified");
     
     store : Register`Register * Register`Register * Register`Register ==> ()
     store(dst, intReg, src) == storei(dst, intReg, src, 0);
@@ -284,9 +284,9 @@ operations
                         else
                             Register`write_float(dst, Data`real2float(num3))
                 else
-                    err()
+                    err("add instruction error: arithmetic error")
         else
-            err();
+            err("add instruction error: operands not specified");
     
     sub : Register`Register * Register`Register * Register`Register ==> ()
     sub(dst, src1, src2) ==
@@ -327,9 +327,9 @@ operations
                         else
                             Register`write_float(dst, Data`real2float(num3))
                 else
-                    err()
+                    err("sub instruction error: operands not integer")
         else
-            err();
+            err("sub instruction error: operands not specified");
     
     mul : Register`Register * Register`Register * Register`Register ==> ()
     mul(dst, src1, src2) ==
@@ -370,9 +370,9 @@ operations
                         else
                             Register`write_float(dst, Data`real2float(num3))
                 else
-                    err()
+                    err("mul instruction error: operands not integer")
         else
-            err();
+            err("mul instruction error: operands not specified");
     
     fdiv : Register`Register * Register`Register * Register`Register ==> ()
     fdiv(dst, src1, src2) ==
@@ -394,39 +394,46 @@ operations
                 then
                     Register`write_float(dst, Data`real2float(num1 / num2))
                 else
-                    err()
+                    err("fdiv instruction error: operands not number")
         else
-            err();
+            err("fdiv instruction error: operands not specified");
     
     idiv : Register`Register * Register`Register * Register`Register ==> ()
     idiv(dst, src1, src2) ==
-        let
-            int1 : Data`Int = if src1 > 0 then Register`read_int(src1) else 1,
-            int2 : Data`Int = if src2 > 0 then Register`read_int(src2) else 1
-        in
-            if
-                (int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue)
-                and dst > 0
-            then
-                Register`write_int(dst, int1 div int2)
-            else
-                err();
+        if
+            (dst > 0 and src1 > 0) and src2 > 0
+        then
+            let
+                int1 : Data`Int = Register`read_int(src1),
+                int2 : Data`Int = Register`read_int(src2)
+            in
+                if
+                    int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue
+                then
+                    Register`write_int(dst, int1 div int2)
+                else
+                    err("idiv instruction error: operands not integer")
+        else
+            err("idiv instruction error: operands not specified");
     
     imod : Register`Register * Register`Register * Register`Register ==> ()
     imod(dst, src1, src2) ==
-        let
-            int1 : Data`Int =
-                if src1 > 0 then Register`read_int(src1) else Data`invalidIntValue,
-            int2 : Data`Int =
-                if src2 > 0 then Register`read_int(src2) else Data`invalidIntValue
-        in
-            if
-                (int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue)
-                and dst > 0
-            then
-                Register`write_int(dst, int1 mod int2)
-            else
-                err();
+        if
+            (dst > 0 and src1 > 0) and src2 > 0
+        then
+            let
+                int1 : Data`Int = Register`read_int(src1),
+                int2 : Data`Int = Register`read_int(src2)
+            in
+                if
+                    (int1 <> Data`invalidIntValue and int2 <> Data`invalidIntValue)
+                    and dst > 0
+                then
+                    Register`write_int(dst, int1 mod int2)
+                else
+                    err("imod instruction error: operands not integer")
+        else
+            err("imod instruction error: operands not specified");
     
     lessthan : Register`Register * Register`Register * Register`Register ==> ()
     lessthan(dst, src1, src2) ==
@@ -460,9 +467,9 @@ operations
                 then
                     Register`write_oid(dst, if num1 < num2 then Data`trueValue else Data`falseValue)
                 else
-                    err()
+                    err("lessthan instruction error: operands not integer")
         else
-            err();
+            err("lessthan instruction error: operands not specified");
     
     equal : Register`Register * Register`Register * Register`Register ==> ()
     equal(dst, src1, src2) ==
@@ -496,9 +503,9 @@ operations
                 then
                     Register`write_oid(dst, if num1 = num2 then Data`trueValue else Data`falseValue)
                 else
-                    err()
+                    err("equal instruction error: operands not number")
         else
-            err();
+            err("equal instruction error: operands not specified");
     
     jump : Register`Register ==> ()
     jump(intReg) ==
@@ -507,9 +514,14 @@ operations
         then
             let ip = Register`read_int(intReg)
             in
-                if ip <> Data`invalidIntValue then Register`write_ip(ip) else err()
+                if
+                    ip <> Data`invalidIntValue
+                then
+                    Register`write_ip(ip)
+                else
+                    err("jump instruction error: operand not integer")
         else
-            err();
+            err("jump instruction error: register not specified");
     
     jumptrue : Register`Register * Register`Register ==> ()
     jumptrue(boolReg, intReg) ==
@@ -524,12 +536,12 @@ operations
                     cases b:
                         (Data`trueValue) -> Register`write_ip(ip),
                         (Data`falseValue) -> skip,
-                        others -> err()
+                        others -> err("jumptrue instruction error: operand not boolean")
                         end
                 else
-                    err()
+                    err("jumptrue instruction error: operand not integer")
         else
-            err();
+            err("jumptrue instruction error: operands not specified");
     
     jumpfalse : Register`Register * Register`Register ==> ()
     jumpfalse(boolReg, intReg) ==
@@ -544,11 +556,11 @@ operations
                     cases b:
                         (Data`trueValue) -> skip,
                         (Data`falseValue) -> Register`write_ip(ip),
-                        others -> err()
+                        others -> err("jumpfalse instruction error: operand not boolean")
                         end
                 else
-                    err()
+                    err("jumpfalse instruction error: operand not integer")
         else
-            err();
+            err("jumpfalse instruction error: operands not specified");
 
 end Instruction

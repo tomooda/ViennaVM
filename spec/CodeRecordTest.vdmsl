@@ -1,0 +1,43 @@
+module CodeRecordTest
+imports
+    from CodeRecord all,
+    from Data all,
+    from Register all,
+    from Instruction
+        operations
+            MOVEI renamed MOVEI;
+            ADD renamed ADD;
+            LESSTHAN renamed LESSTHAN;
+            JUMPFALSE renamed JUMPFALSE;
+            ERR renamed ERR;
+            step;,
+    from UnitTesting operations assertEquals renamed assertEquals;
+exports all
+definitions
+operations
+    test_allocProc : () ==> ()
+    test_allocProc() ==
+        (let
+            cr =
+                CodeRecord`allocProc(
+                    Data`invalidOidValue,
+                    Data`invalidOidValue,
+                    /* r1: sum, r2: loop variant=1,...,10, r3: stop=10, r4: step=1, r5: jump label=8 r6: jump flag*/
+                    [mk_(MOVEI, 1, 0, 0, Data`int2oid(0)),
+                    mk_(MOVEI, 3, 0, 0, Data`int2oid(10)),
+                    mk_(MOVEI, 2, 4, 0, Data`int2oid(1)),
+                    mk_(MOVEI, 5, 0, 0, Data`int2oid(8)), mk_(ADD, 1, 1, 2, nil),
+                    mk_(ADD, 2, 2, 4, nil), mk_(LESSTHAN, 6, 3, 2, nil),
+                    mk_(JUMPFALSE, 6, 5, 0, nil), mk_(ERR, 0, 0, 0, nil)])
+        in
+            (assertEquals(CodeRecord`code_size(cr), 13, "code size = 13");
+            assertEquals(CodeRecord`num_regs(cr), 6, "uses r1-r6");
+            assertEquals(CodeRecord`argtypes(cr), Data`invalidOidValue, "no argtypes");
+            assertEquals(CodeRecord`rettype(cr), Data`invalidOidValue, "no rettype");
+            Register`write_cr(cr);
+            Register`write_ip(0);
+            while Register`read_ip() < 12 do Instruction`step();
+            assertEquals(Register`read_int(2), 11, "r2 = 11 (just over the stop value=10)");
+            assertEquals(Register`read_int(1), 55, "r1 = 55 (sum of 0,...,10)")));
+
+end CodeRecordTest

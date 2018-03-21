@@ -79,20 +79,20 @@ operations
         assertEquals(
             Memory`basic_read(p2 + Memory`REFERENCE_COUNT_OFFSET),
             0,
-            "(r2) is free")); -- "r1 <- 3"
+            "(r2) is free"));
     
     test_add : () ==> ()
     test_add() ==
-        (Instruction`movei(1, 0, 0, Data`int2oid(3)); -- "r2 <- -4"
-        Instruction`movei(2, 0, 0, Data`int2oid(-4));
+        (Instruction`movei(1, 0, 0, Data`int2oid(3)); -- "r1 <- 3"
+        Instruction`movei(2, 0, 0, Data`int2oid(-4)); -- "r2 <- -4"
         assertEquals(Register`read_int(1), 3, "r1 is set to 3");
-        assertEquals(Register`read_int(2), -4, "r2 is set to -4"); -- "r3 <- r1 + r2"
-        Instruction`add(3, 1, 2);
-        assertEquals(Register`read_int(3), -1, "r3 is set to -1"); -- "r1 <- 3.14"
-        Instruction`movei(1, 0, 0, Data`float2oid(Data`real2float(3.14)));
+        assertEquals(Register`read_int(2), -4, "r2 is set to -4");
+        Instruction`add(3, 1, 2); -- "r3 <- r1 + r2"
+        assertEquals(Register`read_int(3), -1, "r3 is set to -1");
+        Instruction`movei(1, 0, 0, Data`float2oid(Data`real2float(3.14))); -- "r1 <- 3.14"
         assertEquals(
-            Register`read_float(1), Data`real2float(3.14), "r1 is set to 3.14"); -- "r4 <- r1 + r2"
-        Instruction`add(4, 1, 2);
+            Register`read_float(1), Data`real2float(3.14), "r1 is set to 3.14");
+        Instruction`add(4, 1, 2); -- "r4 <- r1 + r2"
         assertApproxEquals(
             Data`float2real(Register`read_float(4)),
             -0.86,
@@ -101,16 +101,16 @@ operations
     
     test_sub : () ==> ()
     test_sub() ==
-        (Instruction`movei(1, 0, 0, Data`int2oid(3)); -- "r2 <- -4"
-        Instruction`movei(2, 0, 0, Data`int2oid(-4));
+        (Instruction`movei(1, 0, 0, Data`int2oid(3));
+        Instruction`movei(2, 0, 0, Data`int2oid(-4)); -- "r2 <- -4"
         assertEquals(Register`read_int(1), 3, "r1 is set to 3");
-        assertEquals(Register`read_int(2), -4, "r2 is set to -4"); -- "r3 <- r1 + r2"
-        Instruction`sub(3, 1, 2);
+        assertEquals(Register`read_int(2), -4, "r2 is set to -4");
+        Instruction`sub(3, 1, 2); -- "r3 <- r1 + r2"
         assertEquals(Register`read_int(3), 7, "r3 is set to 7");
-        Instruction`movei(1, 0, 0, Data`float2oid(Data`real2float(3.14))); -- "r1 <- 3.14"
+        Instruction`movei(1, 0, 0, Data`float2oid(Data`real2float(3.14)));
         assertEquals(
-            Register`read_float(1), Data`real2float(3.14), "r1 is set to 3.14"); -- "r4 <- r1 + r2"
-        Instruction`sub(4, 1, 2);
+            Register`read_float(1), Data`real2float(3.14), "r1 is set to 3.14"); -- "r1 <- 3.14"
+        Instruction`sub(4, 1, 2); -- "r4 <- r1 + r2"
         assertApproxEquals(
             Data`float2real(Register`read_float(4)),
             7.14,
@@ -151,20 +151,20 @@ operations
     
     test_idiv : () ==> ()
     test_idiv() ==
-        (Instruction`movei(1, 0, 0, Data`int2oid(13)); -- "r2 <- -4"
-        Instruction`movei(2, 0, 0, Data`int2oid(-4));
+        (Instruction`movei(1, 0, 0, Data`int2oid(13));
+        Instruction`movei(2, 0, 0, Data`int2oid(-4)); -- "r2 <- -4"
         assertEquals(Register`read_int(1), 13, "r1 is set to 13");
-        assertEquals(Register`read_int(2), -4, "r2 is set to -4"); -- "r3 <- r1 + r2"
-        Instruction`idiv(3, 1, 2);
-        assertEquals(Register`read_int(3), -3, "r3 is set to -3")); -- "r1 <- 13"
+        assertEquals(Register`read_int(2), -4, "r2 is set to -4");
+        Instruction`idiv(3, 1, 2); -- "r3 <- r1 + r2"
+        assertEquals(Register`read_int(3), -3, "r3 is set to -3"));
     
     test_imod : () ==> ()
     test_imod() ==
-        (Instruction`movei(1, 0, 0, Data`int2oid(13)); -- "r2 <- -4"
-        Instruction`movei(2, 0, 0, Data`int2oid(-4));
+        (Instruction`movei(1, 0, 0, Data`int2oid(13)); -- "r1 <- 13"
+        Instruction`movei(2, 0, 0, Data`int2oid(-4)); -- "r2 <- -4"
         assertEquals(Register`read_int(1), 13, "r1 is set to 13");
-        assertEquals(Register`read_int(2), -4, "r2 is set to -4"); -- "r3 <- r1 + r2"
-        Instruction`imod(3, 1, 2);
+        assertEquals(Register`read_int(2), -4, "r2 is set to -4");
+        Instruction`imod(3, 1, 2); -- "r3 <- r1 + r2"
         assertEquals(Register`read_int(3), -3, "r3 is set to -3"));
     
     test_lessthan : () ==> ()
@@ -224,29 +224,26 @@ operations
     
     test_step : () ==> ()
     test_step() ==
-			/* r1: sum, r2: loop variant=1,...,10, r3: stop=10, r4: step=1, r5: jump label=6 */
-        (dcl cr:Data`Pointer := CodeRecord`allocRoot(13);
-        Register`write_cr(cr);
-        CodeRecord`write_code(cr, 0, Data`int2oid(Data`words2qword(Instruction`MOVEI, 1, 0, 0)));
-        CodeRecord`write_code(cr, 1, Data`int2oid(0));
-        CodeRecord`write_code(cr, 2, Data`int2oid(Data`words2qword(Instruction`MOVEI, 3, 0, 0)));
-        CodeRecord`write_code(cr, 3, Data`int2oid(10));
-        CodeRecord`write_code(cr, 4, Data`int2oid(Data`words2qword(Instruction`MOVEI, 2, 4, 0)));
-        CodeRecord`write_code(cr, 5, Data`int2oid(1));
-        CodeRecord`write_code(cr, 6, Data`int2oid(Data`words2qword(Instruction`MOVEI, 5, 0, 0)));
-        CodeRecord`write_code(cr, 7, Data`int2oid(8));
-        CodeRecord`write_code(cr, 8, Data`int2oid(Data`words2qword(Instruction`ADD, 1, 1, 2)));
-        CodeRecord`write_code(cr, 9, Data`int2oid(Data`words2qword(Instruction`ADD, 2, 2, 4)));
-        CodeRecord`write_code(
-            cr, 10, Data`int2oid(Data`words2qword(Instruction`LESSTHAN, 6, 3, 2)));
-        CodeRecord`write_code(
-            cr,
-            11,
-            Data`int2oid(Data`words2qword(Instruction`JUMPFALSE, 6, 5, 0)));
-        CodeRecord`write_code(cr, 12, Data`int2oid(Data`words2qword(Instruction`ERR, 0, 0, 0)));
-        Register`write_ip(0);
-        while Register`read_ip() < 12 do Instruction`step();
-        assertEquals(Register`read_int(2), 11, "r2 = 11 (just over the stop value=10)");
-        assertEquals(Register`read_int(1), 55, "r1 = 55 (sum of 0,...,10)"));
+        (let
+            cr =
+                CodeRecord`allocProc(
+                    Data`invalidOidValue,
+                    Data`invalidOidValue,
+                    /* r1: sum, r2: loop variant=1,...,10, r3: stop=10, r4: step=1, r5: jump label=8 r6: jump flag*/
+                    [mk_(Instruction`MOVEI, 1, 0, 0, Data`int2oid(0)),
+                    mk_(Instruction`MOVEI, 3, 0, 0, Data`int2oid(10)),
+                    mk_(Instruction`MOVEI, 2, 4, 0, Data`int2oid(1)),
+                    mk_(Instruction`MOVEI, 5, 0, 0, Data`int2oid(8)),
+                    mk_(Instruction`ADD, 1, 1, 2, nil),
+                    mk_(Instruction`ADD, 2, 2, 4, nil),
+                    mk_(Instruction`LESSTHAN, 6, 3, 2, nil),
+                    mk_(Instruction`JUMPFALSE, 6, 5, 0, nil),
+                    mk_(Instruction`ERR, 0, 0, 0, nil)])
+        in
+            (Register`write_cr(cr);
+            Register`write_ip(0);
+            while Register`read_ip() < 12 do Instruction`step();
+            assertEquals(Register`read_int(2), 11, "r2 = 11 (just over the stop value=10)");
+            assertEquals(Register`read_int(1), 55, "r1 = 55 (sum of 0,...,10)")));
 
 end InstructionTest

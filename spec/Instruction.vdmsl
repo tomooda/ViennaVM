@@ -54,7 +54,9 @@ operations
                     mk_(opcode, reg1, reg2, reg3) = Data`qword2words(code)
                 in
                     (cases opcode:
-                        (ERR) -> err("error instruction invoked"),
+                        (ERR) ->
+                            (exit Register`read_ip() - 1;
+                            err("error instruction invoked")),
                         (NOP) -> nop(),
                         (ALLOC) -> alloc(reg1, reg2, reg3, fetch()),
                         (RESET) -> reset(reg1, reg2, reg3),

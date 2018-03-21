@@ -41,6 +41,52 @@ operations
     write_code(cr, ip, code) ==
         Memory`write_slot(cr, IP_SLOT_OFFSET + ip, code);
     
+    assemble : Data`OID * Data`OID *
+    seq of (Data`Word * Data`Word * Data`Word * Data`Word *
+        [Data`OID| seq of char] * [seq of char]) ==> Data`Pointer
+    assemble(argtypes, rettype, instructions) ==
+        let
+            size =
+                len instructions + len [i | i in seq instructions & i .# 5 <> nil],
+            cr = Memory`alloc(size + IP_SLOT_OFFSET - 1)
+        in
+            (dcl
+                max_reg:Data`Word := 0,
+                ip:Data`Dword := 0,
+                labels:map seq of char to Data`Dword := {|->};
+            for mk_(opcode, reg1, reg2, reg3, imm, label) in instructions
+            do
+                (if reg1 > max_reg then max_reg := reg1;
+                if reg2 > max_reg then max_reg := reg2;
+                if reg3 > max_reg then max_reg := reg3;
+                if label <> nil then labels(label) := ip;
+                ip := ip + 1;
+                if imm <> nil then ip := ip + 1);
+            Memory`write_slot(cr, NUM_REGS_SLOT, Data`int2oid(max_reg));
+            Memory`write_slot(cr, ARGTYPES_SLOT, argtypes);
+            Memory`write_slot(cr, RETTYPE_SLOT, rettype);
+            ip := 0;
+            for mk_(opcode, reg1, reg2, reg3, imm, label) in instructions
+            do
+                (Memory`write_slot(
+                    cr,
+                    IP_SLOT_OFFSET + ip,
+                    Data`int2oid(Data`words2qword(opcode, reg1, reg2, reg3)));
+                ip := ip + 1;
+                if
+                    imm <> nil
+                then
+                    (if
+                        is_(imm, seq of char)
+                    then
+                        let address : Data`Dword = labels(imm)
+                        in
+                            Memory`write_slot(cr, IP_SLOT_OFFSET + ip, Data`int2oid(address))
+                    else
+                        Memory`write_slot(cr, IP_SLOT_OFFSET + ip, imm);
+                    ip := ip + 1));
+            return cr);
+    
     allocProc : Data`OID * Data`OID *
     seq of (Data`Word * Data`Word * Data`Word * Data`Word * [Data`OID]) ==> Data`Pointer
     allocProc(argtypes, rettype, instructions) ==

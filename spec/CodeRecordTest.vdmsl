@@ -3,32 +3,28 @@ imports
     from CodeRecord all,
     from Data all,
     from Register all,
-    from Instruction
-        operations
-            MOVEI renamed MOVEI;
-            ADD renamed ADD;
-            LESSTHAN renamed LESSTHAN;
-            JUMPFALSE renamed JUMPFALSE;
-            ERR renamed ERR;
-            step;,
+    from Instruction all,
     from UnitTesting operations assertEquals renamed assertEquals;
 exports all
 definitions
 operations
-    test_allocProc : () ==> ()
-    test_allocProc() ==
+    test_assemble : () ==> ()
+    test_assemble() ==
         (let
             cr =
-                CodeRecord`allocProc(
+                CodeRecord`assemble(
                     Data`invalidOidValue,
                     Data`invalidOidValue,
-                    /* r1: sum, r2: loop variant=1,...,10, r3: stop=10, r4: step=1, r5: jump label=8 r6: jump flag*/
-                    [mk_(MOVEI, 1, 0, 0, Data`int2oid(0)),
-                    mk_(MOVEI, 3, 0, 0, Data`int2oid(10)),
-                    mk_(MOVEI, 2, 4, 0, Data`int2oid(1)),
-                    mk_(MOVEI, 5, 0, 0, Data`int2oid(8)), mk_(ADD, 1, 1, 2, nil),
-                    mk_(ADD, 2, 2, 4, nil), mk_(LESSTHAN, 6, 3, 2, nil),
-                    mk_(JUMPFALSE, 6, 5, 0, nil), mk_(ERR, 0, 0, 0, nil)])
+                    /* r1: sum, r2: loop variant=1,...,10, r3: stop=10, r4: step=1, r5: jump label, r6: loop condition */
+                    [mk_(Instruction`MOVEI, 1, 0, 0, Data`int2oid(0), nil),
+                    mk_(Instruction`MOVEI, 3, 0, 0, Data`int2oid(10), nil),
+                    mk_(Instruction`MOVEI, 2, 4, 0, Data`int2oid(1), nil),
+                    mk_(Instruction`MOVEI, 5, 0, 0, "loop", nil),
+                    mk_(Instruction`ADD, 1, 1, 2, nil, "loop"),
+                    mk_(Instruction`ADD, 2, 2, 4, nil, nil),
+                    mk_(Instruction`LESSTHAN, 6, 3, 2, nil, nil),
+                    mk_(Instruction`JUMPFALSE, 6, 5, 0, nil, nil),
+                    mk_(Instruction`ERR, 0, 0, 0, nil, nil)])
         in
             (assertEquals(CodeRecord`code_size(cr), 13, "code size = 13");
             assertEquals(CodeRecord`num_regs(cr), 6, "uses r1-r6");

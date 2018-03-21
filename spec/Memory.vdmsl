@@ -1,25 +1,11 @@
 module Memory
 imports
-    from Instruction operations err;,
-    from Data
-        types
-            Byte renamed Byte;
-            Word renamed Word;
-            Dword renamed Dword;
-            Qword renamed Qword;
-            OID renamed OID;
-            Int renamed Int;
-            Float renamed Float;
-            Char renamed Char;
-            Pointer renamed Pointer;
-        functions oid2pointer renamed oid2pointer;
-        values
-            invalidPointerValue renamed invalidPointerValue;
-            invalidOidValue renamed invalidOidValue;
+    from Instruction all,
+    from Data all
 exports all
 definitions
 types
-     Slot :: address : Pointer size : Qword;
+     Slot :: address : Data`Pointer size : Data`Qword;
 
 values
      /* CONSTANTS ON MEMORY SPACE */
@@ -38,11 +24,11 @@ values
      LARGE_OBJECT_FLAG = 1;
 
 functions
-    align : Qword -> Qword
+    align : Data`Qword -> Data`Qword
     align(x) == ((x - 1) div ALIGNMENT + 1)  * ALIGNMENT;
 
 state State of
-    heapPages : seq of (seq of Byte)
+    heapPages : seq of (seq of Data`Byte)
     poolPages : seq of (seq of Slot)
     poolCleanerPageIndex : nat1
     poolCleanerIndex : nat1
@@ -69,7 +55,7 @@ operations
             poolCleanerPageIndex := 1;
             poolCleanerIndex := 1);
     
-    alloc : Qword ==> [Pointer]
+    alloc : Data`Qword ==> Data`Pointer
     alloc(num_slots) ==
         let size = align(CONTENT_OFFSET + num_slots  * 8)
         in
@@ -93,14 +79,15 @@ operations
                                     basic_write_dword(pointer + SIZE_OFFSET, size);
                                     basic_write_dword(pointer + FLAGS_OFFSET, 0);
                                     basic_write(pointer + REFERENCE_COUNT_OFFSET, 0);
-                                    basic_write(pointer + FORWARDER_OFFSET, invalidPointerValue);
+                                    basic_write(pointer + FORWARDER_OFFSET, Data`invalidPointerValue);
                                     basic_write(pointer + SLOTS_SIZE_OFFSET, num_slots);
                                     for i = 0 to  num_slots - 1
-                                    do basic_write(pointer + CONTENT_OFFSET + i  * 8, invalidOidValue);
+                                    do
+                                        basic_write(pointer + CONTENT_OFFSET + i  * 8, Data`invalidOidValue);
                                     return pointer));
-            return nil);
+            return Data`invalidPointerValue);
     
-    free : Pointer ==> ()
+    free : Data`Pointer ==> ()
     free(pointer) ==
         let
             size = basic_read_dword(pointer + SIZE_OFFSET),
@@ -111,8 +98,11 @@ operations
             (basic_write_dword(pointer + SIZE_OFFSET, 0);
             for i = 0 to  slots_size(pointer) - 1
             do
-                let p = oid2pointer(basic_read(pointer + CONTENT_OFFSET + i  * 8))
-                in if p <> invalidPointerValue then decrementReferenceCount(p);
+                let
+                    p =
+                        Data`oid2pointer(basic_read(pointer + CONTENT_OFFSET + i  * 8))
+                in
+                    if p <> Data`invalidPointerValue then decrementReferenceCount(p);
             for i = 1 to  len pool
             do
                 (if
@@ -135,11 +125,11 @@ operations
                         poolPages(page)(i) .size := size);
                     return )));
     
-    pure slots_size : Pointer ==> Dword
+    pure slots_size : Data`Pointer ==> Data`Dword
     slots_size(pointer) ==
         return basic_read(pointer + SLOTS_SIZE_OFFSET);
     
-    insert_slot : Pointer * Int * OID ==> ()
+    insert_slot : Data`Pointer * Data`Int * Data`OID ==> ()
     insert_slot(pointer, index, oid) ==
         let
             size = basic_read_dword(pointer + SIZE_OFFSET),
@@ -160,25 +150,25 @@ operations
                 error)
     pre  index > 0 and index <= slots_size(pointer) + 1;
     
-    pure read_slot : Pointer * Int ==> OID
+    pure read_slot : Data`Pointer * Data`Int ==> Data`OID
     read_slot(pointer, index) ==
         return basic_read(pointer + CONTENT_OFFSET + (index - 1)  * 8)
     pre  index > 0 and index <= slots_size(pointer);
     
-    write_slot : Pointer * Int * OID ==> ()
+    write_slot : Data`Pointer * Data`Int * Data`OID ==> ()
     write_slot(pointer, index, oid) ==
-        (let oidPointer = oid2pointer(oid)
+        (let oidPointer = Data`oid2pointer(oid)
         in
             if
-                oidPointer <> invalidPointerValue
+                oidPointer <> Data`invalidPointerValue
             then
                 incrementReferenceCount(oidPointer);
         let
             address = pointer + CONTENT_OFFSET + (index - 1)  * 8,
-            oldPointer = oid2pointer(basic_read(address))
+            oldPointer = Data`oid2pointer(basic_read(address))
         in
             (if
-                oldPointer <> invalidPointerValue
+                oldPointer <> Data`invalidPointerValue
             then
                 decrementReferenceCount(oldPointer);
             basic_write(address, oid)))
@@ -192,7 +182,7 @@ operations
                 ^ [[mk_Slot(0, HEAP_PAGE_SIZE)]
                 ^ [mk_Slot(0, 0) | i in set {1, ..., POOL_PAGE_SIZE - 1}]]);
     
-    pure basic_read : Pointer ==> Qword
+    pure basic_read : Data`Pointer ==> Data`Qword
     basic_read(pointer) ==
         let
             heap = heapPages(pointer div HEAP_PAGE_SIZE + 1),
@@ -214,7 +204,7 @@ operations
         pointer mod HEAP_PAGE_SIZE <= HEAP_PAGE_SIZE - 8
         and pointer div HEAP_PAGE_SIZE < len heapPages;
     
-    basic_write : Pointer * Qword ==> ()
+    basic_write : Data`Pointer * Data`Qword ==> ()
     basic_write(pointer, data) ==
         let
             page = pointer div HEAP_PAGE_SIZE + 1,
@@ -240,7 +230,7 @@ operations
         pointer mod HEAP_PAGE_SIZE <= HEAP_PAGE_SIZE - 8
         and pointer div HEAP_PAGE_SIZE < len heapPages;
     
-    pure basic_read_dword : Pointer ==> Dword
+    pure basic_read_dword : Data`Pointer ==> Data`Dword
     basic_read_dword(pointer) ==
         let
             heap = heapPages(pointer div HEAP_PAGE_SIZE + 1),
@@ -254,7 +244,7 @@ operations
         pointer mod HEAP_PAGE_SIZE <= HEAP_PAGE_SIZE - 4
         and pointer div HEAP_PAGE_SIZE < len heapPages;
     
-    basic_write_dword : Pointer * Dword ==> ()
+    basic_write_dword : Data`Pointer * Data`Dword ==> ()
     basic_write_dword(pointer, data) ==
         let
             page = pointer div HEAP_PAGE_SIZE + 1,
@@ -272,7 +262,7 @@ operations
         pointer mod HEAP_PAGE_SIZE <= HEAP_PAGE_SIZE - 4
         and pointer div HEAP_PAGE_SIZE < len heapPages;
     
-    pure basic_read_byte : Pointer ==> Byte
+    pure basic_read_byte : Data`Pointer ==> Data`Byte
     basic_read_byte(pointer) ==
         let
             heap = heapPages(pointer div HEAP_PAGE_SIZE + 1),
@@ -280,7 +270,7 @@ operations
         in return heap(address)
     pre  pointer div HEAP_PAGE_SIZE < len heapPages;
     
-    basic_write_byte : Pointer * Byte ==> ()
+    basic_write_byte : Data`Pointer * Data`Byte ==> ()
     basic_write_byte(pointer, data) ==
         let
             page = pointer div HEAP_PAGE_SIZE + 1,
@@ -319,13 +309,13 @@ operations
                 atomic(heapPages := reverse (tl (reverse heapPages));
                     poolPages := reverse (tl (reverse poolPages)))));
     
-    incrementReferenceCount : Pointer ==> ()
+    incrementReferenceCount : Data`Pointer ==> ()
     incrementReferenceCount(pointer) ==
         basic_write(
             pointer + REFERENCE_COUNT_OFFSET,
             basic_read(pointer + REFERENCE_COUNT_OFFSET) + 1);
     
-    decrementReferenceCount : Pointer ==> ()
+    decrementReferenceCount : Data`Pointer ==> ()
     decrementReferenceCount(pointer) ==
         let p = pointer + REFERENCE_COUNT_OFFSET, c = basic_read(p) - 1
         in

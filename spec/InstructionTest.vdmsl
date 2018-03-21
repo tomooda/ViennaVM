@@ -57,7 +57,7 @@ operations
             Memory`basic_read(p2 + Memory`REFERENCE_COUNT_OFFSET),
             1,
             "(r2).refCount = 1");
-        Instruction`storei(1, 0, Data`int2oid(1), 2);
+        Instruction`store1(1, 0, 2);
         assertEquals(
             Memory`read_slot(Register`read_pointer(1), 1),
             Register`read_oid(2),

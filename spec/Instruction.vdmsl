@@ -19,7 +19,7 @@ values
      LOAD4 = 0x0024;
      LOAD5 = 0x0025;
      LOAD6 = 0x0026;
-     LOAD6 = 0x0027;
+     LOAD7 = 0x0027;
      STORE = 0x0028;
      STORE1 = 0x0029;
      STORE2 = 0x002a;
@@ -27,7 +27,7 @@ values
      STORE4 = 0x002c;
      STORE5 = 0x002d;
      STORE6 = 0x002e;
-     STORE6 = 0x002f;
+     STORE7 = 0x002f;
      ADD = 0x00030;
      SUB = 0x0031;
      MUL = 0x0032;
@@ -59,7 +59,21 @@ operations
                         (MOVE) -> move(reg1, reg2, reg3),
                         (MOVEI) -> movei(reg1, reg2, reg3, fetch()),
                         (LOAD) -> load(reg1, reg2, reg3),
+                        (LOAD1) -> load1(reg1, reg2, reg3),
+                        (LOAD2) -> load2(reg1, reg2, reg3),
+                        (LOAD3) -> load3(reg1, reg2, reg3),
+                        (LOAD4) -> load4(reg1, reg2, reg3),
+                        (LOAD5) -> load5(reg1, reg2, reg3),
+                        (LOAD6) -> load6(reg1, reg2, reg3),
+                        (LOAD7) -> load7(reg1, reg2, reg3),
                         (STORE) -> store(reg1, reg2, reg3),
+                        (STORE1) -> store1(reg1, reg2, reg3),
+                        (STORE2) -> store2(reg1, reg2, reg3),
+                        (STORE3) -> store3(reg1, reg2, reg3),
+                        (STORE4) -> store4(reg1, reg2, reg3),
+                        (STORE5) -> store5(reg1, reg2, reg3),
+                        (STORE6) -> store6(reg1, reg2, reg3),
+                        (STORE7) -> store7(reg1, reg2, reg3),
                         (ADD) -> add(reg1, reg2, reg3),
                         (SUB) -> sub(reg1, reg2, reg3),
                         (MUL) -> mul(reg1, reg2, reg3),

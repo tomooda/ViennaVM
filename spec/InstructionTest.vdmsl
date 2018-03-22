@@ -189,6 +189,20 @@ operations
         Instruction`equal(3, 1, 2);
         assertEquals(Register`read_oid(3), Data`trueValue, "r3 is true"));
     
+    test_bnot : () ==> ()
+    test_bnot() ==
+        (Instruction`movei(1, 0, 0, Data`trueValue);
+        Instruction`bnot(2, 1);
+        assertEquals(
+            Register`read_oid(2),
+            Data`falseValue,
+            "r2 = not r1 = not true = false");
+        Instruction`bnot(3, 2);
+        assertEquals(
+            Register`read_oid(3),
+            Data`trueValue,
+            "r3 = not r2 = not false = true"));
+    
     test_jumptrue : () ==> ()
     test_jumptrue() ==
         (Register`write_ip(0);

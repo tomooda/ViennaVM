@@ -37,6 +37,7 @@ values
      IMOD = 0x0034;
      EQUAL = 0x0050;
      LESSTHAN = 0x0051;
+     NOT = 0x0060;
      JUMP = 0x0070;
      JUMPTRUE = 0x0071;
      JUMPFALSE = 0x0072;
@@ -85,6 +86,7 @@ operations
                         (IMOD) -> imod(reg1, reg2, reg3),
                         (LESSTHAN) -> lessthan(reg1, reg2, reg3),
                         (EQUAL) -> equal(reg1, reg2, reg3),
+                        (NOT) -> bnot(reg1, reg2),
                         (JUMP) -> jump(reg1),
                         (JUMPTRUE) -> jumptrue(reg1, reg2),
                         (JUMPFALSE) -> jumpfalse(reg1, reg2),
@@ -508,6 +510,19 @@ operations
                     err("equal instruction error: operands not number")
         else
             err("equal instruction error: operands not specified");
+    
+    bnot : Register`Register * Register`Register ==> ()
+    bnot(dst, src) ==
+        if
+            dst > 0 and src > 0
+        then
+            cases Register`read_oid(src):
+                (Data`trueValue) -> Register`write_oid(dst, Data`falseValue),
+                (Data`falseValue) -> Register`write_oid(dst, Data`trueValue),
+                others -> err("not instruction error: 2nd operand not boolean")
+                end
+        else
+            err("not instruction error: operands not specified");
     
     jump : Register`Register ==> ()
     jump(intReg) ==

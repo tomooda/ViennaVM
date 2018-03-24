@@ -35,5 +35,35 @@ operations
             while Register`read_ip() < 12 do Instruction`step();
             assertEquals(Register`read_int(2), 11, "r2 = 11 (just over the stop value=10)");
             assertEquals(Register`read_int(1), 55, "r1 = 55 (sum of 0,...,10)")));
+    
+    test_sum_by_recursion : () ==> ()
+    test_sum_by_recursion() ==
+        let
+            cr =
+                CodeRecord`assemble(
+                    Data`invalidOidValue,
+                    Data`invalidOidValue,
+                    /* r1: 1, r2: i, r3: i-1, r4: sum(i-1), r5: i+sum(i-1), r6: misc */
+                    [mk_(Instruction`MOVEI, 1, 0, 0, Data`int2oid(1), nil),
+                    mk_(Instruction`ARG1, 2, 0, 0, nil, nil),
+                    mk_(Instruction`EQUAL, 6, 1, 2, nil, nil),
+                    mk_(Instruction`RETTRUE, 6, 1, 0, nil, nil),
+                    mk_(Instruction`SUB, 3, 2, 1, nil, nil),
+                    mk_(Instruction`CALLREC1, 4, 3, 0, nil, nil),
+                    mk_(Instruction`ADD, 5, 2, 4, nil, nil),
+                    mk_(Instruction`RET, 5, 0, 0, nil, nil)])
+        in
+            (assertEquals(CodeRecord`read_code_size(cr), 9, "code size = 9");
+            assertEquals(CodeRecord`read_num_regs(cr), 6, "uses r1-r6");
+            assertEquals(CodeRecord`read_argtypes(cr), Data`invalidOidValue, "no argtypes");
+            assertEquals(CodeRecord`read_rettype(cr), Data`invalidOidValue, "no rettype");
+            Register`write_cr(Data`invalidPointerValue);
+            Register`write_ip(0);
+            Register`write_int(1, 10);
+            Register`write_pointer(2, cr);
+            Instruction`call1(1, 2, 1);
+            while Register`read_cr() <> Data`invalidPointerValue
+            do Instruction`step();
+            assertEquals(Register`read_int(1), 55, "r1 = 55 (sum of 0,...,10)"));
 
 end CodeRecordTest

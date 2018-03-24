@@ -43,7 +43,10 @@ operations
         in
             (codeRecord := pointer;
             instructionPointer := 0;
-            Memory`incrementReferenceCount(codeRecord);
+            if
+                codeRecord <> Data`invalidPointerValue
+            then
+                Memory`incrementReferenceCount(codeRecord);
             if
                 old_cr <> Data`invalidPointerValue
             then
@@ -63,7 +66,7 @@ operations
         let old_ar = activationRecord
         in
             (activationRecord := ar;
-            Memory`incrementReferenceCount(ar);
+            if ar <> Data`invalidPointerValue then Memory`incrementReferenceCount(ar);
             if
                 old_ar <> Data`invalidPointerValue
             then

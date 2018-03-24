@@ -855,7 +855,10 @@ operations
                     ret_reg = ActivationRecord`read_ret_reg(ar),
                     num_regs = CodeRecord`read_num_regs(cr)
                 in
-                    (if src > 0 and ret_reg > 0 then Register`move(ret_reg, src);
+                    (if
+                        (src > 0 and ret_reg > 0) and src <> ret_reg
+                    then
+                        Register`move(ret_reg, src);
                     for i = 1 to  num_regs
                     do
                         if
@@ -887,7 +890,10 @@ operations
                                 ret_reg = ActivationRecord`read_ret_reg(ar),
                                 num_regs = CodeRecord`read_num_regs(cr)
                             in
-                                (if src > 0 and ret_reg > 0 then Register`move(ret_reg, src);
+                                (if
+                                    (src > 0 and ret_reg > 0) and src <> ret_reg
+                                then
+                                    Register`move(ret_reg, src);
                                 for i = 1 to  num_regs
                                 do
                                     if

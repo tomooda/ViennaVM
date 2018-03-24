@@ -312,6 +312,310 @@ operations
                     Data`pointer2oid(args),
                     "r3 is saved")));
     
+    test_call0 : () ==> ()
+    test_call0() ==
+        let
+            caller_cr =
+                CodeRecord`assemble(
+                    Data`invalidOidValue,
+                    Data`invalidOidValue,
+                    [mk_(Instruction`MOVEI, 1, 0, 0, Data`int2oid(1), nil),
+                    mk_(Instruction`MOVEI, 2, 0, 0, Data`int2oid(2), nil),
+                    mk_(Instruction`MOVEI, 3, 0, 0, Data`int2oid(3), nil)]),
+            caller_ar =
+                ActivationRecord`alloc_ar0(
+                    Data`invalidPointerValue, 1, 0, Data`invalidPointerValue, 0),
+            callee_cr =
+                CodeRecord`assemble(
+                    Data`invalidOidValue,
+                    Data`invalidOidValue,
+                    [mk_(Instruction`MOVEI, 1, 0, 0, Data`int2oid(1), nil),
+                    mk_(Instruction`MOVEI, 2, 0, 0, Data`int2oid(2), nil),
+                    mk_(Instruction`MOVEI, 3, 0, 0, Data`int2oid(3), nil)])
+        in
+            (Register`write_int(1, 10);
+            Register`write_pointer(2, callee_cr);
+            Register`write_int(3, 30);
+            Register`write_cr(caller_cr);
+            Register`write_ip(2);
+            Register`write_ar(caller_ar);
+            Instruction`call0(1, 2);
+            let callee_ar = Register`read_ar()
+            in
+                (assertEquals(Register`read_cr(), callee_cr, "cr is callee's");
+                assertEquals(
+                    ActivationRecord`read_dynamic_link(callee_ar),
+                    caller_ar,
+                    "dynamic link is at caller's ar");
+                assertEquals(
+                    ActivationRecord`read_return_cr(callee_ar), caller_cr, "caller's cr");
+                assertEquals(ActivationRecord`read_return_ip(callee_ar), 2, "caller's ip");
+                assertEquals(ActivationRecord`read_ret_reg(callee_ar), 1, "return value to r1");
+                assertEquals(
+                    ActivationRecord`read_local(callee_ar, 1),
+                    Data`int2oid(10),
+                    "r1 is saved");
+                assertEquals(
+                    ActivationRecord`read_local(callee_ar, 2),
+                    Data`pointer2oid(callee_cr),
+                    "r2 is saved");
+                assertEquals(
+                    ActivationRecord`read_local(callee_ar, 3),
+                    Data`int2oid(30),
+                    "r3 is saved")));
+    
+    test_call1 : () ==> ()
+    test_call1() ==
+        let
+            caller_cr =
+                CodeRecord`assemble(
+                    Data`invalidOidValue,
+                    Data`invalidOidValue,
+                    [mk_(Instruction`MOVEI, 1, 0, 0, Data`int2oid(1), nil),
+                    mk_(Instruction`MOVEI, 2, 0, 0, Data`int2oid(2), nil),
+                    mk_(Instruction`MOVEI, 3, 0, 0, Data`int2oid(3), nil)]),
+            caller_ar =
+                ActivationRecord`alloc_ar0(
+                    Data`invalidPointerValue, 1, 0, Data`invalidPointerValue, 0),
+            callee_cr =
+                CodeRecord`assemble(
+                    Data`invalidOidValue,
+                    Data`invalidOidValue,
+                    [mk_(Instruction`MOVEI, 1, 0, 0, Data`int2oid(1), nil),
+                    mk_(Instruction`MOVEI, 2, 0, 0, Data`int2oid(2), nil),
+                    mk_(Instruction`MOVEI, 3, 0, 0, Data`int2oid(3), nil)])
+        in
+            (Register`write_int(1, 10);
+            Register`write_pointer(2, callee_cr);
+            Register`write_int(3, 30);
+            Register`write_cr(caller_cr);
+            Register`write_ip(2);
+            Register`write_ar(caller_ar);
+            Instruction`call1(1, 2, 3);
+            let callee_ar = Register`read_ar()
+            in
+                (assertEquals(Register`read_cr(), callee_cr, "cr is callee's");
+                assertEquals(
+                    ActivationRecord`read_arg(callee_ar, 1),
+                    Data`int2oid(30),
+                    "arg1 = 30");
+                assertEquals(
+                    ActivationRecord`read_dynamic_link(callee_ar),
+                    caller_ar,
+                    "dynamic link is at caller's ar");
+                assertEquals(
+                    ActivationRecord`read_return_cr(callee_ar), caller_cr, "caller's cr");
+                assertEquals(ActivationRecord`read_return_ip(callee_ar), 2, "caller's ip");
+                assertEquals(ActivationRecord`read_ret_reg(callee_ar), 1, "return value to r1");
+                assertEquals(
+                    ActivationRecord`read_local(callee_ar, 1),
+                    Data`int2oid(10),
+                    "r1 is saved");
+                assertEquals(
+                    ActivationRecord`read_local(callee_ar, 2),
+                    Data`pointer2oid(callee_cr),
+                    "r2 is saved");
+                assertEquals(
+                    ActivationRecord`read_local(callee_ar, 3),
+                    Data`int2oid(30),
+                    "r3 is saved")));
+    
+    test_callrec : () ==> ()
+    test_callrec() ==
+        let
+            caller_cr =
+                CodeRecord`assemble(
+                    Data`invalidOidValue,
+                    Data`invalidOidValue,
+                    [mk_(Instruction`MOVEI, 1, 0, 0, Data`int2oid(1), nil),
+                    mk_(Instruction`MOVEI, 2, 0, 0, Data`int2oid(2), nil),
+                    mk_(Instruction`MOVEI, 3, 0, 0, Data`int2oid(3), nil)]),
+            caller_ar =
+                ActivationRecord`alloc_ar0(
+                    Data`invalidPointerValue, 1, 0, Data`invalidPointerValue, 0),
+            args = Memory`alloc(1)
+        in
+            (Register`write_int(1, 10);
+            Register`write_int(2, 20);
+            Register`write_pointer(3, args);
+            Memory`write_slot(args, 1, Data`int2oid(1));
+            Register`write_cr(caller_cr);
+            Register`write_ip(2);
+            Register`write_ar(caller_ar);
+            Instruction`callrec(1, 3);
+            let callee_ar = Register`read_ar()
+            in
+                (assertEquals(Register`read_cr(), caller_cr, "cr is caller's");
+                assertEquals(
+                    ActivationRecord`read_arg(callee_ar, 1), Data`int2oid(1), "arg1 = 1");
+                assertEquals(
+                    ActivationRecord`read_dynamic_link(callee_ar),
+                    caller_ar,
+                    "dynamic link is at caller's ar");
+                assertEquals(
+                    ActivationRecord`read_return_cr(callee_ar), caller_cr, "caller's cr");
+                assertEquals(ActivationRecord`read_return_ip(callee_ar), 2, "caller's ip");
+                assertEquals(ActivationRecord`read_ret_reg(callee_ar), 1, "return value to r1");
+                assertEquals(
+                    ActivationRecord`read_local(callee_ar, 1),
+                    Data`int2oid(10),
+                    "r1 is saved");
+                assertEquals(
+                    ActivationRecord`read_local(callee_ar, 2),
+                    Data`int2oid(20),
+                    "r2 is saved");
+                assertEquals(
+                    ActivationRecord`read_local(callee_ar, 3),
+                    Data`pointer2oid(args),
+                    "r3 is saved")));
+    
+    test_callrec0 : () ==> ()
+    test_callrec0() ==
+        let
+            caller_cr =
+                CodeRecord`assemble(
+                    Data`invalidOidValue,
+                    Data`invalidOidValue,
+                    [mk_(Instruction`MOVEI, 1, 0, 0, Data`int2oid(1), nil),
+                    mk_(Instruction`MOVEI, 2, 0, 0, Data`int2oid(2), nil),
+                    mk_(Instruction`MOVEI, 3, 0, 0, Data`int2oid(3), nil)]),
+            caller_ar =
+                ActivationRecord`alloc_ar0(
+                    Data`invalidPointerValue, 1, 0, Data`invalidPointerValue, 0)
+        in
+            (Register`write_int(1, 10);
+            Register`write_int(2, 20);
+            Register`write_int(3, 30);
+            Register`write_cr(caller_cr);
+            Register`write_ip(2);
+            Register`write_ar(caller_ar);
+            Instruction`callrec0(1);
+            let callee_ar = Register`read_ar()
+            in
+                (assertEquals(Register`read_cr(), caller_cr, "cr is caller's");
+                assertEquals(
+                    ActivationRecord`read_dynamic_link(callee_ar),
+                    caller_ar,
+                    "dynamic link is at caller's ar");
+                assertEquals(
+                    ActivationRecord`read_return_cr(callee_ar), caller_cr, "caller's cr");
+                assertEquals(ActivationRecord`read_return_ip(callee_ar), 2, "caller's ip");
+                assertEquals(ActivationRecord`read_ret_reg(callee_ar), 1, "return value to r1");
+                assertEquals(
+                    ActivationRecord`read_local(callee_ar, 1),
+                    Data`int2oid(10),
+                    "r1 is saved");
+                assertEquals(
+                    ActivationRecord`read_local(callee_ar, 2),
+                    Data`int2oid(20),
+                    "r2 is saved");
+                assertEquals(
+                    ActivationRecord`read_local(callee_ar, 3),
+                    Data`int2oid(30),
+                    "r3 is saved")));
+    
+    test_callrec1 : () ==> ()
+    test_callrec1() ==
+        let
+            caller_cr =
+                CodeRecord`assemble(
+                    Data`invalidOidValue,
+                    Data`invalidOidValue,
+                    [mk_(Instruction`MOVEI, 1, 0, 0, Data`int2oid(1), nil),
+                    mk_(Instruction`MOVEI, 2, 0, 0, Data`int2oid(2), nil),
+                    mk_(Instruction`MOVEI, 3, 0, 0, Data`int2oid(3), nil)]),
+            caller_ar =
+                ActivationRecord`alloc_ar0(
+                    Data`invalidPointerValue, 1, 0, Data`invalidPointerValue, 0)
+        in
+            (Register`write_int(1, 10);
+            Register`write_int(2, 20);
+            Register`write_int(3, 30);
+            Register`write_cr(caller_cr);
+            Register`write_ip(2);
+            Register`write_ar(caller_ar);
+            Instruction`callrec1(1, 2);
+            let callee_ar = Register`read_ar()
+            in
+                (assertEquals(Register`read_cr(), caller_cr, "cr is caller's");
+                assertEquals(
+                    ActivationRecord`read_arg(callee_ar, 1),
+                    Data`int2oid(20),
+                    "arg1 = 20");
+                assertEquals(
+                    ActivationRecord`read_dynamic_link(callee_ar),
+                    caller_ar,
+                    "dynamic link is at caller's ar");
+                assertEquals(
+                    ActivationRecord`read_return_cr(callee_ar), caller_cr, "caller's cr");
+                assertEquals(ActivationRecord`read_return_ip(callee_ar), 2, "caller's ip");
+                assertEquals(ActivationRecord`read_ret_reg(callee_ar), 1, "return value to r1");
+                assertEquals(
+                    ActivationRecord`read_local(callee_ar, 1),
+                    Data`int2oid(10),
+                    "r1 is saved");
+                assertEquals(
+                    ActivationRecord`read_local(callee_ar, 2),
+                    Data`int2oid(20),
+                    "r2 is saved");
+                assertEquals(
+                    ActivationRecord`read_local(callee_ar, 3),
+                    Data`int2oid(30),
+                    "r3 is saved")));
+    
+    test_callrec2 : () ==> ()
+    test_callrec2() ==
+        let
+            caller_cr =
+                CodeRecord`assemble(
+                    Data`invalidOidValue,
+                    Data`invalidOidValue,
+                    [mk_(Instruction`MOVEI, 1, 0, 0, Data`int2oid(1), nil),
+                    mk_(Instruction`MOVEI, 2, 0, 0, Data`int2oid(2), nil),
+                    mk_(Instruction`MOVEI, 3, 0, 0, Data`int2oid(3), nil)]),
+            caller_ar =
+                ActivationRecord`alloc_ar0(
+                    Data`invalidPointerValue, 1, 0, Data`invalidPointerValue, 0)
+        in
+            (Register`write_int(1, 10);
+            Register`write_int(2, 20);
+            Register`write_int(3, 30);
+            Register`write_cr(caller_cr);
+            Register`write_ip(2);
+            Register`write_ar(caller_ar);
+            Instruction`callrec2(1, 2, 3);
+            let callee_ar = Register`read_ar()
+            in
+                (assertEquals(Register`read_cr(), caller_cr, "cr is caller's");
+                assertEquals(
+                    ActivationRecord`read_arg(callee_ar, 1),
+                    Data`int2oid(20),
+                    "arg1 = 20");
+                assertEquals(
+                    ActivationRecord`read_arg(callee_ar, 2),
+                    Data`int2oid(30),
+                    "arg2 = 30");
+                assertEquals(
+                    ActivationRecord`read_dynamic_link(callee_ar),
+                    caller_ar,
+                    "dynamic link is at caller's ar");
+                assertEquals(
+                    ActivationRecord`read_return_cr(callee_ar), caller_cr, "caller's cr");
+                assertEquals(ActivationRecord`read_return_ip(callee_ar), 2, "caller's ip");
+                assertEquals(ActivationRecord`read_ret_reg(callee_ar), 1, "return value to r1");
+                assertEquals(
+                    ActivationRecord`read_local(callee_ar, 1),
+                    Data`int2oid(10),
+                    "r1 is saved");
+                assertEquals(
+                    ActivationRecord`read_local(callee_ar, 2),
+                    Data`int2oid(20),
+                    "r2 is saved");
+                assertEquals(
+                    ActivationRecord`read_local(callee_ar, 3),
+                    Data`int2oid(30),
+                    "r3 is saved")));
+    
     test_ret : () ==> ()
     test_ret() ==
         let
@@ -350,6 +654,106 @@ operations
                 Register`write_ip(4);
                 Instruction`ret(3);
                 assertEquals(Register`read_int(1), 100, "r1 is the return value");
+                assertEquals(Register`read_pointer(2), callee_cr, "r2 is restored");
+                assertEquals(Register`read_pointer(3), args, "r3 is restored");
+                assertEquals(Register`read_cr(), caller_cr, "cr is the caller");
+                assertEquals(Register`read_ip(), 2, "ip is the caller");
+                assertEquals(Register`read_ar(), caller_ar, "ar is the caller");
+                assertEquals(
+                    Memory`basic_read(callee_ar + Memory`SIZE_OFFSET),
+                    0,
+                    "callee's ar is free")));
+    
+    test_rettrue : () ==> ()
+    test_rettrue() ==
+        let
+            caller_cr =
+                CodeRecord`assemble(
+                    Data`invalidOidValue,
+                    Data`invalidOidValue,
+                    [mk_(Instruction`MOVEI, 1, 0, 0, Data`int2oid(1), nil),
+                    mk_(Instruction`MOVEI, 2, 0, 0, Data`int2oid(2), nil),
+                    mk_(Instruction`MOVEI, 3, 0, 0, Data`int2oid(3), nil)]),
+            caller_ar =
+                ActivationRecord`alloc_ar0(
+                    Data`invalidPointerValue, 1, 0, Data`invalidPointerValue, 0),
+            callee_cr =
+                CodeRecord`assemble(
+                    Data`invalidOidValue,
+                    Data`invalidOidValue,
+                    [mk_(Instruction`MOVEI, 1, 0, 0, Data`int2oid(1), nil),
+                    mk_(Instruction`MOVEI, 2, 0, 0, Data`int2oid(2), nil),
+                    mk_(Instruction`MOVEI, 3, 0, 0, Data`int2oid(3), nil)]),
+            args = Memory`alloc(1)
+        in
+            (Register`write_int(1, 10);
+            Register`write_pointer(2, callee_cr);
+            Register`write_pointer(3, args);
+            Memory`write_slot(args, 1, Data`int2oid(1));
+            Register`write_cr(caller_cr);
+            Register`write_ip(2);
+            Register`write_ar(caller_ar);
+            Instruction`call(1, 2, 3);
+            let callee_ar = Register`read_ar()
+            in
+                (Register`write_int(1, 0);
+                Register`write_oid(2, Data`trueValue);
+                Register`write_oid(3, Data`falseValue);
+                Register`write_ip(4);
+                Instruction`rettrue(3, 2);
+                assertEquals(Register`read_ip(), 4, "not returned");
+                Instruction`rettrue(2, 3);
+                assertEquals(Register`read_oid(1), Data`falseValue, "r1 is the return value");
+                assertEquals(Register`read_pointer(2), callee_cr, "r2 is restored");
+                assertEquals(Register`read_pointer(3), args, "r3 is restored");
+                assertEquals(Register`read_cr(), caller_cr, "cr is the caller");
+                assertEquals(Register`read_ip(), 2, "ip is the caller");
+                assertEquals(Register`read_ar(), caller_ar, "ar is the caller");
+                assertEquals(
+                    Memory`basic_read(callee_ar + Memory`SIZE_OFFSET),
+                    0,
+                    "callee's ar is free")));
+    
+    test_retfalse : () ==> ()
+    test_retfalse() ==
+        let
+            caller_cr =
+                CodeRecord`assemble(
+                    Data`invalidOidValue,
+                    Data`invalidOidValue,
+                    [mk_(Instruction`MOVEI, 1, 0, 0, Data`int2oid(1), nil),
+                    mk_(Instruction`MOVEI, 2, 0, 0, Data`int2oid(2), nil),
+                    mk_(Instruction`MOVEI, 3, 0, 0, Data`int2oid(3), nil)]),
+            caller_ar =
+                ActivationRecord`alloc_ar0(
+                    Data`invalidPointerValue, 1, 0, Data`invalidPointerValue, 0),
+            callee_cr =
+                CodeRecord`assemble(
+                    Data`invalidOidValue,
+                    Data`invalidOidValue,
+                    [mk_(Instruction`MOVEI, 1, 0, 0, Data`int2oid(1), nil),
+                    mk_(Instruction`MOVEI, 2, 0, 0, Data`int2oid(2), nil),
+                    mk_(Instruction`MOVEI, 3, 0, 0, Data`int2oid(3), nil)]),
+            args = Memory`alloc(1)
+        in
+            (Register`write_int(1, 10);
+            Register`write_pointer(2, callee_cr);
+            Register`write_pointer(3, args);
+            Memory`write_slot(args, 1, Data`int2oid(1));
+            Register`write_cr(caller_cr);
+            Register`write_ip(2);
+            Register`write_ar(caller_ar);
+            Instruction`call(1, 2, 3);
+            let callee_ar = Register`read_ar()
+            in
+                (Register`write_int(1, 0);
+                Register`write_oid(2, Data`trueValue);
+                Register`write_oid(3, Data`falseValue);
+                Register`write_ip(4);
+                Instruction`retfalse(2, 3);
+                assertEquals(Register`read_ip(), 4, "not returned");
+                Instruction`retfalse(3, 2);
+                assertEquals(Register`read_oid(1), Data`trueValue, "r1 is the return value");
                 assertEquals(Register`read_pointer(2), callee_cr, "r2 is restored");
                 assertEquals(Register`read_pointer(3), args, "r3 is restored");
                 assertEquals(Register`read_cr(), caller_cr, "cr is the caller");

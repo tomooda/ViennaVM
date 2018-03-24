@@ -8,8 +8,8 @@ imports
 exports all
 definitions
 operations
-    test_assemble : () ==> ()
-    test_assemble() ==
+    test_sum_by_loop : () ==> ()
+    test_sum_by_loop() ==
         (let
             cr =
                 CodeRecord`assemble(
@@ -26,10 +26,10 @@ operations
                     mk_(Instruction`JUMPFALSE, 6, 5, 0, nil, nil),
                     mk_(Instruction`ERR, 0, 0, 0, nil, nil)])
         in
-            (assertEquals(CodeRecord`code_size(cr), 13, "code size = 13");
-            assertEquals(CodeRecord`num_regs(cr), 6, "uses r1-r6");
-            assertEquals(CodeRecord`argtypes(cr), Data`invalidOidValue, "no argtypes");
-            assertEquals(CodeRecord`rettype(cr), Data`invalidOidValue, "no rettype");
+            (assertEquals(CodeRecord`read_code_size(cr), 13, "code size = 13");
+            assertEquals(CodeRecord`read_num_regs(cr), 6, "uses r1-r6");
+            assertEquals(CodeRecord`read_argtypes(cr), Data`invalidOidValue, "no argtypes");
+            assertEquals(CodeRecord`read_rettype(cr), Data`invalidOidValue, "no rettype");
             Register`write_cr(cr);
             Register`write_ip(0);
             while Register`read_ip() < 12 do Instruction`step();

@@ -42,6 +42,7 @@ operations
         let old_cr = codeRecord
         in
             (codeRecord := pointer;
+            instructionPointer := 0;
             Memory`incrementReferenceCount(codeRecord);
             if
                 old_cr <> Data`invalidPointerValue

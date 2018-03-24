@@ -107,7 +107,7 @@ operations
         assert(p1 <> p2, "p1 <> p2");
         Memory`free(p1);
         Memory`free(p2);
-        for i = 1 to  Memory`POOL_PAGE_SIZE do Memory`cleanPool();
+        for i = 1 to  Memory`POOL_PAGE_SIZE do Memory`clean_pool();
         p3 := Memory`alloc(0);
         assertEquals(p3, p1, "allocated the same memory"));
     

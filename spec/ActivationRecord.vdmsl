@@ -39,17 +39,27 @@ operations
             Memory`write_slot(pointer, RETURN_CR_SLOT, Data`pointer2oid(ret_cr));
             return pointer);
     
+    read_dynamic_link : Data`Pointer ==> Data`Pointer
+    read_dynamic_link(ar) ==
+        return Data`oid2pointer(Memory`read_slot(ar, DYNAMIC_LINK_SLOT));
+    
     read_ret_reg : Data`Pointer ==> Data`Word
     read_ret_reg(pointer) ==
-        return Memory`read_slot(pointer, RETURN_IP_REG_SLOT) div 0x100000000;
+        return Data`oid2int(Memory`read_slot(pointer, RETURN_IP_REG_SLOT))
+            div 0x100000000;
     
     read_return_ip : Data`Pointer ==> Data`Dword
     read_return_ip(pointer) ==
-        return Memory`read_slot(pointer, RETURN_IP_REG_SLOT) mod 0x100000000;
+        return Data`oid2int(Memory`read_slot(pointer, RETURN_IP_REG_SLOT))
+            mod 0x100000000;
     
     read_return_cr : Data`Pointer ==> Data`Pointer
     read_return_cr(pointer) ==
-        return Memory`read_slot(pointer, RETURN_CR_SLOT);
+        return Data`oid2pointer(Memory`read_slot(pointer, RETURN_CR_SLOT));
+    
+    read_args : Data`Pointer ==> Data`OID
+    read_args(pointer) ==
+        return Data`oid2pointer(Memory`read_slot(pointer, ARGS_SLOT));
     
     read_arg : Data`Pointer * Data`Dword ==> Data`OID
     read_arg(pointer, i) ==

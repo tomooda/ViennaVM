@@ -278,8 +278,8 @@ operations
         in heapPages(page)(address) := data
     pre  pointer div HEAP_PAGE_SIZE < len heapPages;
     
-    cleanPool : () ==> ()
-    cleanPool() ==
+    clean_pool : () ==> ()
+    clean_pool() ==
         (if
             poolPages(poolCleanerPageIndex)(poolCleanerIndex).size > 0
         then
@@ -321,5 +321,9 @@ operations
         in
             (basic_write(p, c);
             if c = 0 then free(pointer));
+    
+    read_reference_count : Data`Pointer ==> Data`Qword
+    read_reference_count(pointer) ==
+        return basic_read(pointer + REFERENCE_COUNT_OFFSET);
 
 end Memory

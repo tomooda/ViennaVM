@@ -14,6 +14,14 @@ values
      RESET = 0x0010;
      MOVE = 0x0011;
      MOVEI = 0x0012;
+     ARGS = 0x0018;
+     ARG1 = 0x0019;
+     ARG2 = 0x001a;
+     ARG3 = 0x001b;
+     ARG4 = 0x001c;
+     ARG5 = 0x001d;
+     ARG6 = 0x001e;
+     ARG7 = 0x001f;
      LOAD = 0x0020;
      LOAD1 = 0x0021;
      LOAD2 = 0x0022;
@@ -41,6 +49,16 @@ values
      JUMP = 0x0070;
      JUMPTRUE = 0x0071;
      JUMPFALSE = 0x0072;
+     CALL = 0x0080;
+     CALL0 = 0x0081;
+     CALL1 = 0x0082;
+     CALLREC = 0x0083;
+     CALLREC0 = 0x0084;
+     CALLREC1 = 0x0085;
+     CALLREC2 = 0x0086;
+     RET = 0x0088;
+     RETTRUE = 0x0089;
+     RETFALSE = 0x008a;
 
 operations
     step : () ==> ()
@@ -63,6 +81,14 @@ operations
                         (RESET) -> reset(reg1, reg2, reg3),
                         (MOVE) -> move(reg1, reg2, reg3),
                         (MOVEI) -> movei(reg1, reg2, reg3, fetch()),
+                        (ARGS) -> args(reg1, reg2, reg3),
+                        (ARG1) -> arg1(reg1, reg2, reg3),
+                        (ARG2) -> arg2(reg1, reg2, reg3),
+                        (ARG3) -> arg3(reg1, reg2, reg3),
+                        (ARG4) -> arg4(reg1, reg2, reg3),
+                        (ARG5) -> arg5(reg1, reg2, reg3),
+                        (ARG6) -> arg6(reg1, reg2, reg3),
+                        (ARG7) -> arg7(reg1, reg2, reg3),
                         (LOAD) -> load(reg1, reg2, reg3),
                         (LOAD1) -> load1(reg1, reg2, reg3),
                         (LOAD2) -> load2(reg1, reg2, reg3),
@@ -90,6 +116,16 @@ operations
                         (JUMP) -> jump(reg1),
                         (JUMPTRUE) -> jumptrue(reg1, reg2),
                         (JUMPFALSE) -> jumpfalse(reg1, reg2),
+                        (CALL) -> call(reg1, reg2, reg3),
+                        (CALL0) -> call0(reg1, reg2),
+                        (CALL1) -> call1(reg1, reg2, reg3),
+                        (CALLREC) -> callrec(reg1, reg2),
+                        (CALLREC0) -> callrec0(reg1),
+                        (CALLREC1) -> callrec1(reg1, reg2),
+                        (CALLREC2) -> callrec2(reg1, reg2, reg3),
+                        (RET) -> ret(reg1),
+                        (RETTRUE) -> rettrue(reg1, reg2),
+                        (RETFALSE) -> retfalse(reg1, reg2),
                         others -> err("decode error: unknown instruction")
                         end)
             else
@@ -101,7 +137,7 @@ operations
         in
             (Register`write_ip(ip + 1);
             if
-                ip >= 0 and ip < CodeRecord`code_size(cr)
+                ip >= 0 and ip < CodeRecord`read_code_size(cr)
             then
                 return CodeRecord`read_code(cr, ip)
             else
@@ -162,6 +198,43 @@ operations
             if dst3 > 0 then Register`write_oid(dst3, imm))
         else
             err("movei instruction error: invalid immediate value");
+    
+    args : Register`Register * Register`Register * Register`Register ==> ()
+    args(dst1, dst2, dst3) ==
+        let args = ActivationRecord`read_args(Register`read_ar())
+        in
+            (if dst1 > 0 then Register`write_pointer(dst1, args);
+            if dst2 > 0 then Register`write_pointer(dst2, args);
+            if dst3 > 0 then Register`write_pointer(dst3, args));
+    
+    argi : Register`Register * Register`Register * Register`Register * nat ==> ()
+    argi(dst1, dst2, dst3, i) ==
+        let arg = ActivationRecord`read_arg(Register`read_ar(), i)
+        in
+            (if dst1 > 0 then Register`write_oid(dst1, arg);
+            if dst2 > 0 then Register`write_oid(dst2, arg);
+            if dst3 > 0 then Register`write_oid(dst3, arg));
+    
+    arg1 : Register`Register * Register`Register * Register`Register ==> ()
+    arg1(dst1, dst2, dst3) == argi(dst1, dst2, dst3, 1);
+    
+    arg2 : Register`Register * Register`Register * Register`Register ==> ()
+    arg2(dst1, dst2, dst3) == argi(dst1, dst2, dst3, 2);
+    
+    arg3 : Register`Register * Register`Register * Register`Register ==> ()
+    arg3(dst1, dst2, dst3) == argi(dst1, dst2, dst3, 3);
+    
+    arg4 : Register`Register * Register`Register * Register`Register ==> ()
+    arg4(dst1, dst2, dst3) == argi(dst1, dst2, dst3, 4);
+    
+    arg5 : Register`Register * Register`Register * Register`Register ==> ()
+    arg5(dst1, dst2, dst3) == argi(dst1, dst2, dst3, 5);
+    
+    arg6 : Register`Register * Register`Register * Register`Register ==> ()
+    arg6(dst1, dst2, dst3) == argi(dst1, dst2, dst3, 6);
+    
+    arg7 : Register`Register * Register`Register * Register`Register ==> ()
+    arg7(dst1, dst2, dst3) == argi(dst1, dst2, dst3, 7);
     
     loadi : Register`Register * Register`Register * Register`Register * int ==> ()
     loadi(dst, src, intReg, offset) ==
@@ -579,5 +652,294 @@ operations
                     err("jumpfalse instruction error: operand not integer")
         else
             err("jumpfalse instruction error: operands not specified");
+    
+    call : Register`Register * Register`Register * Register`Register ==> ()
+    call(dst, crPointerReg, argsPointerReg) ==
+        if
+            crPointerReg > 0
+        then
+            let
+                args =
+                    if
+                        argsPointerReg > 0
+                    then
+                        Register`read_pointer(argsPointerReg)
+                    else
+                        Data`invalidPointerValue,
+                cr = Register`read_pointer(crPointerReg)
+            in
+                if
+                    cr <> Data`invalidPointerValue
+                then
+                    let
+                        num_regs = CodeRecord`read_num_regs(cr),
+                        ar =
+                            ActivationRecord`alloc_ar(
+                                Register`read_ar(),
+                                args,
+                                dst,
+                                Register`read_ip(),
+                                Register`read_cr(),
+                                num_regs)
+                    in
+                        (Register`write_ar(ar);
+                        Register`write_cr(cr);
+                        for i = 1 to  num_regs
+                        do ActivationRecord`write_local(ar, i, Register`read_oid(i)))
+                else
+                    err("call instruction error: second operand not pointer")
+        else
+            err("call instruction error: operands not specified");
+    
+    call0 : Register`Register * Register`Register ==> ()
+    call0(dst, crPointerReg) ==
+        if
+            crPointerReg > 0
+        then
+            let
+                args = Data`invalidPointerValue,
+                cr = Register`read_pointer(crPointerReg)
+            in
+                if
+                    cr <> Data`invalidPointerValue
+                then
+                    let
+                        num_regs = CodeRecord`read_num_regs(cr),
+                        ar =
+                            ActivationRecord`alloc_ar(
+                                Register`read_ar(),
+                                args,
+                                dst,
+                                Register`read_ip(),
+                                Register`read_cr(),
+                                num_regs)
+                    in
+                        (Register`write_ar(ar);
+                        Register`write_cr(cr);
+                        for i = 1 to  num_regs
+                        do ActivationRecord`write_local(ar, i, Register`read_oid(i)))
+                else
+                    err("call instruction error: second operand not pointer")
+        else
+            err("call instruction error: operands not specified");
+    
+    call1 : Register`Register * Register`Register * Register`Register ==> ()
+    call1(dst, crPointerReg, arg1) ==
+        if
+            crPointerReg > 0
+        then
+            let
+                args = Memory`alloc(1), cr = Register`read_pointer(crPointerReg)
+            in
+                if
+                    cr <> Data`invalidPointerValue
+                then
+                    let
+                        num_regs = CodeRecord`read_num_regs(cr),
+                        ar =
+                            ActivationRecord`alloc_ar(
+                                Register`read_ar(),
+                                args,
+                                dst,
+                                Register`read_ip(),
+                                Register`read_cr(),
+                                num_regs)
+                    in
+                        (Memory`write_slot(args, 1, Register`read_oid(arg1));
+                        Register`write_ar(ar);
+                        Register`write_cr(cr);
+                        for i = 1 to  num_regs
+                        do ActivationRecord`write_local(ar, i, Register`read_oid(i)))
+                else
+                    err("call instruction error: second operand not pointer")
+        else
+            err("call instruction error: operands not specified");
+    
+    callrec : Register`Register * Register`Register ==> ()
+    callrec(dst, argsPointerReg) ==
+        let
+            args =
+                if
+                    argsPointerReg > 0
+                then
+                    Register`read_pointer(argsPointerReg)
+                else
+                    Data`invalidPointerValue,
+            cr = Register`read_cr()
+        in
+            let
+                num_regs = CodeRecord`read_num_regs(cr),
+                ar =
+                    ActivationRecord`alloc_ar(
+                        Register`read_ar(), args, dst, Register`read_ip(), cr, num_regs)
+            in
+                (Register`write_ar(ar);
+                Register`write_ip(0);
+                for i = 1 to  num_regs
+                do ActivationRecord`write_local(ar, i, Register`read_oid(i)));
+    
+    callrec0 : Register`Register ==> ()
+    callrec0(dst) ==
+        let cr = Register`read_cr()
+        in
+            let
+                num_regs = CodeRecord`read_num_regs(cr),
+                ar =
+                    ActivationRecord`alloc_ar(
+                        Register`read_ar(),
+                        Data`invalidPointerValue,
+                        dst,
+                        Register`read_ip(),
+                        cr,
+                        num_regs)
+            in
+                (Register`write_ar(ar);
+                Register`write_ip(0);
+                for i = 1 to  num_regs
+                do ActivationRecord`write_local(ar, i, Register`read_oid(i)));
+    
+    callrec1 : Register`Register * Register`Register ==> ()
+    callrec1(dst, arg1) ==
+        if
+            arg1 > 0
+        then
+            let args = Memory`alloc(1), cr = Register`read_cr()
+            in
+                let
+                    num_regs = CodeRecord`read_num_regs(cr),
+                    ar =
+                        ActivationRecord`alloc_ar(
+                            Register`read_ar(), args, dst, Register`read_ip(), cr, num_regs)
+                in
+                    (Memory`write_slot(args, 1, Register`read_oid(arg1));
+                    Register`write_ar(ar);
+                    Register`write_ip(0);
+                    for i = 1 to  num_regs
+                    do ActivationRecord`write_local(ar, i, Register`read_oid(i)))
+        else
+            err("callrec1 instruction error: second operand not specified");
+    
+    callrec2 : Register`Register * Register`Register * Register`Register ==> ()
+    callrec2(dst, arg1, arg2) ==
+        if
+            arg1 > 0 and arg2 > 0
+        then
+            let args = Memory`alloc(2), cr = Register`read_cr()
+            in
+                let
+                    num_regs = CodeRecord`read_num_regs(cr),
+                    ar =
+                        ActivationRecord`alloc_ar(
+                            Register`read_ar(), args, dst, Register`read_ip(), cr, num_regs)
+                in
+                    (Memory`write_slot(args, 1, Register`read_oid(arg1));
+                    Memory`write_slot(args, 2, Register`read_oid(arg2));
+                    Register`write_ar(ar);
+                    Register`write_ip(0);
+                    for i = 1 to  num_regs
+                    do ActivationRecord`write_local(ar, i, Register`read_oid(i)))
+        else
+            err("callrec2 instruction error: second/third operand not specified");
+    
+    ret : Register`Register ==> ()
+    ret(src) ==
+        let ar = Register`read_ar(), cr = Register`read_cr()
+        in
+            if
+                ar <> Data`invalidPointerValue and cr <> Data`invalidPointerValue
+            then
+                let
+                    ret_ar = ActivationRecord`read_dynamic_link(ar),
+                    ret_cr = ActivationRecord`read_return_cr(ar),
+                    ret_ip = ActivationRecord`read_return_ip(ar),
+                    ret_reg = ActivationRecord`read_ret_reg(ar),
+                    num_regs = CodeRecord`read_num_regs(cr)
+                in
+                    (if src > 0 and ret_reg > 0 then Register`move(ret_reg, src);
+                    for i = 1 to  num_regs
+                    do
+                        if
+                            i <> ret_reg
+                        then
+                            Register`write_oid(i, ActivationRecord`read_local(ar, i));
+                    Register`write_cr(ret_cr);
+                    Register`write_ip(ret_ip);
+                    Register`write_ar(ret_ar))
+            else
+                err("ret instruction error: no cr/ar");
+    
+    rettrue : Register`Register * Register`Register ==> ()
+    rettrue(boolReg, src) ==
+        if
+            boolReg > 0
+        then
+            cases Register`read_oid(boolReg):
+                (Data`trueValue) ->
+                    let ar = Register`read_ar(), cr = Register`read_cr()
+                    in
+                        if
+                            ar <> Data`invalidPointerValue and cr <> Data`invalidPointerValue
+                        then
+                            let
+                                ret_ar = ActivationRecord`read_dynamic_link(ar),
+                                ret_cr = ActivationRecord`read_return_cr(ar),
+                                ret_ip = ActivationRecord`read_return_ip(ar),
+                                ret_reg = ActivationRecord`read_ret_reg(ar),
+                                num_regs = CodeRecord`read_num_regs(cr)
+                            in
+                                (if src > 0 and ret_reg > 0 then Register`move(ret_reg, src);
+                                for i = 1 to  num_regs
+                                do
+                                    if
+                                        i <> ret_reg
+                                    then
+                                        Register`write_oid(i, ActivationRecord`read_local(ar, i));
+                                Register`write_cr(ret_cr);
+                                Register`write_ip(ret_ip);
+                                Register`write_ar(ret_ar))
+                        else
+                            err("ret instruction error: no cr/ar"),
+                (Data`falseValue) -> skip,
+                others -> err("rettrue instruction error: operand1 not boolean")
+                end
+        else
+            err("rettrue instruction error: operand1 not specified");
+    
+    retfalse : Register`Register * Register`Register ==> ()
+    retfalse(boolReg, src) ==
+        if
+            boolReg > 0
+        then
+            cases Register`read_oid(boolReg):
+                (Data`falseValue) ->
+                    let ar = Register`read_ar(), cr = Register`read_cr()
+                    in
+                        if
+                            ar <> Data`invalidPointerValue and cr <> Data`invalidPointerValue
+                        then
+                            let
+                                ret_ar = ActivationRecord`read_dynamic_link(ar),
+                                ret_cr = ActivationRecord`read_return_cr(ar),
+                                ret_ip = ActivationRecord`read_return_ip(ar),
+                                ret_reg = ActivationRecord`read_ret_reg(ar),
+                                num_regs = CodeRecord`read_num_regs(cr)
+                            in
+                                (if src > 0 and ret_reg > 0 then Register`move(ret_reg, src);
+                                for i = 1 to  num_regs
+                                do
+                                    if
+                                        i <> ret_reg
+                                    then
+                                        Register`write_oid(i, ActivationRecord`read_local(ar, i));
+                                Register`write_cr(ret_cr);
+                                Register`write_ip(ret_ip);
+                                Register`write_ar(ret_ar))
+                        else
+                            err("ret instruction error: no cr/ar"),
+                (Data`trueValue) -> skip,
+                others -> err("rettrue instruction error: operand1 not boolean")
+                end
+        else
+            err("rettrue instruction error: operand1 not specified");
 
 end Instruction

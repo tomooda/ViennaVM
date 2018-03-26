@@ -62,12 +62,12 @@ functions
             then let f = normalized_r2f(x  * 2.0)
             in mk_Float(f.sign, f.exponent - 1, f.fraction)
         else
-            mk_Float(0, 127, floor ((x - 1)  * 2 ** 23))
+            mk_Float(0, 127, floor ((x - 1)  * 2 ** 23 + 0.5))
     pre x >= 0;
     
     denormalized_r2f : real -> Float
     denormalized_r2f(x) ==
-        mk_Float(0, 0, floor (x  * 2 ** (126 + 23)))
+        mk_Float(0, 0, floor (x  * 2 ** (126 + 23) + 0.5))
     pre x >= 0;
     
     exp : real * real -> real

@@ -27,7 +27,7 @@ values
      nilValue = 0x22;
      trueValue = 0x2a;
      falseValue = 0x32;
-	/* default values */
+	  /* default values */
      invalidOidValue = invalidTag;
      invalidIntValue = 0x7fffffffffffffff;
      invalidFloatValue = mk_Float(1, 255, 0x7fffff);

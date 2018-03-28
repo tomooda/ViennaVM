@@ -120,7 +120,7 @@ operations
                 Memory`basic_read(p + Memory`REFERENCE_COUNT_OFFSET),
                 0,
                 "refCount= 0 at the beginning");
-            Memory`incrementReferenceCount(p);
+            Memory`increment_reference_count(p);
             assertEquals(
                 Memory`basic_read(p + Memory`REFERENCE_COUNT_OFFSET),
                 1,
@@ -128,7 +128,7 @@ operations
             assert(
                 Memory`basic_read_dword(p + Memory`SIZE_OFFSET) > 0,
                 "still allocated");
-            Memory`incrementReferenceCount(p);
+            Memory`increment_reference_count(p);
             assertEquals(
                 Memory`basic_read(p + Memory`REFERENCE_COUNT_OFFSET),
                 2,
@@ -136,7 +136,7 @@ operations
             assert(
                 Memory`basic_read_dword(p + Memory`SIZE_OFFSET) > 0,
                 "still allocated");
-            Memory`decrementReferenceCount(p);
+            Memory`decrement_reference_count(p);
             assertEquals(
                 Memory`basic_read(p + Memory`REFERENCE_COUNT_OFFSET),
                 1,
@@ -144,7 +144,7 @@ operations
             assert(
                 Memory`basic_read_dword(p + Memory`SIZE_OFFSET) > 0,
                 "still allocated");
-            Memory`decrementReferenceCount(p);
+            Memory`decrement_reference_count(p);
             assert(Memory`basic_read_dword(p + Memory`SIZE_OFFSET) = 0, "free"));
     
     test_read_write_slot : () ==> ()

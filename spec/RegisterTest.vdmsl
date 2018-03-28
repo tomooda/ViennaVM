@@ -123,8 +123,8 @@ operations
         assertEquals(Register`read_char(1), Data`invalidCharValue, "->char");
         assertEquals(Register`read_pointer(1), Data`invalidPointerValue, "->pointer"));
     
-    testReferenceCount : () ==> ()
-    testReferenceCount() ==
+    test_reference_count : () ==> ()
+    test_reference_count() ==
         let
             p1 = Memory`alloc(0),
             p2 = Memory`alloc(0),

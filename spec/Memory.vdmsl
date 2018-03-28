@@ -1,7 +1,5 @@
 module Memory
-imports
-    from Instruction all,
-    from Data all
+imports from Data all
 exports all
 definitions
 types
@@ -15,12 +13,12 @@ values
      /* DATA STRUCTURE OF ALLOCATED MEMORY */
      MAX_OBJECT_SIZE = 1024; -- dword
      SIZE_OFFSET = 0; -- dword
-     FLAGS_OFFSET = 4; -- qword
+     FLAGS_OFFSET = 4; -- dword
      REFERENCE_COUNT_OFFSET = 8; -- qword
      FORWARDER_OFFSET = 16;
      SLOTS_SIZE_OFFSET = 24;
+     CONTENT_OFFSET = 32;
      /* FLAGS IN "basic_read_dword(pointer + FLAGS_OFFSET)" */
-     CONTENT_OFFSET = 32; --- if 1, the object is a large virtual object
      LARGE_OBJECT_FLAG = 1;
 
 functions
@@ -102,7 +100,7 @@ operations
                     p =
                         Data`oid2pointer(basic_read(pointer + CONTENT_OFFSET + i  * 8))
                 in
-                    if p <> Data`invalidPointerValue then decrementReferenceCount(p);
+                    if p <> Data`invalidPointerValue then decrement_reference_count(p);
             for i = 1 to  len pool
             do
                 (if
@@ -129,27 +127,6 @@ operations
     slots_size(pointer) ==
         return basic_read(pointer + SLOTS_SIZE_OFFSET);
     
-    insert_slot : Data`Pointer * Data`Int * Data`OID ==> ()
-    insert_slot(pointer, index, oid) ==
-        let
-            size = basic_read_dword(pointer + SIZE_OFFSET),
-            old_slots_size = slots_size(pointer),
-            new_slots_size = old_slots_size + 1
-        in
-            (if
-                CONTENT_OFFSET + new_slots_size  * 8 <= size
-            then
-                (basic_write(pointer + SLOTS_SIZE_OFFSET, new_slots_size);
-                for i = index to  old_slots_size
-                do
-                    basic_write(
-                        pointer + CONTENT_OFFSET + i  * 8,
-                        basic_read(pointer + CONTENT_OFFSET + (i - 1)  * 8));
-                basic_write(pointer + CONTENT_OFFSET + (index - 1)  * 8, oid))
-            else
-                error)
-    pre  index > 0 and index <= slots_size(pointer) + 1;
-    
     pure read_slot : Data`Pointer * Data`Int ==> Data`OID
     read_slot(pointer, index) ==
         return basic_read(pointer + CONTENT_OFFSET + (index - 1)  * 8)
@@ -162,7 +139,7 @@ operations
             if
                 oidPointer <> Data`invalidPointerValue
             then
-                incrementReferenceCount(oidPointer);
+                increment_reference_count(oidPointer);
         let
             address = pointer + CONTENT_OFFSET + (index - 1)  * 8,
             oldPointer = Data`oid2pointer(basic_read(address))
@@ -170,7 +147,7 @@ operations
             (if
                 oldPointer <> Data`invalidPointerValue
             then
-                decrementReferenceCount(oldPointer);
+                decrement_reference_count(oldPointer);
             basic_write(address, oid)))
     pre  index > 0 and index <= slots_size(pointer);
     
@@ -309,14 +286,14 @@ operations
                 atomic(heapPages := reverse (tl (reverse heapPages));
                     poolPages := reverse (tl (reverse poolPages)))));
     
-    incrementReferenceCount : Data`Pointer ==> ()
-    incrementReferenceCount(pointer) ==
+    increment_reference_count : Data`Pointer ==> ()
+    increment_reference_count(pointer) ==
         basic_write(
             pointer + REFERENCE_COUNT_OFFSET,
             basic_read(pointer + REFERENCE_COUNT_OFFSET) + 1);
     
-    decrementReferenceCount : Data`Pointer ==> ()
-    decrementReferenceCount(pointer) ==
+    decrement_reference_count : Data`Pointer ==> ()
+    decrement_reference_count(pointer) ==
         let p = pointer + REFERENCE_COUNT_OFFSET, c = basic_read(p) - 1
         in
             (basic_write(p, c);

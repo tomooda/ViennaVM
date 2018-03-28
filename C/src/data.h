@@ -66,7 +66,7 @@ static inline OID char2oid(Char c) {
   return c != invalidCharValue ? (((OID)c) << 8) | charTag : invalidOidValue;
 }
 
-static inline Pointer oit2pointer(OID oid) {
+static inline Pointer oid2pointer(OID oid) {
   return (oid & 0x3) == 0 ? oid >> 8 : invalidPointerValue;
 }
 static inline OID pointer2oid(Pointer p) {

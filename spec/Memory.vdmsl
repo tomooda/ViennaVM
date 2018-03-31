@@ -8,7 +8,7 @@ types
 values
      /* CONSTANTS ON MEMORY SPACE */
      ALIGNMENT = 64;
-     HEAP_PAGE_SIZE = 4  * 1024;
+     HEAP_PAGE_SIZE = 1  * 1024;
      POOL_PAGE_SIZE = HEAP_PAGE_SIZE div ALIGNMENT;
      /* DATA STRUCTURE OF ALLOCATED MEMORY */
      MAX_OBJECT_SIZE = 1024; -- dword
@@ -28,19 +28,13 @@ functions
 state State of
     heapPages : seq of (seq of Data`Byte)
     poolPages : seq of (seq of Slot)
-    poolCleanerPageIndex : nat1
-    poolCleanerIndex : nat1
-inv mk_State(heaps, pools, pageIndex, index) ==
-    (len heaps = len pools and pageIndex <= len pools)
-    and index <= POOL_PAGE_SIZE
+inv mk_State(heaps, pools) == len heaps = len pools
 init s ==
     s
     = mk_State(
         [[0 | i in set {1, ..., HEAP_PAGE_SIZE}]],
         [[mk_Slot(0, HEAP_PAGE_SIZE)]
-        ^ [mk_Slot(0, 0) | i in set {1, ..., POOL_PAGE_SIZE - 1}]],
-        1,
-        1)
+        ^ [mk_Slot(0, 0) | i in set {1, ..., POOL_PAGE_SIZE - 1}]])
 end
 
 operations
@@ -49,9 +43,7 @@ operations
         atomic(heapPages := [[0 | i in set {1, ..., HEAP_PAGE_SIZE}]];
             poolPages
                 := [[mk_Slot(0, HEAP_PAGE_SIZE)]
-                ^ [mk_Slot(0, 0) | i in set {1, ..., POOL_PAGE_SIZE - 1}]];
-            poolCleanerPageIndex := 1;
-            poolCleanerIndex := 1);
+                ^ [mk_Slot(0, 0) | i in set {1, ..., POOL_PAGE_SIZE - 1}]]);
     
     alloc : Data`Qword ==> Data`Pointer
     alloc(num_slots) ==
@@ -63,10 +55,10 @@ operations
                 in
                     for i = 1 to  len pool
                     do
-                        (let newSize = pool(i).size - size
+                        let newSize = pool(i).size - size
                         in
                             if
-                                newSize >= 0
+                                pool(i).size > 0 and newSize >= 0
                             then
                                 let
                                     address = pool(i).address,
@@ -82,11 +74,12 @@ operations
                                     for s = 0 to  num_slots - 1
                                     do
                                         basic_write(pointer + CONTENT_OFFSET + s  * 8, Data`invalidOidValue);
-                                    return pointer));
-            return Data`invalidPointerValue);
+                                    return pointer);
+            add_page();
+            return alloc(num_slots));
     
-    free : Data`Pointer ==> ()
-    free(pointer) ==
+    release : Data`Pointer ==> ()
+    release(pointer) ==
         let
             size = basic_read_dword(pointer + SIZE_OFFSET),
             page = pointer div HEAP_PAGE_SIZE + 1,
@@ -104,24 +97,45 @@ operations
             for i = 1 to  len pool
             do
                 (if
-                    pool(i).address + pool(i).size = address
+                    pool(i).size <> 0 and pool(i).address + pool(i).size = address
                 then
-                    (poolPages(page)(i) .size := pool(i).size + size;
+                    (for j = i + 1 to  len pool
+                    do
+                        if
+                            pool(j).size <> 0 and address + size = pool(j).address
+                        then
+                            (poolPages(page)(i) .size
+                                := poolPages(page)(i).size + poolPages(page)(j).size + size;
+                            poolPages(page)(j) .address := 0;
+                            poolPages(page)(j) .size := 0;
+                            return );
+                    poolPages(page)(i) .size := pool(i).size + size;
                     return );
                 if
-                    address + size = pool(i).address
+                    pool(i).size <> 0 and address + size = pool(i).address
                 then
-                    (atomic(poolPages(page)(i) .address := address;
+                    (for j = i + 1 to  len pool
+                    do
+                        if
+                            pool(j).size <> 0 and pool(j).address + pool(j).size = address
+                        then
+                            (atomic(poolPages(page)(i) .address := poolPages(page)(j).address;
+                                poolPages(page)(i) .size
+                                    := poolPages(page)(i).size + poolPages(page)(j).size + size;
+                                poolPages(page)(j) .address := 0;
+                                poolPages(page)(j) .size := 0);
+                            return );
+                    atomic(poolPages(page)(i) .address := address;
                         poolPages(page)(i) .size := pool(i).size + size);
                     return ));
             for i = 1 to  len pool
             do
-                (if
+                if
                     pool(i).size = 0
                 then
                     (atomic(poolPages(page)(i) .address := address;
                         poolPages(page)(i) .size := size);
-                    return )));
+                    return ));
     
     pure slots_size : Data`Pointer ==> Data`Dword
     slots_size(pointer) ==
@@ -151,8 +165,8 @@ operations
             basic_write(address, oid)))
     pre  index > 0 and index <= slots_size(pointer);
     
-    addPage : () ==> ()
-    addPage() ==
+    add_page : () ==> ()
+    add_page() ==
         atomic(heapPages := heapPages ^ [[0 | i in set {1, ..., HEAP_PAGE_SIZE}]];
             poolPages
                 := poolPages
@@ -255,37 +269,6 @@ operations
         in heapPages(page)(address) := data
     pre  pointer div HEAP_PAGE_SIZE < len heapPages;
     
-    clean_pool : () ==> ()
-    clean_pool() ==
-        (if
-            poolPages(poolCleanerPageIndex)(poolCleanerIndex).size > 0
-        then
-            let
-                pool = poolPages(poolCleanerPageIndex),
-                endAddress =
-                    pool(poolCleanerIndex).address + pool(poolCleanerIndex).size
-            in
-                for index = 1 to  POOL_PAGE_SIZE
-                do
-                    if
-                        pool(index).size > 0 and pool(index).address = endAddress
-                    then
-                        atomic(poolPages(poolCleanerPageIndex)(poolCleanerIndex) .size
-                                := pool(poolCleanerIndex).size + pool(index).size;
-                            poolPages(poolCleanerPageIndex)(index) .size := 0);
-        poolCleanerIndex := poolCleanerIndex mod POOL_PAGE_SIZE + 1;
-        if
-            poolCleanerIndex = 1
-        then
-            (poolCleanerPageIndex := poolCleanerPageIndex mod len poolPages + 1;
-            if
-                poolCleanerPageIndex = 1
-                and (forall i in set {1, ..., POOL_PAGE_SIZE} &
-                        poolPages(len poolPages)(i).size = 0)
-            then
-                atomic(heapPages := reverse (tl (reverse heapPages));
-                    poolPages := reverse (tl (reverse poolPages)))));
-    
     increment_reference_count : Data`Pointer ==> ()
     increment_reference_count(pointer) ==
         basic_write(
@@ -297,7 +280,7 @@ operations
         let p = pointer + REFERENCE_COUNT_OFFSET, c = basic_read(p) - 1
         in
             (basic_write(p, c);
-            if c = 0 then free(pointer));
+            if c = 0 then release(pointer));
     
     read_reference_count : Data`Pointer ==> Data`Qword
     read_reference_count(pointer) ==

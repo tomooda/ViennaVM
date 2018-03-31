@@ -1,6 +1,8 @@
 #include <stdio.h>
+#include "cUnit.h"
 #include "../src/data.h"
 
+extern int testData();
 static int test_oid2int();
 static int test_oid2float();
 static int test_oid2char();
@@ -13,63 +15,43 @@ int main()
 
 int testData()
 {
-  if (test_oid2int()) {
-    printf("test_oid2int: failed\n");
-    return 1;
-  };
-  if (test_oid2float()) {
-    printf("test_oid2float: failed\n");
-    return 1;
-  };
-  if (test_oid2char()) {
-    printf("test_oid2char: failed\n");
-    return 1;
-  };
-  if (test_oid2pointer()) {
-    printf("test_oid2pointer: failed\n");
-    return 1;
-  };
-  printf("testData: all passed\n");
+  runTest(test_oid2int);
+  runTest(test_oid2float);
+  runTest(test_oid2char);
+  runTest(test_oid2pointer);
   return 0;
 }
 
 int test_oid2int() {
-  Int expected = (Int)-0x123456789abcdef;
-  Int actual = oid2int(int2oid(expected));
-  if (expected != actual) {
-    printf("expected: %llx, actual: %llx\n", expected, actual);
-    return 1;
-  }
+  assertEquals
+    (oid2int(int2oid((Int)-0x123456789abcdef)),
+     (Int)-0x123456789abcdef,
+     "oid2int");
   return 0;
 }
 
 int test_oid2float() {
-  Float expected = 3.1415;
-  Float actual = oid2float(float2oid(expected));
-  if (expected != actual) {
-    printf("expected: %f, actual: %f\n", expected, actual);
-    return 1;
-  }
+  assertApproxEquals
+    (oid2float(float2oid(3.1415)),
+     3.1415,
+     0.00000001,
+     "oid2float");
   return 0;
 }
 
 int test_oid2char() {
-  Char expected = (Char)0x40;
-  Char actual = oid2char(char2oid(expected));
-  if (expected != actual) {
-    printf("expected: %x, actual: %x\n", expected, actual);
-    return 1;
-  }
+  assertEquals
+    (oid2char(char2oid((Char)0x40)),
+     (Char)0x40,
+     "oid2char");
   return 0;
 }
 
 int test_oid2pointer() {
-  Pointer expected = (Pointer)0x1234;
-  Pointer actual = oid2pointer(pointer2oid(expected));
-  if (expected != actual) {
-    printf("expected: %llx, actual: %llx\n", expected, actual);
-    return 1;
-  }
+  assertEquals
+    (oid2pointer(pointer2oid((Pointer)0x1234)),
+     (Pointer)0x1234,
+     "oid2pointer");
   return 0;
 }
 

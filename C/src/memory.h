@@ -34,7 +34,8 @@ extern Slot ** slotPages;
 
 extern void reset();
 extern Pointer alloc(Qword num_slots);
-extern void freePointer(Pointer pointer);
+extern void release(Pointer pointer);
+extern void add_page();
 
 static inline Qword basic_read(Pointer pointer) {
   return *((Qword *)(heapPages[pointer / HEAP_PAGE_SIZE]+(pointer % HEAP_PAGE_SIZE)));
@@ -61,15 +62,15 @@ static inline void basic_write_byte(Pointer pointer, Byte data) {
 }
 
 static inline void increment_reference_count(Pointer pointer) {
-  (*((Qword *)(heapPages[pointer / HEAP_PAGE_SIZE]+(pointer % HEAP_PAGE_SIZE))))++;
+  ++(*((Qword *)(heapPages[pointer/HEAP_PAGE_SIZE]+pointer%HEAP_PAGE_SIZE+REFERENCE_COUNT_OFFSET)));
 }
 
 static inline void decrement_reference_count(Pointer pointer) {
-  if (! (*((Qword *)(heapPages[pointer / HEAP_PAGE_SIZE]+(pointer % HEAP_PAGE_SIZE))))--) freePointer(pointer);
+  if (! --(*((Qword *)(heapPages[pointer/HEAP_PAGE_SIZE]+pointer%HEAP_PAGE_SIZE+REFERENCE_COUNT_OFFSET)))) release(pointer);
 }
 
 static inline Qword read_reference_count(Pointer pointer) {
-  return *((Qword *)(heapPages[pointer / HEAP_PAGE_SIZE]+(pointer % HEAP_PAGE_SIZE)));
+  return *((Qword *)(heapPages[pointer/HEAP_PAGE_SIZE]+pointer%HEAP_PAGE_SIZE+REFERENCE_COUNT_OFFSET));
 }
 
 static inline Dword slots_size(Pointer pointer) {

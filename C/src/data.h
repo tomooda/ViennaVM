@@ -1,3 +1,6 @@
+#ifndef _DATA_H_
+#define _DATA_H_
+
 #include <stdint.h>
 #include <math.h>
 
@@ -72,3 +75,5 @@ static inline Pointer oid2pointer(OID oid) {
 static inline OID pointer2oid(Pointer p) {
   return p != invalidPointerValue ? ((OID)p) << 8 : invalidOidValue;
 }
+
+#endif

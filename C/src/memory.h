@@ -1,3 +1,6 @@
+#ifndef _MEMORY_H_
+#define _MEMORY_H_
+
 #include "data.h"
 
 typedef struct {
@@ -93,3 +96,5 @@ static inline void write_slot(Pointer pointer, Int index, OID oid) {
   }
   basic_write(address, oid);
 }
+
+#endif

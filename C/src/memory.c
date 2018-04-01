@@ -7,10 +7,7 @@ Slot ** poolPages = NULL;
 int num_pages = 0;
 int max_pages = 1024;
 
-int poolCleanerPageIndex = 0;
-int poolCleanerIndex = 0;
-
-void reset() {
+void memory_reset() {
   heapPages = malloc(sizeof(void *) * 1024);
   poolPages = malloc(sizeof(void *) * 1024);
   max_pages = 1024;
@@ -20,9 +17,6 @@ void reset() {
   }
   num_pages = 0;
   add_page();
-  poolCleanerPageIndex = 0;
-  poolCleanerIndex = 0;
-  
 }
 
 void add_page() {

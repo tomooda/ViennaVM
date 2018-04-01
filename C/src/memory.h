@@ -35,7 +35,7 @@ extern Slot ** slotPages;
 
 /* operations */
 
-extern void reset();
+extern void memory_reset();
 extern Pointer alloc(Qword num_slots);
 extern void release(Pointer pointer);
 extern void add_page();

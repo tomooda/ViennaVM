@@ -32,7 +32,7 @@ int test_oid2int() {
 
 int test_oid2float() {
   assertApproxEquals
-    (oid2float(float2oid(3.1415)),
+    (float2real(oid2float(float2oid(real2float(3.1415)))),
      3.1415,
      0.00000001,
      "oid2float");

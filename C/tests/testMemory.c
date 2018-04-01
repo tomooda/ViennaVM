@@ -51,7 +51,7 @@ int test_align() {
 }
 
 int test_basic_read() {
-  reset();
+  memory_reset();
   add_page();
   basic_write(0x12, 0xfedcba9876543210);
   assertEquals
@@ -74,7 +74,7 @@ int test_basic_read() {
 }
 
 int test_basic_write() {
-  reset();
+  memory_reset();
   add_page();
   for (int i = 0; i <= 0x100; i++)
     basic_write_byte(i, 0x00);
@@ -93,7 +93,7 @@ int test_basic_write() {
 }
 
 int test_basic_read_dword() {
-  reset();
+  memory_reset();
   add_page();
   basic_write_dword(0x12, 0x12345678);
   assertEquals
@@ -112,7 +112,7 @@ int test_basic_read_dword() {
 }
 
 int test_basic_write_dword() {
-  reset();
+  memory_reset();
   add_page();
   for (int i = 0; i <= 0x100; i++)
     basic_write_byte(i, 0x00);
@@ -127,7 +127,7 @@ int test_basic_write_dword() {
 }
     
 int test_basic_read_byte() {
-  reset();
+  memory_reset();
   add_page();
   for (int i = 0; i <= 0x100; i++)
     basic_write_byte(i, 0x00);
@@ -137,7 +137,7 @@ int test_basic_read_byte() {
 }    
 
 int test_basic_write_byte() {
-  reset();
+  memory_reset();
   add_page();
   for (int i = 0; i <= 0x100; i++)
     basic_write_byte(i, 0x00);
@@ -149,7 +149,7 @@ int test_basic_write_byte() {
 }
     
 int test_allocate_release() {
-  reset();
+  memory_reset();
   Pointer p1 = alloc(0);
   Pointer p2 = alloc(0);
   assert(p1 != p2, "p1 <> p2");
@@ -161,7 +161,7 @@ int test_allocate_release() {
 }
     
 int test_referenceCount() {
-  reset();
+  memory_reset();
   Pointer p = alloc(0x10);
   assert(basic_read_dword(p + SIZE_OFFSET) > 0, "allocated");
   assertEquals
@@ -198,7 +198,7 @@ int test_referenceCount() {
 }
     
 int test_read_write_slot() {
-  reset();
+  memory_reset();
   Pointer p1 = alloc(2), p2 = alloc(1), p3 = alloc(1);
   write_slot(p1, 1, int2oid(123));
   write_slot(p1, 2, char2oid(0x41));

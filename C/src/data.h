@@ -10,7 +10,7 @@ typedef uint32_t             Dword;
 typedef uint64_t             Qword;
 typedef Qword                OID;
 typedef int64_t              Int;
-typedef float                Float;
+typedef uint32_t             Float;
 typedef Dword                Char;
 typedef Qword                Pointer;
 
@@ -29,12 +29,12 @@ typedef Qword                Pointer;
 /* default values */
 #define invalidOidValue      invalidTag
 #define invalidIntValue      (Int)0x7fffffffffffffff
-#define invalidFloatValue    (Float)NAN
+#define invalidFloatValue    (Float)0xffffffff
 #define invalidCharValue     0xffffffff
 #define invalidPointerValue  (Pointer)0x100000000000000
 
 typedef union {Word words[4]; Qword qword;} words_qword;
-typedef union {float f; uint32_t i;} float_int;
+typedef union {float r; Float f;} float_real;
 
 static inline Int oid2int(OID oid) {
   return oid & 1 ? ((Int)oid) >> 1 : invalidIntValue;
@@ -45,21 +45,29 @@ static inline OID int2oid(Int i) {
 
 static inline Float oid2float(OID oid) {
   if ((oid & 0xff) == floatTag) {
-    float_int v;
-    v.i = oid >> 8;
-    return v.f;
+    return oid >> 8;
   } else {
     return invalidFloatValue;
   }
 }
 static inline OID float2oid(Float f) {
   if (f != invalidFloatValue) {
-    float_int v;
-    v.f = f;
-    return (((OID)v.i) << 8) | floatTag;
+    return (((OID)f) << 8) | floatTag;
   } else {
     return invalidOidValue;
   }
+}
+
+static inline float float2real(Float f) {
+  float_real v;
+  v.f = f;
+  return v.r;
+}
+
+static inline Float real2float(float r) {
+  float_real v;
+  v.r = r;
+  return v.f;
 }
 
 static inline Char oid2char(OID oid) {

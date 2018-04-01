@@ -84,4 +84,13 @@ static inline OID pointer2oid(Pointer p) {
   return p != invalidPointerValue ? ((OID)p) << 8 : invalidOidValue;
 }
 
+static inline Qword words2qword(Word w1, Word w2, Word w3, Word w4) {
+  words_qword v;
+  v.words[3] = w1;
+  v.words[2] = w2;
+  v.words[1] = w3;
+  v.words[0] = w4;
+  return v.qword;
+}
+
 #endif

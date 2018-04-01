@@ -1,6 +1,6 @@
 CFLAGS = -Wall
 
-OBJS = memory.o register.o
+OBJS = memory.o register.o codeRecord.o
 
 LIB = libViennaVM.a
 ARFLAGS = crsv

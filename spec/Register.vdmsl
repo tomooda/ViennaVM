@@ -66,7 +66,10 @@ operations
         let old_ar = activationRecord
         in
             (activationRecord := ar;
-            if ar <> Data`invalidPointerValue then Memory`increment_reference_count(ar);
+            if
+                ar <> Data`invalidPointerValue
+            then
+                Memory`increment_reference_count(ar);
             if
                 old_ar <> Data`invalidPointerValue
             then
@@ -81,7 +84,10 @@ operations
             then
                 (let p2 = Data`oid2pointer(reg.oid)
                 in
-                    if p2 <> Data`invalidPointerValue then Memory`increment_reference_count(p2))
+                    if
+                        p2 <> Data`invalidPointerValue
+                    then
+                        Memory`increment_reference_count(p2))
             else
                 Memory`increment_reference_count(p1));
         let p1 = registers(dst).p
@@ -93,7 +99,10 @@ operations
             else
                 let p2 = Data`oid2pointer(registers(dst).oid)
                 in
-                    if p2 <> Data`invalidPointerValue then Memory`decrement_reference_count(p2));
+                    if
+                        p2 <> Data`invalidPointerValue
+                    then
+                        Memory`decrement_reference_count(p2));
         registers(dst) := registers(src));
     
     read_oid : Register ==> Data`OID
@@ -123,17 +132,23 @@ operations
     
     write_oid : Register * Data`OID ==> ()
     write_oid(r, oid) ==
-        (let p1 = registers(r).p, p2 = Data`oid2pointer(oid)
+        let p1 = registers(r).p, p2 = Data`oid2pointer(oid)
         in
-            (if p1 <> Data`invalidPointerValue then Memory`decrement_reference_count(p1);
-            if p2 <> Data`invalidPointerValue then Memory`increment_reference_count(p2));
-        registers(r)
-            := mk_Reg(
-                oid,
-                Data`invalidIntValue,
-                Data`invalidFloatValue,
-                Data`invalidCharValue,
-                Data`oid2pointer(oid)));
+            (if
+                p2 <> Data`invalidPointerValue
+            then
+                Memory`increment_reference_count(p2);
+            if
+                p1 <> Data`invalidPointerValue
+            then
+                Memory`decrement_reference_count(p1);
+            registers(r)
+                := mk_Reg(
+                    oid,
+                    Data`invalidIntValue,
+                    Data`invalidFloatValue,
+                    Data`invalidCharValue,
+                    p2));
     
     read_int : Register ==> Data`Int
     read_int(r) ==
@@ -232,25 +247,15 @@ operations
                 Data`invalidPointerValue));
     
     read_pointer : Register ==> Data`Pointer
-    read_pointer(r) ==
-        let reg : Reg = registers(r), p : [Data`Pointer] = reg.p
-        in
-            if
-                p = Data`invalidPointerValue
-            then
-                let p2 : Data`Pointer = Data`oid2pointer(reg.oid)
-                in
-                    (registers(r) .p := p2;
-                    return p2)
-            else
-                return p;
+    read_pointer(r) == return registers(r).p;
     
     write_pointer : Register * Data`Pointer ==> ()
     write_pointer(r, p) ==
-        (let p1 = registers(r).p
-        in
-            if p1 <> Data`invalidPointerValue then Memory`decrement_reference_count(p1);
-        if p <> Data`invalidPointerValue then Memory`increment_reference_count(p);
+        (if p <> Data`invalidPointerValue then Memory`increment_reference_count(p);
+        if
+            registers(r).p <> Data`invalidPointerValue
+        then
+            Memory`decrement_reference_count(registers(r).p);
         registers(r)
             := mk_Reg(
                 Data`invalidTag,

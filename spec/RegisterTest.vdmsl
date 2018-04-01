@@ -24,22 +24,22 @@ operations
         assertEquals(Register`read_int(2), 123, "r2 is set to 123");
         Register`write_pointer(1, p);
         assertEquals(
-            Memory`basic_read(p + Memory`REFERENCE_COUNT_OFFSET),
+            read_reference_count(p),
             1,
             "(r1).refCount = 1");
         Register`move(2, 1);
         assertEquals(
-            Memory`basic_read(p + Memory`REFERENCE_COUNT_OFFSET),
+            read_reference_count(p),
             2,
             "(r1).refCount = 2");
         Register`write_int(2, 0);
         assertEquals(
-            Memory`basic_read(p + Memory`REFERENCE_COUNT_OFFSET),
+            read_reference_count(p),
             1,
             "(r1).refCount = 1");
         Register`move(1, 2);
         assertEquals(
-            Memory`basic_read(p + Memory`REFERENCE_COUNT_OFFSET),
+            read_reference_count(p),
             0,
             "(r1).refCount = 0"));
     

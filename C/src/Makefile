@@ -1,4 +1,4 @@
-CFLAGS = -Wall -Oz
+CFLAGS = -Wall -O4
 
 OBJS = memory.o register.o codeRecord.o
 

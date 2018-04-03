@@ -4,16 +4,20 @@
 
 Byte ** heapPages = NULL;
 Slot ** poolPages = NULL;
+int * poolSizes = NULL;
+
 int num_pages = 0;
 int max_pages = 1024;
 
 void memory_reset() {
   heapPages = malloc(sizeof(void *) * 1024);
   poolPages = malloc(sizeof(void *) * 1024);
+  poolSizes = malloc(sizeof(int) * 1024);
   max_pages = 1024;
   for (int i = 1; i < max_pages; i++) {
     heapPages[i] = NULL;
     poolPages[i] = NULL;
+    poolSizes[i] = 0;
   }
   num_pages = 0;
   add_page();
@@ -38,6 +42,7 @@ void add_page() {
   }
   heapPages[num_pages] = heap;
   poolPages[num_pages] = pool;
+  poolSizes[num_pages] = 1;
   ++num_pages;
 }
 
@@ -45,7 +50,8 @@ Pointer alloc(Qword num_slots) {
   Qword size = align(CONTENT_OFFSET + num_slots * 8);
   for (int page = 0; page < num_pages; page++) {
     Slot *pool = poolPages[page];
-    for (int i = 0; i < POOL_PAGE_SIZE; i++) {
+    int poolSize = poolSizes[page];
+    for (int i = 0; i < poolSize; i++) {
       if (pool[i].size >= size) {
 	Pointer address = pool[i].address;
 	Pointer pointer = page * HEAP_PAGE_SIZE + address;
@@ -71,6 +77,7 @@ void release(Pointer pointer) {
   Dword size = basic_read_dword(pointer + SIZE_OFFSET);
   Dword page = pointer / HEAP_PAGE_SIZE;
   Slot *pool = poolPages[page];
+  int poolSize = poolSizes[page];
   Dword address = pointer % HEAP_PAGE_SIZE;
   Dword slotsSize = slots_size(pointer);
   basic_write_dword(pointer+SIZE_OFFSET, 0);
@@ -80,15 +87,22 @@ void release(Pointer pointer) {
       decrement_reference_count(p);
     }
   }
-  for (int i = 0; i < POOL_PAGE_SIZE; i++) {
+  for (int i = 0; i < poolSize; i++) {
     if (!pool[i].size) continue;
     if (pool[i].address + pool[i].size == address) {
       Dword endAddress = address + size;
-      for (int j = 0; j < POOL_PAGE_SIZE; j++) {
+      for (int j = 0; j < poolSize; j++) {
 	if (pool[j].size && pool[j].address == endAddress) {
 	  pool[i].size += size + pool[j].size;
 	  pool[j].address = 0;
 	  pool[j].size = 0;
+	  if (j == poolSize - 1) {
+	    while (j && !pool[j].size) {
+	      --j;
+	    }
+	    poolSizes[page] = j;
+	  }
+	  return;
 	}
       }
       pool[i].size += size;
@@ -101,6 +115,12 @@ void release(Pointer pointer) {
 	  pool[i].size += pool[j].size + size;
 	  pool[j].address = 0;
 	  pool[j].size = 0;
+	  if (j == poolSize - 1) {
+	    while (j && !pool[j].size) {
+	      --j;
+	    }
+	    poolSizes[page] = j;
+	  }
 	  return;
 	}
       }

@@ -1,12 +1,15 @@
 LIB = ../src/libViennaVM.a
-CFLAGS = -L../src -lViennaVM -Oz
+CFLAGS = -L../src -lViennaVM -O4
 TESTS = testInstruction testActivationRecord testRegister testMemory testData testCodeRecord
 
 all: $(TESTS)
 	for p in $(TESTS); do echo [$$p]; ./$$p; done
 
 clean:
-	rm $(TESTS)
+	rm $(TESTS) fib
+
+fib: fib.c $(LIB) ../src/instruction.h cUnit.h
+	$(CC) $(CFLAGS) fib.c -o fib
 
 testCodeRecord: testCodeRecord.c $(LIB) ../src/instruction.h cUnit.h
 	$(CC) $(CFLAGS) testCodeRecord.c -o testCodeRecord
@@ -23,5 +26,5 @@ testRegister: testRegister.c $(LIB) ../src/register.h cUnit.h
 testMemory: testMemory.c $(LIB) ../src/memory.h ../src/data.h cUnit.h
 	$(CC) $(CFLAGS) testMemory.c -o testMemory
 
-testData: testData.o $(LIB) ../src/data.h cUnit.h
+testData: testData.c $(LIB) ../src/data.h cUnit.h
 	$(CC) $(CFLAGS) testData.c -o testData

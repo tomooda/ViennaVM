@@ -10,7 +10,7 @@ typedef struct labeldef_s {
 Pointer assemble(OID argtypes, OID rettype, Instruction *instructions) {
   int size = 0;
   int num_labels = 0;
-  int max_reg;
+  int max_reg = 0;
   for (int i = 0; instructions[i].opcode < 0x8000; i++) {
     ++size;
     if (instructions[i].imm != invalidOidValue) {

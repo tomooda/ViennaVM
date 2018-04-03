@@ -1,6 +1,7 @@
 #ifndef _INSTRUCTION_H_
 #define _INSTRUCTION_H_
 
+#include <stdio.h>
 #include <stdlib.h>
 #include "data.h"
 #include "memory.h"

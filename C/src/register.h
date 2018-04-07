@@ -109,9 +109,7 @@ static inline OID read_oid(Register r) {
 
 static inline void write_oid(Register r, OID oid) {
   Reg *reg = registers + r;
-  if (reg->oid == oid) {
-    return;
-  }
+  if (reg->oid == oid && oid != invalidOidValue) return;
   Pointer p1 = registers[r].p;
   Pointer p2 = oid2pointer(oid);
   if (p2 != invalidPointerValue) {

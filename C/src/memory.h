@@ -31,7 +31,7 @@ static inline Qword align(Qword x) {
 
 /* state variables */
 extern Byte ** heapPages;
-extern Slot ** slotPages;
+extern Slot ** poolPages;
 extern int * poolSizes;
 
 /* operations */

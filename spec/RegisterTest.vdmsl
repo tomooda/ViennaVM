@@ -23,25 +23,13 @@ operations
         Register`move(2, 1);
         assertEquals(Register`read_int(2), 123, "r2 is set to 123");
         Register`write_pointer(1, p);
-        assertEquals(
-            Memory`read_reference_count(p),
-            1,
-            "(r1).refCount = 1");
+        assertEquals(Memory`read_reference_count(p), 1, "(r1).refCount = 1");
         Register`move(2, 1);
-        assertEquals(
-            Memory`read_reference_count(p),
-            2,
-            "(r1).refCount = 2");
+        assertEquals(Memory`read_reference_count(p), 2, "(r1).refCount = 2");
         Register`write_int(2, 0);
-        assertEquals(
-            Memory`read_reference_count(p),
-            1,
-            "(r1).refCount = 1");
+        assertEquals(Memory`read_reference_count(p), 1, "(r1).refCount = 1");
         Register`move(1, 2);
-        assertEquals(
-            Memory`read_reference_count(p),
-            0,
-            "(r1).refCount = 0"));
+        assertEquals(Memory`read_reference_count(p), 0, "(r1).refCount = 0"));
     
     testWriteAndReadDifferentRegister : () ==> ()
     testWriteAndReadDifferentRegister() ==
@@ -128,8 +116,7 @@ operations
         let
             p1 = Memory`alloc(0),
             p2 = Memory`alloc(0),
-            oid1 = Data`pointer2oid(p1),
-            oid2 = Data`pointer2oid(p2)
+            oid = Data`pointer2oid(p2)
         in
             (assertEquals(
                 Memory`basic_read(p1 + Memory`REFERENCE_COUNT_OFFSET),
@@ -148,7 +135,7 @@ operations
                 Memory`basic_read(p2 + Memory`REFERENCE_COUNT_OFFSET),
                 0,
                 "no referrence to p1");
-            Register`write_oid(1, oid2);
+            Register`write_oid(1, oid);
             assertEquals(Memory`basic_read(p1 + Memory`SIZE_OFFSET), 0, "p1 is free");
             assertEquals(
                 Memory`basic_read(p2 + Memory`REFERENCE_COUNT_OFFSET),

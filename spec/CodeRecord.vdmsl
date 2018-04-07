@@ -46,7 +46,7 @@ operations
                 max_reg:Data`Word := 0,
                 ip:Data`Dword := 0,
                 labels:map seq of char to Data`Dword := {|->};
-            for mk_(opcode, reg1, reg2, reg3, imm, label) in instructions
+            for mk_(-, reg1, reg2, reg3, imm, label) in instructions
             do
                 (if reg1 > max_reg then max_reg := reg1;
                 if reg2 > max_reg then max_reg := reg2;

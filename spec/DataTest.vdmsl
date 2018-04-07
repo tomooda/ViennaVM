@@ -1,10 +1,7 @@
 module DataTest
 imports
     from Data all,
-    from UnitTesting
-        operations
-            assert renamed assert;
-            assertEquals renamed assertEquals;
+    from UnitTesting operations assertEquals renamed assertEquals;
 exports all
 definitions
 operations

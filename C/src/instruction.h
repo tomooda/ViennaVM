@@ -15,14 +15,6 @@
 #define RESET      0x0010
 #define MOVE       0x0011
 #define MOVEI      0x0012
-#define ARGS       0x0018
-#define ARG1       0x0019
-#define ARG2       0x001a
-#define ARG3       0x001b
-#define ARG4       0x001c
-#define ARG5       0x001d
-#define ARG6       0x001e
-#define ARG7       0x001f
 #define LOAD       0x0020
 #define LOAD1      0x0021
 #define LOAD2      0x0022
@@ -51,12 +43,7 @@
 #define JUMPTRUE   0x0071
 #define JUMPFALSE  0x0072
 #define CALL       0x0080
-#define CALL0      0x0081
-#define CALL1      0x0082
 #define CALLREC    0x0083
-#define CALLREC0   0x0084
-#define CALLREC1   0x0085
-#define CALLREC2   0x0086
 #define RET        0x0088
 #define RETTRUE    0x0089
 #define RETFALSE   0x008a
@@ -124,76 +111,14 @@ static inline void mov(Register dst1, Register dst2, Register src) {
   }
 }
 
-static inline void movei(Register dst1, Register dst2, Register dst3, OID imm) {
-  if (imm != invalidOidValue) {
-    if (dst1) {
-      write_oid(dst1, imm);
-    }
-    if (dst2) {
-      write_oid(dst2, imm);
-    }
-    if (dst3) {
-      write_oid(dst3, imm);
-    }
+static inline void movei(Register dst, OID imm) {
+  if (dst) {
+    write_oid(dst, imm);
   } else {
     err("movei instruction error: invalid immediate value");
   }
 }
     
-static inline void args(Register dst1, Register dst2, Register dst3) {
-  Pointer args = read_args(read_ar());
-  if (dst1) {
-    write_pointer(dst1, args);
-  }
-  if (dst2) {
-    write_pointer(dst2, args);
-  }
-  if (dst3) {
-    write_pointer(dst3, args);
-  }
-}
-    
-static inline void argi(Register dst1, Register dst2, Register dst3, int i) {
-  OID arg = read_arg(read_ar(), i);
-  if (dst1){
-    write_oid(dst1, arg);
-  }
-  if (dst2) {
-    write_oid(dst2, arg);
-  }
-  if (dst3) {
-    write_oid(dst3, arg);
-  }
-}
-
-static inline void arg1(Register dst1, Register dst2, Register dst3) {
-  argi(dst1, dst2, dst3, 1);
-}
-
-static inline void arg2(Register dst1, Register dst2, Register dst3) {
-  argi(dst1, dst2, dst3, 2);
-}
-
-static inline void arg3(Register dst1, Register dst2, Register dst3) {
-  argi(dst1, dst2, dst3, 3);
-}
-
-static inline void arg4(Register dst1, Register dst2, Register dst3) {
-  argi(dst1, dst2, dst3, 4);
-}
-
-static inline void arg5(Register dst1, Register dst2, Register dst3) {
-  argi(dst1, dst2, dst3, 5);
-}
-
-static inline void arg6(Register dst1, Register dst2, Register dst3) {
-  argi(dst1, dst2, dst3, 6);
-}
-
-static inline void arg7(Register dst1, Register dst2, Register dst3) {
-  argi(dst1, dst2, dst3, 7);
-}
-
 static inline void loadi(Register dst, Register src, Register intReg, int offset) {
   if (dst && src) {
     Pointer pointer = read_pointer(src);
@@ -505,13 +430,12 @@ static inline void jumpfalse(Register boolReg, Register intReg) {
   }
 }
     
-static inline void call(Register dst, Register crPointerReg, Register argsPointerReg) {
+static inline void call(Register dst, Register crPointerReg) {
   if (crPointerReg) {
-    Pointer args = argsPointerReg ? read_pointer(argsPointerReg) : invalidPointerValue;
     Pointer cr = read_pointer(crPointerReg);
     if (cr != invalidPointerValue) {
       Int num_regs = read_num_regs(cr);
-      Pointer ar =alloc_ar(read_ar(), args, dst, read_ip(), read_cr(), num_regs);
+      Pointer ar =alloc_ar(read_ar(), dst, read_ip(), read_cr(), num_regs);
       write_ar(ar);
       write_cr(cr);
       for (int i = 1; i <=  num_regs; i++) {
@@ -525,103 +449,14 @@ static inline void call(Register dst, Register crPointerReg, Register argsPointe
   }
 }    
 
-static inline void call0(Register dst, Register crPointerReg) {
-  if (crPointerReg) {
-    Pointer cr = read_pointer(crPointerReg);
-    if (cr != invalidPointerValue) {
-      Int num_regs = read_num_regs(cr);
-      Pointer ar = alloc_ar0(read_ar(), dst, read_ip(), read_cr(), num_regs);
-      write_ar(ar);
-      write_cr(cr);
-      for (int i = 1; i <=  num_regs; i++) {
-	write_local(ar, i, read_oid(i));
-      }
-    } else {
-      err("call0 instruction error: second operand not pointer");
-    }
-  } else {
-    err("call0 instruction error: operands not specified");
-  }
-}    
-    
-static inline void call1(Register dst, Register crPointerReg, Register argReg) {
-  if (crPointerReg) {
-    Pointer cr = read_pointer(crPointerReg);
-    if (cr != invalidPointerValue) {
-      Int num_regs = read_num_regs(cr);
-      Pointer ar = alloc_ar1(read_ar(), read_oid(argReg), dst, read_ip(), read_cr(), num_regs);
-      write_ar(ar);
-      write_cr(cr);
-      for (int i = 1; i <=  num_regs; i++) {
-	write_local(ar, i, read_oid(i));
-      }
-    } else {
-      err("call1 instruction error: second operand not pointer");
-    }
-  } else {
-    err("call1 instruction error: operands not specified");
-  }
-}    
-    
-static inline void callrec(Register dst, Register argsPointerReg) {
-  if (argsPointerReg) {
-    Pointer args = read_pointer(argsPointerReg);
-    Pointer cr = read_cr();
-    Int num_regs = read_num_regs(cr);
-    Pointer ar = alloc_ar(read_ar(), args, dst, read_ip(), cr, num_regs);
-    write_ar(ar);
-    write_ip(0);
-    for (int i = 1; i <= num_regs; i++) {
-      write_local(ar, i, read_oid(i));
-    }
-  } else {
-    err("callrec instruction error: operands not specified");
-  }
-}
-    
-static inline void callrec0(Register dst) {
+static inline void callrec(Register dst) {
   Pointer cr = read_cr();
   Int num_regs = read_num_regs(cr);
-  Pointer ar =alloc_ar0(read_ar(), dst, read_ip(), cr, num_regs);
+  Pointer ar = alloc_ar(read_ar(), dst, read_ip(), cr, num_regs);
   write_ar(ar);
   write_ip(0);
   for (int i = 1; i <= num_regs; i++) {
     write_local(ar, i, read_oid(i));
-  }
-}
-    
-static inline void callrec1(Register dst, Register arg1) {
-  if (arg1) {
-    Pointer args = alloc(1);
-    Pointer cr = read_cr();
-    Int num_regs = read_num_regs(cr);
-    Pointer ar = alloc_ar(read_ar(), args, dst, read_ip(), cr, num_regs);
-    write_slot(args, 1, read_oid(arg1));
-    write_ar(ar);
-    write_ip(0);
-    for (int i = 1; i <= num_regs; i++) {
-      write_local(ar, i, read_oid(i));
-    }
-  } else {
-    err("callrec1 instruction error: second operand not specified");
-  }
-}
-    
-static inline void callrec2(Register dst, Register arg1, Register arg2) {
-  if (arg1 && arg2) {
-    Pointer args = alloc(2);
-    write_slot(args, 1, read_oid(arg1));
-    write_slot(args, 2, read_oid(arg2));
-    Pointer cr = read_cr();
-    Int num_regs = read_num_regs(cr);
-    Pointer ar = alloc_ar(read_ar(), args, dst, read_ip(), cr, num_regs);
-    write_ar(ar);
-    write_ip(0);
-    for (int i = 1; i <= num_regs; i++) {
-      write_local(ar, i, read_oid(i));
-    }
-  } else {
-    err("callrec2 instruction error: second/third operand not specified");
   }
 }
     
@@ -728,13 +563,14 @@ static inline void retfalse(Register boolReg, Register src) {
   }
 }
 
+#define reg1(code) ((code >> 32) & 0xffff)
+#define reg2(code) ((code >> 16) & 0xffff)
+#define reg3(code) (code & 0xffff)
+
 static inline void step() {
   Qword code = (Qword)oid2int(fetch());
   if (code != invalidIntValue) {
     int opcode = (code >> 48) & 0x7fff;
-    int reg1 = (code >> 32) & 0xffff;
-    int reg2 = (code >> 16) & 0xffff;
-    int reg3 = code & 0xffff;
     switch (opcode) {
     case ERR:
       err("error instruction invoked");
@@ -743,151 +579,112 @@ static inline void step() {
       nop();
       return;
     case ALLOC:
-      allocate(reg1, reg2, reg3, fetch());
+      allocate(reg1(code), reg2(code), reg3(code), fetch());
       return;
     case RESET:
-      reset(reg1, reg2, reg3);
+      reset(reg1(code), reg2(code), reg3(code));
       return;
     case MOVE:
-      mov(reg1, reg2, reg3);
+      mov(reg1(code), reg2(code), reg3(code));
       return;
     case MOVEI:
-      movei(reg1, reg2, reg3, fetch());
-      return;
-    case ARGS:
-      args(reg1, reg2, reg3);
-      return;
-    case ARG1:
-      arg1(reg1, reg2, reg3);
-      return;
-    case ARG2:
-      arg2(reg1, reg2, reg3);
-      return;
-    case ARG3:
-      arg3(reg1, reg2, reg3);
-      return;
-    case ARG4:
-      arg4(reg1, reg2, reg3);
-      return;
-    case ARG5:
-      arg5(reg1, reg2, reg3);
-      return;
-    case ARG6:
-      arg6(reg1, reg2, reg3);
-      return;
-    case ARG7:
-      arg7(reg1, reg2, reg3);
+      movei(reg1(code), fetch());
       return;
     case LOAD:
-      load(reg1, reg2, reg3);
+      load(reg1(code), reg2(code), reg3(code));
       return;
     case LOAD1:
-      load1(reg1, reg2, reg3);
+      load1(reg1(code), reg2(code), reg3(code));
       return;
     case LOAD2:
-      load2(reg1, reg2, reg3);
+      load2(reg1(code), reg2(code), reg3(code));
       return;
     case LOAD3:
-      load3(reg1, reg2, reg3);
+      load3(reg1(code), reg2(code), reg3(code));
       return;
     case LOAD4:
-      load4(reg1, reg2, reg3);
+      load4(reg1(code), reg2(code), reg3(code));
       return;
     case LOAD5:
-      load5(reg1, reg2, reg3);
+      load5(reg1(code), reg2(code), reg3(code));
       return;
     case LOAD6:
-      load6(reg1, reg2, reg3);
+      load6(reg1(code), reg2(code), reg3(code));
       return;
     case LOAD7:
-      load7(reg1, reg2, reg3);
+      load7(reg1(code), reg2(code), reg3(code));
       return;
     case STORE:
-      store(reg1, reg2, reg3);
+      store(reg1(code), reg2(code), reg3(code));
       return;
     case STORE1:
-      store1(reg1, reg2, reg3);
+      store1(reg1(code), reg2(code), reg3(code));
       return;
     case STORE2:
-      store2(reg1, reg2, reg3);
+      store2(reg1(code), reg2(code), reg3(code));
       return;
     case STORE3:
-      store3(reg1, reg2, reg3);
+      store3(reg1(code), reg2(code), reg3(code));
       return;
     case STORE4:
-      store4(reg1, reg2, reg3);
+      store4(reg1(code), reg2(code), reg3(code));
       return;
     case STORE5:
-      store5(reg1, reg2, reg3);
+      store5(reg1(code), reg2(code), reg3(code));
       return;
     case STORE6:
-      store6(reg1, reg2, reg3);
+      store6(reg1(code), reg2(code), reg3(code));
       return;
     case STORE7:
-      store7(reg1, reg2, reg3);
+      store7(reg1(code), reg2(code), reg3(code));
       return;
     case ADD:
-      add(reg1, reg2, reg3);
+      add(reg1(code), reg2(code), reg3(code));
       return;
     case SUB:
-      sub(reg1, reg2, reg3);
+      sub(reg1(code), reg2(code), reg3(code));
       return;
     case MUL:
-      mul(reg1, reg2, reg3);
+      mul(reg1(code), reg2(code), reg3(code));
       return;
     case IDIV:
-      idiv(reg1, reg2, reg3);
+      idiv(reg1(code), reg2(code), reg3(code));
       return;
     case IMOD:
-      imod(reg1, reg2, reg3);
+      imod(reg1(code), reg2(code), reg3(code));
       return;
     case LESSTHAN:
-      lessthan(reg1, reg2, reg3);
+      lessthan(reg1(code), reg2(code), reg3(code));
       return;
     case EQUAL:
-      equal(reg1, reg2, reg3);
+      equal(reg1(code), reg2(code), reg3(code));
       return;
     case NOT:
-      bnot(reg1, reg2);
+      bnot(reg1(code), reg2(code));
       return;
     case JUMP:
-      jump(reg1);
+      jump(reg1(code));
       return;
     case JUMPTRUE:
-      jumptrue(reg1, reg2);
+      jumptrue(reg1(code), reg2(code));
       return;
     case JUMPFALSE:
-      jumpfalse(reg1, reg2);
+      jumpfalse(reg1(code), reg2(code));
       return;
     case CALL:
-      call(reg1, reg2, reg3);
-      return;
-    case CALL0:
-      call0(reg1, reg2);
-      return;
-    case CALL1:
-      call1(reg1, reg2, reg3);
+      call(reg1(code), reg2(code));
       return;
     case CALLREC:
-      callrec(reg1, reg2);
-      return;
-    case CALLREC0:
-      callrec0(reg1);
-      return;
-    case CALLREC1:
-      callrec1(reg1, reg2);
-      return;
-    case CALLREC2:
-      callrec2(reg1, reg2, reg3);
+      callrec(reg1(code));
       return;
     case RET:
-      ret(reg1);
+      ret(reg1(code));
       return;
     case RETTRUE:
-      rettrue(reg1, reg2);
+      rettrue(reg1(code), reg2(code));
       return;
     case RETFALSE:
-      retfalse(reg1, reg2);
+      retfalse(reg1(code), reg2(code));
       return;
     default:
       err("decode error: unknown instruction");

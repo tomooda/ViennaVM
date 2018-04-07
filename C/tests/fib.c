@@ -12,16 +12,15 @@ int main(int argc, char **argv) {
   int n;
   sscanf(argv[1],"%d",&n);
   static OID _ = invalidOidValue;
-  Instruction src[11] = {
-    /* r1: 1, i-1, sum(i-1), r2: i */
-    {MOVEI,    1, 0, 0, int2oid(1), NULL, NULL},
-    {ARG1,     2, 0, 0, _, NULL, NULL},
-    {LESSTHAN, 3, 1, 2, _, NULL, NULL},
-    {RETFALSE, 3, 2, 0, _, NULL, NULL},
-    {SUB,      2, 2, 1, _, NULL, NULL},
-    {CALLREC1, 3, 2, 0, _, NULL, NULL},
-    {SUB,      2, 2, 1, _, NULL, NULL},
-    {CALLREC1, 1, 2, 0, _, NULL, NULL},
+  Instruction src[10] = {
+    /* r1: i, i-1, i-2 r2: 1, sum(i-1) */
+    {MOVEI,    2, 0, 0, int2oid(1), NULL, NULL},
+    {LESSTHAN, 3, 2, 1, _, NULL, NULL},
+    {RETFALSE, 3, 1, 0, _, NULL, NULL},
+    {SUB,      1, 1, 2, _, NULL, NULL},
+    {CALLREC, 3, 0, 0, _, NULL, NULL},
+    {SUB,      1, 1, 2, _, NULL, NULL},
+    {CALLREC, 1, 0, 0, _, NULL, NULL},
     {ADD,      1, 1, 3, _, NULL, NULL},
     {RET,      1, 0, 0, _, NULL, NULL},
     {0xffff,   0, 0, 0, _, NULL, NULL}};
@@ -32,7 +31,7 @@ int main(int argc, char **argv) {
   write_ip(0);
   write_int(1, n);
   write_pointer(2, cr);
-  call1(1, 2, 1);
+  call(1, 2);
   while (read_cr() != invalidPointerValue) {
     step();
   }

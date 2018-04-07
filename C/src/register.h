@@ -64,6 +64,9 @@ static inline void write_ar(Pointer ar) {
 }
 
 static inline void move(Register dst, Register src) {
+  if (dst == src) {
+    return;
+  }
   Pointer srcPointer = registers[src].p;
   Pointer dstPointer = registers[dst].p;
   if (srcPointer != invalidPointerValue) {
@@ -105,9 +108,12 @@ static inline OID read_oid(Register r) {
 }
 
 static inline void write_oid(Register r, OID oid) {
+  Reg *reg = registers + r;
+  if (reg->oid == oid) {
+    return;
+  }
   Pointer p1 = registers[r].p;
   Pointer p2 = oid2pointer(oid);
-  Reg *reg = registers + r;
   if (p2 != invalidPointerValue) {
     increment_reference_count(p2);
   }
@@ -134,6 +140,9 @@ static inline Int read_int(Register r) {
 
 static inline void write_int(Register r, Int i) {
   Reg *reg = &registers[r];
+  if (reg->i == i) {
+    return;
+  }
   if (reg->p != invalidPointerValue) {
     decrement_reference_count(reg->p);
   }
@@ -162,6 +171,9 @@ static inline Float read_float(Register r) {
     
 static inline void write_float(Register r, Float f) {
   Reg *reg = registers+r;
+  if (reg->f == f) {
+    return;
+  }
   if (reg->p != invalidPointerValue) {
     decrement_reference_count(reg->p);
   }
@@ -185,6 +197,9 @@ static inline Char read_char(Register r) {
 
 static inline void write_char(Register r, Char c) {
   Reg *reg = registers+r;
+  if (reg -> c == c) {
+    return;
+  }
   if (reg->p != invalidPointerValue) {
     decrement_reference_count(reg->p);
   }
@@ -201,6 +216,9 @@ static inline Pointer read_pointer(Register r) {
     
 static inline void write_pointer(Register r, Pointer p) {
   Reg *reg = registers+r;
+  if (reg -> p == p) {
+    return;
+  }
   if (p != invalidPointerValue) {
     increment_reference_count(p);
   }

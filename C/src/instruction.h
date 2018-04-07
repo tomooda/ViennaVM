@@ -115,8 +115,7 @@ static inline void movei(Register dst, OID imm) {
   if (dst) {
     write_oid(dst, imm);
   } else {
-    err("movei instruction error: operand not specified
-");
+    err("movei instruction error: operand not specified ");
   }
 }
     

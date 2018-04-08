@@ -49,6 +49,10 @@ static inline void basic_write(Pointer pointer, Qword data) {
   *((Qword *)(heapPages[pointer / HEAP_PAGE_SIZE]+(pointer % HEAP_PAGE_SIZE))) = data;
 }
 
+static inline void basic_init(Pointer pointer) {
+  *((Qword *)(heapPages[pointer / HEAP_PAGE_SIZE]+(pointer % HEAP_PAGE_SIZE))) = invalidOidValue;
+}
+
 static inline Dword basic_read_dword(Pointer pointer) {
   return *((Dword *)(heapPages[pointer / HEAP_PAGE_SIZE]+(pointer % HEAP_PAGE_SIZE)));
 }
@@ -85,17 +89,7 @@ static inline OID read_slot(Pointer pointer, Int index) {
   return basic_read(pointer + CONTENT_OFFSET + (index - 1) * 8);
 }
 
-static inline void write_slot(Pointer pointer, Int index, OID oid) {
-  Pointer oidPointer = oid2pointer(oid);
-  if (oidPointer != invalidPointerValue) {
-    increment_reference_count(oidPointer);
-  }
-  Pointer address = pointer + CONTENT_OFFSET + (index - 1) * 8;
-  Pointer oldPointer = oid2pointer(basic_read(address));
-  if (oldPointer != invalidPointerValue) {
-    decrement_reference_count(oldPointer);
-  }
-  basic_write(address, oid);
-}
+extern void write_slot(Pointer pointer, Int index, OID oid);
+extern void init_slot(Pointer pointer, Int index, OID oid);
 
 #endif

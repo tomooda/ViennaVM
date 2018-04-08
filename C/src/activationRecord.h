@@ -13,9 +13,9 @@
 
 static inline Pointer alloc_ar(Pointer caller, Register ret_reg, Dword ret_ip, Pointer ret_cr, Register num_locals) {
   Pointer ar = alloc(LOCAL_SLOT_OFFSET + num_locals);
-  write_slot(ar, DYNAMIC_LINK_SLOT, pointer2oid(caller));
-  write_slot(ar, RETURN_IP_REG_SLOT, int2oid(ret_ip+ret_reg*0x100000000));
-  write_slot(ar, RETURN_CR_SLOT, pointer2oid(ret_cr));
+  init_slot(ar, DYNAMIC_LINK_SLOT, pointer2oid(caller));
+  init_slot(ar, RETURN_IP_REG_SLOT, int2oid(ret_ip+ret_reg*0x100000000));
+  init_slot(ar, RETURN_CR_SLOT, pointer2oid(ret_cr));
   return ar;
 }
 
@@ -41,6 +41,10 @@ static inline OID read_local(Pointer ar, Dword i) {
     
 static inline void write_local(Pointer ar, Dword i, OID oid) {
   write_slot(ar, LOCAL_SLOT_OFFSET + i, oid);
+}
+
+static inline void init_local(Pointer ar, Dword i, OID oid) {
+  init_slot(ar, LOCAL_SLOT_OFFSET + i, oid);
 }
 
 #endif

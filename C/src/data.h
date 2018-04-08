@@ -36,6 +36,10 @@ typedef Qword                Pointer;
 typedef union {Word words[4]; Qword qword;} words_qword;
 typedef union {float r; Float f;} float_real;
 
+static inline int isPointer(oid) {
+  return !(oid & 3);
+}
+
 static inline Int oid2int(OID oid) {
   return oid & 1 ? ((Int)oid) >> 1 : invalidIntValue;
 }

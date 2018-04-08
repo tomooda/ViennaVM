@@ -3,6 +3,8 @@
 #include "../src/register.h"
 #include "../src/instruction.h"
 #include "cUnit.h"
+#include <time.h>
+#include <stdio.h>
 
 int main(int argc, char **argv) {
   if (argc != 2) {
@@ -24,6 +26,7 @@ int main(int argc, char **argv) {
     {ADD,      1, 1, 3, _, NULL, NULL},
     {RET,      1, 0, 0, _, NULL, NULL},
     {0xffff,   0, 0, 0, _, NULL, NULL}};
+  clock_t start = clock();
   memory_reset();
   register_reset();
   Pointer cr = assemble(invalidOidValue, invalidOidValue, src);
@@ -36,5 +39,6 @@ int main(int argc, char **argv) {
     step();
   }
   printf("fib(%d)=%lld\n", n, read_int(1));
+  printf("%d ms\n", (int)(clock()-start)/1000);
   return 0;
 }

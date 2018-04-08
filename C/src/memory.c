@@ -91,7 +91,7 @@ void release(Pointer pointer) {
     if (!pool[i].size) continue;
     if (pool[i].address + pool[i].size == address) {
       Dword endAddress = address + size;
-      for (int j = 0; j < poolSize; j++) {
+      for (int j = i+1; j <= poolSize; j++) {
 	if (pool[j].size && pool[j].address == endAddress) {
 	  pool[i].size += size + pool[j].size;
 	  pool[j].address = 0;
@@ -109,7 +109,7 @@ void release(Pointer pointer) {
       return;
     }
     if (address + size == pool[i].address) {
-      for (int j = 0; j < POOL_PAGE_SIZE; j++) {
+      for (int j = i+1; j <= poolSize; j++) {
 	if (pool[j].size && pool[j].address + pool[j].size == address) {
 	  pool[i].address = pool[j].address;
 	  pool[i].size += pool[j].size + size;
@@ -139,3 +139,23 @@ void release(Pointer pointer) {
   fprintf(stderr, "can't free a pointer. something must have gone wrong!\n");
   exit(1);
 }
+
+void write_slot(Pointer pointer, Int index, OID oid) {
+  Pointer address = pointer + CONTENT_OFFSET + (index - 1) * 8;
+  Pointer oldOid = basic_read(address);
+  if (isPointer(oid)) {
+    increment_reference_count(oid2pointer(oid));
+  }
+  if (isPointer(oldOid)) {
+    decrement_reference_count(oid2pointer(oldOid));
+  }
+  basic_write(address, oid);
+}
+
+void init_slot(Pointer pointer, Int index, OID oid) {
+  if (isPointer(oid)) {
+    increment_reference_count(oid2pointer(oid));
+  }
+  basic_write(pointer + CONTENT_OFFSET + (index - 1) * 8, oid);
+}
+

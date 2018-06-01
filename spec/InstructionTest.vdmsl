@@ -33,7 +33,7 @@ operations
     test_alloc : () ==> ()
     test_alloc() ==
         (dcl p:Data`Pointer;
-        Instruction`alloc(1, 0, 0, Data`int2oid(0));
+        Instruction`alloc(1, Data`int2oid(0));
         p := Register`read_pointer(1);
         assert(p <> Data`invalidPointerValue, "r1 is set to allocated heap");
         assert(
@@ -47,8 +47,8 @@ operations
     test_store_load : () ==> ()
     test_store_load() ==
         (dcl p1:Data`Pointer, p2:Data`Pointer;
-        Instruction`alloc(1, 0, 0, Data`int2oid(1));
-        Instruction`alloc(2, 0, 0, Data`int2oid(0));
+        Instruction`alloc(1, Data`int2oid(1));
+        Instruction`alloc(2, Data`int2oid(0));
         p1 := Register`read_pointer(1);
         p2 := Register`read_pointer(2);
         assertEquals(

@@ -34,7 +34,7 @@ init s ==
 end
 
 operations
-    read_cr : () ==> Data`Pointer
+    pure read_cr : () ==> Data`Pointer
     read_cr() == return codeRecord;
     
     write_cr : Data`Pointer ==> ()
@@ -52,13 +52,13 @@ operations
             then
                 Memory`decrement_reference_count(old_cr));
     
-    read_ip : () ==> Data`Dword
+    pure read_ip : () ==> Data`Dword
     read_ip() == return instructionPointer;
     
     write_ip : Data`Dword ==> ()
     write_ip(i) == instructionPointer := i;
     
-    read_ar : () ==> Data`Pointer
+    pure read_ar : () ==> Data`Pointer
     read_ar() == return activationRecord;
     
     write_ar : Data`Pointer ==> ()
@@ -246,7 +246,7 @@ operations
                 c,
                 Data`invalidPointerValue));
     
-    read_pointer : Register ==> Data`Pointer
+    pure read_pointer : Register ==> Data`Pointer
     read_pointer(r) == return registers(r).p;
     
     write_pointer : Register * Data`Pointer ==> ()

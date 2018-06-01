@@ -21,32 +21,43 @@ operations
                 RETURN_IP_REG_SLOT,
                 Data`int2oid(ret_ip + ret_reg  * 0x100000000));
             Memory`write_slot(pointer, RETURN_CR_SLOT, Data`pointer2oid(ret_cr));
-            return pointer);
+            return pointer)
+    post 
+        ((read_dynamic_link(RESULT) = caller and read_ret_reg(RESULT) = ret_reg)
+            and read_return_ip(RESULT) = ret_ip)
+        and read_return_cr(RESULT) = ret_cr;
     
-    read_dynamic_link : Data`Pointer ==> Data`Pointer
+    pure read_dynamic_link : Data`Pointer ==> Data`Pointer
     read_dynamic_link(ar) ==
-        return Data`oid2pointer(Memory`read_slot(ar, DYNAMIC_LINK_SLOT));
+        return Data`oid2pointer(Memory`read_slot(ar, DYNAMIC_LINK_SLOT))
+    pre  ar <> Data`invalidPointerValue;
     
-    read_ret_reg : Data`Pointer ==> Data`Word
+    pure read_ret_reg : Data`Pointer ==> Data`Word
     read_ret_reg(pointer) ==
         return Data`oid2int(Memory`read_slot(pointer, RETURN_IP_REG_SLOT))
-            div 0x100000000;
+            div 0x100000000
+    pre  pointer <> Data`invalidPointerValue;
     
-    read_return_ip : Data`Pointer ==> Data`Dword
+    pure read_return_ip : Data`Pointer ==> Data`Dword
     read_return_ip(pointer) ==
         return Data`oid2int(Memory`read_slot(pointer, RETURN_IP_REG_SLOT))
-            mod 0x100000000;
+            mod 0x100000000
+    pre  pointer <> Data`invalidPointerValue;
     
-    read_return_cr : Data`Pointer ==> Data`Pointer
+    pure read_return_cr : Data`Pointer ==> Data`Pointer
     read_return_cr(pointer) ==
-        return Data`oid2pointer(Memory`read_slot(pointer, RETURN_CR_SLOT));
+        return Data`oid2pointer(Memory`read_slot(pointer, RETURN_CR_SLOT))
+    pre  pointer <> Data`invalidPointerValue;
     
-    read_local : Data`Pointer * Data`Dword ==> Data`OID
+    pure read_local : Data`Pointer * Data`Dword ==> Data`OID
     read_local(pointer, i) ==
-        return Memory`read_slot(pointer, LOCAL_SLOT_OFFSET + i);
+        return Memory`read_slot(pointer, LOCAL_SLOT_OFFSET + i)
+    pre  pointer <> Data`invalidPointerValue;
     
     write_local : Data`Pointer * Data`Dword * Data`OID ==> ()
     write_local(pointer, i, oid) ==
-        return Memory`write_slot(pointer, LOCAL_SLOT_OFFSET + i, oid);
+        return Memory`write_slot(pointer, LOCAL_SLOT_OFFSET + i, oid)
+    pre  pointer <> Data`invalidPointerValue
+    post  read_local(pointer, i) = oid;
 
 end ActivationRecord

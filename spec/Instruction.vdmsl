@@ -64,7 +64,7 @@ operations
                             (exit Register`read_ip() - 1;
                             err("error instruction invoked")),
                         (NOP) -> nop(),
-                        (ALLOC) -> alloc(reg1, reg2, reg3, fetch()),
+                        (ALLOC) -> alloc(reg1, fetch()),
                         (RESET) -> reset(reg1, reg2, reg3),
                         (MOVE) -> move(reg1, reg2, reg3),
                         (MOVEI) -> movei(reg1, fetch()),
@@ -124,9 +124,8 @@ operations
     nop : () ==> ()
     nop() == skip;
     
-    alloc : Register`Register * Register`Register * Register`Register *
-    Data`OID ==> ()
-    alloc(reg1, reg2, reg3, imm) ==
+    alloc : Register`Register * Data`OID ==> ()
+    alloc(reg1, imm) ==
         let size = Data`oid2int(imm)
         in
             if
@@ -137,13 +136,12 @@ operations
                     if
                         p <> Data`invalidPointerValue
                     then
-                        (if reg1 > 0 then Register`write_pointer(reg1, p);
-                        if reg2 > 0 then Register`write_pointer(reg2, p);
-                        if reg3 > 0 then Register`write_pointer(reg3, p))
+                        Register`write_pointer(reg1, p)
                     else
                         err("alloc instruction error: allocator returned invalid pointer")
             else
-                err("alloc instruction error: size is not integer");
+                err("alloc instruction error: size is not integer")
+    post  Register`read_pointer(reg1) <> Data`invalidPointerValue;
     
     reset : Register`Register * Register`Register * Register`Register ==> ()
     reset(reg1, reg2, reg3) ==

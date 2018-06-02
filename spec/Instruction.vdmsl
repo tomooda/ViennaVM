@@ -141,7 +141,9 @@ operations
                         err("alloc instruction error: allocator returned invalid pointer")
             else
                 err("alloc instruction error: size is not integer")
-    post  Register`read_pointer(reg1) <> Data`invalidPointerValue;
+    post 
+        Register`read_pointer(reg1) <> Data`invalidPointerValue
+        and Memory`read_reference_count(Register`read_pointer(reg1)) = 1;
     
     reset : Register`Register * Register`Register * Register`Register ==> ()
     reset(reg1, reg2, reg3) ==

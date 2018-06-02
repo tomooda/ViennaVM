@@ -282,7 +282,7 @@ operations
             (basic_write(p, c);
             if c = 0 then release(pointer));
     
-    read_reference_count : Data`Pointer ==> Data`Qword
+    pure read_reference_count : Data`Pointer ==> Data`Qword
     read_reference_count(pointer) ==
         return basic_read(pointer + REFERENCE_COUNT_OFFSET);
 

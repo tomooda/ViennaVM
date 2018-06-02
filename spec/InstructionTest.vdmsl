@@ -27,13 +27,14 @@ operations
         (Instruction`reset(1, 2, 0);
         Instruction`movei(1, Data`int2oid(0));
         assertEquals(Register`read_int(1), 0, "r1 is now set to 0");
-        Instruction`move(2, 0, 1);
+        Instruction`move(2, 1);
         assertEquals(Register`read_int(2), 0, "r2 is now set to 0"));
     
     test_alloc : () ==> ()
     test_alloc() ==
         (dcl p:Data`Pointer;
-        Instruction`alloc(1, Data`int2oid(0));
+        Register`write_int(1, 0);
+        Instruction`alloc(1, 1);
         p := Register`read_pointer(1);
         assert(p <> Data`invalidPointerValue, "r1 is set to allocated heap");
         assert(
@@ -47,8 +48,10 @@ operations
     test_store_load : () ==> ()
     test_store_load() ==
         (dcl p1:Data`Pointer, p2:Data`Pointer;
-        Instruction`alloc(1, Data`int2oid(1));
-        Instruction`alloc(2, Data`int2oid(0));
+        Register`write_int(1, 1);
+        Instruction`alloc(1, 1);
+        Register`write_int(2, 0);
+        Instruction`alloc(2, 2);
         p1 := Register`read_pointer(1);
         p2 := Register`read_pointer(2);
         assertEquals(
@@ -473,7 +476,7 @@ operations
                     [mk_(Instruction`MOVEI, 1, 0, 0, Data`int2oid(0), nil),
                     mk_(Instruction`MOVEI, 3, 0, 0, Data`int2oid(10), nil),
                     mk_(Instruction`MOVEI, 2, 0, 0, Data`int2oid(1), nil),
-                    mk_(Instruction`MOVE, 4, 0, 2, nil, nil),
+                    mk_(Instruction`MOVE, 4, 2, 0, nil, nil),
                     mk_(Instruction`MOVEI, 5, 0, 0, "loop", nil),
                     mk_(Instruction`ADD, 1, 1, 2, nil, "loop"),
                     mk_(Instruction`ADD, 2, 2, 4, nil, nil),

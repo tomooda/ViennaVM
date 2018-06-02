@@ -64,9 +64,9 @@ operations
                             (exit Register`read_ip() - 1;
                             err("error instruction invoked")),
                         (NOP) -> nop(),
-                        (ALLOC) -> alloc(reg1, fetch()),
+                        (ALLOC) -> alloc(reg1, reg2),
                         (RESET) -> reset(reg1, reg2, reg3),
-                        (MOVE) -> move(reg1, reg2, reg3),
+                        (MOVE) -> move(reg1, reg2),
                         (MOVEI) -> movei(reg1, fetch()),
                         (LOAD) -> load(reg1, reg2, reg3),
                         (LOAD1) -> load1(reg1, reg2, reg3),
@@ -124,9 +124,9 @@ operations
     nop : () ==> ()
     nop() == skip;
     
-    alloc : Register`Register * Data`OID ==> ()
-    alloc(reg1, imm) ==
-        let size = Data`oid2int(imm)
+    alloc : Register`Register * Register`Register ==> ()
+    alloc(reg1, reg2) ==
+        let size = Register`read_int(reg2)
         in
             if
                 size <> Data`invalidIntValue
@@ -151,13 +151,12 @@ operations
         if reg2 > 0 then Register`write_oid(reg2, Data`invalidOidValue);
         if reg3 > 0 then Register`write_oid(reg3, Data`invalidOidValue));
     
-    move : Register`Register * Register`Register * Register`Register ==> ()
-    move(dst1, dst2, src) ==
+    move : Register`Register * Register`Register ==> ()
+    move(dst, src) ==
         if
             src > 0
         then
-            (if dst1 > 0 then Register`move(dst1, src);
-            if dst2 > 0 then Register`move(dst2, src))
+            Register`move(dst, src)
         else
             err("move instruction error: src register not specified");
     

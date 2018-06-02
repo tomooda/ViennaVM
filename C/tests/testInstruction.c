@@ -73,13 +73,14 @@ static int test_move() {
   reset(1, 2, 0);
   movei(1, int2oid(0));
   assertEquals(read_int(1), 0, "r1 is now set to 0");
-  mov(2, 0, 1);
+  mov(2, 1);
   assertEquals(read_int(2), 0, "r2 is now set to 0");
   return 0;
 }
     
 static int test_alloc() {
-  allocate(1, 0, 0, int2oid(0));
+  write_int(1, 0);
+  allocate(1, 1);
   Pointer p = read_pointer(1);
   assert(p != invalidPointerValue, "r1 is set to allocated heap");
   assert(basic_read(p + REFERENCE_COUNT_OFFSET) > 0,"the allocated heap is valid");
@@ -89,8 +90,10 @@ static int test_alloc() {
 }
     
 static int test_store_load() {
-  allocate(1, 0, 0, int2oid(1));
-  allocate(2, 0, 0, int2oid(0));
+  write_int(1, 1);
+  allocate(1, 1);
+  write_int(2, 0);
+  allocate(2, 2);
   Pointer p1 = read_pointer(1);
   Pointer p2 = read_pointer(2);
   assertEquals
@@ -435,7 +438,7 @@ static int test_step() {
     {MOVEI, 1, 0, 0, int2oid(0), NULL, NULL},
     {MOVEI, 3, 0, 0, int2oid(10), NULL, NULL},
     {MOVEI, 2, 0, 0, int2oid(1), NULL, NULL},
-    {MOVE,  4, 0, 2, invalidOidValue, NULL, NULL},
+    {MOVE,  4, 2, 0, invalidOidValue, NULL, NULL},
     {MOVEI, 5, 0, 0, invalidOidValue, "loop", NULL},
     {ADD, 1, 1, 2, invalidOidValue, NULL, "loop"},
     {ADD, 2, 2, 4, invalidOidValue, NULL, NULL},

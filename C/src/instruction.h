@@ -69,9 +69,9 @@ static inline OID fetch() {
 }
 
 extern void nop();
-extern void allocate(Register reg1, Register reg2, Register reg3, OID imm);
+extern void allocate(Register reg1, Register reg2);
 extern void reset(Register reg1, Register reg2, Register reg3);
-extern void mov(Register dst1, Register dst2, Register src);
+extern void mov(Register dst, Register src);
 extern void movei(Register dst, OID imm);
 extern void loadi(Register dst, Register src, Register intReg, int offset);  
 extern void load(Register dst, Register src, Register intReg);
@@ -125,13 +125,13 @@ static inline void step() {
     nop();
     return;
   case ALLOC:
-    allocate(reg1(code), reg2(code), reg3(code), fetch());
+    allocate(reg1(code), reg2(code));
     return;
   case RESET:
     reset(reg1(code), reg2(code), reg3(code));
     return;
   case MOVE:
-    mov(reg1(code), reg2(code), reg3(code));
+    mov(reg1(code), reg2(code));
     return;
   case MOVEI:
     movei(reg1(code), fetch());

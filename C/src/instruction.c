@@ -3,19 +3,11 @@
 void nop() {
 }
 
-void allocate(Register reg1, Register reg2, Register reg3, OID imm) {
-  Int size = oid2int(imm);
+void allocate(Register reg1, Register reg2) {
+  Int size = read_int(reg2);
   if (size != invalidIntValue) {
     Pointer p = alloc(size);
-    if (reg1) {
-      write_pointer(reg1, p);
-    }
-    if (reg2) {
-      write_pointer(reg2, p);
-    }
-    if (reg3) {
-      write_pointer(reg3, p);
-    }
+    write_pointer(reg1, p);
   } else {
     err("alloc instruction error: size is not integer");
   }
@@ -33,25 +25,12 @@ void reset(Register reg1, Register reg2, Register reg3) {
   }
 }
     
-void mov(Register dst1, Register dst2, Register src) {
-  if (src) {
-    if (dst1) {
-      move(dst1, src);
-    }
-    if (dst2) {
-      move(dst2, src);
-    }
-  } else {
-    err("move instruction error: src register not specified");
-  }
+void mov(Register dst, Register src) {
+  move(dst, src);
 }
 
 void movei(Register dst, OID imm) {
-  if (dst) {
-    write_oid(dst, imm);
-  } else {
-    err("movei instruction error: operand not specified ");
-  }
+  write_oid(dst, imm);
 }
     
 void loadi(Register dst, Register src, Register intReg, int offset) {

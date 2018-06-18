@@ -18,6 +18,8 @@ values
      /* oid tag flags */
      smallIntegerFlag = 1;
      immediateFlag = 2;
+     typeFlag = 4;
+     optionTypeFlag = 8;
      /* immediate value oid tags */
      smallIntegerTag = 1;
      invalidTag = 0x0a;
@@ -27,6 +29,42 @@ values
      nilValue = 0x22;
      trueValue = 0x2a;
      falseValue = 0x32;
+     undefinedValue = 0x3a;
+     emptySeqValue = 0x82;
+     emptySetValue = 0x8a;
+     emptyMapValue = 0x92;
+     /* immediate type oid defs */
+     unitType = 0x06;
+     boolType = 0x16;
+     charType = 0x26;
+     realType = 0x36;
+     intType = 0x46;
+     natType = 0x56;
+     nat1Type = 0x66;
+     tokenType = 0x76;
+     anyType = 0xf6;
+     /* heap value oid defs */
+     tupleRecordTag = 0x10;
+     tokenTag = 0x20;
+     seqTag = 0x30;
+     setTag = 0x40;
+     mapTag = 0x50;
+     quoteTag = 0x60;
+     functionTag = 0x70;
+     operationTag = 0x80;
+     largePositiveIntTag = 0x90;
+     largeNegativeIntTag = 0xa0;
+     /* heap type oid defs */
+     tupleType = 0x04;
+     recordType = 0x14;
+     seqType = 0x24;
+     setType = 0x34;
+     mapType = 0x44;
+     quoteType = 0x54;
+     functionType = 0x64;
+     operationType = 0x74;
+     productType = 0x84;
+     unionType = 0x94;
 	  /* default values */
      invalidOidValue = invalidTag;
      invalidIntValue = 0x7fffffffffffffff;

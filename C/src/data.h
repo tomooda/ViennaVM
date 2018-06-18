@@ -17,6 +17,8 @@ typedef Qword                Pointer;
 /* oid tag flags */
 #define smallIntegerFlag     0x01
 #define immediateFlag        0x02
+#define typeFlag             0x04
+#define optionTypeFlag       0x08
 /* immediate value oid tags */
 #define smallIntegerTag      0x01
 #define invalidTag           0x0a
@@ -26,6 +28,42 @@ typedef Qword                Pointer;
 #define nilValue             0x22
 #define trueValue            0x2a
 #define falseValue           0x32
+#define undefinedValue       0x3a
+#define emptySeqValue        0x82
+#define emptySetValue        0x8a
+#define emptyMapValue        0x92
+/* immediate type oid defs */
+#define unitType             0x06
+#define boolType             0x16
+#define charType             0x26
+#define realType             0x36
+#define intType              0x46
+#define natType              0x56
+#define nat1Type             0x66
+#define tokenType            0x76
+#define anyType              0xf6
+/* heap value oid defs */
+#define tupleRecordTag       0x10
+#define tokenTag             0x20
+#define seqTag               0x30
+#define setTag               0x40
+#define mapTag               0x50
+#define quoteTag             0x60
+#define functionTag          0x70
+#define operationTag         0x80
+#define largePositiveIntTag  0x90
+#define largeNegativeIntTag  0xa0
+/* heap type oid defs */
+#define tupleType            0x04
+#define recordType           0x14
+#define seqType              0x24
+#define setType              0x34
+#define mapType              0x44
+#define quoteType            0x54
+#define functionType         0x64
+#define operationType        0x74
+#define productType          0x84
+#define unionType            0x94
 /* default values */
 #define invalidOidValue      invalidTag
 #define invalidIntValue      (Int)0x7fffffffffffffff

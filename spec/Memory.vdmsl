@@ -148,7 +148,8 @@ operations
     
     write_slot : Data`Pointer * Data`Int * Data`OID ==> ()
     write_slot(pointer, index, oid) ==
-        (let oidPointer = Data`oid2pointer(oid)
+        (basic_write(pointer + HASH_OFFSET, Data`invalidIntValue);
+        let oidPointer = Data`oid2pointer(oid)
         in
             if
                 oidPointer <> Data`invalidPointerValue

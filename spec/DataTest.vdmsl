@@ -1,7 +1,11 @@
 module DataTest
 imports
     from Data all,
-    from UnitTesting operations assertEquals renamed assertEquals;
+    from Memory all,
+    from UnitTesting
+        operations
+            assertEquals renamed assertEquals;
+            assert renamed assert;
 exports all
 definitions
 operations
@@ -145,5 +149,38 @@ operations
             Data`pointer2oid(Data`invalidPointerValue),
             Data`invalidOidValue,
             "invalid pointer to invalid OID"));
+    
+    test_hash : () ==> ()
+    test_hash() ==
+        let
+            i1 : Data`Int = 123,
+            i2 : Data`Int = -321,
+            f : Data`Float = Data`real2float(3.14),
+            c : Data`Char = 0x41,
+            p1 : Data`Pointer = Memory`alloc(3),
+            p2 : Data`Pointer = Memory`alloc(3)
+        in
+            (assertEquals(Data`hash(Data`int2oid(i1)), Data`hashInt(i1), "hash int value");
+            assertEquals(
+                Data`hash(Data`float2oid(f)), Data`hashFloat(f), "hash float value");
+            assertEquals(Data`hash(Data`char2oid(c)), Data`hashChar(c), "hash char value");
+            Memory`write_slot(p1, 1, Data`int2oid(i1));
+            Memory`write_slot(p1, 2, Data`float2oid(f));
+            Memory`write_slot(p1, 3, Data`char2oid(c));
+            Memory`write_slot(p2, 1, Data`int2oid(i1));
+            Memory`write_slot(p2, 2, Data`float2oid(f));
+            Memory`write_slot(p2, 3, Data`char2oid(c));
+            assertEquals(
+                Data`hash(Data`pointer2oid(p1)),
+                Data`hashPointer(p1),
+                "hash pointer value");
+            assertEquals(
+                Data`hash(Data`pointer2oid(p1)),
+                Data`hash(Data`pointer2oid(p2)),
+                "hash heap objects with the same contents");
+            Memory`write_slot(p2, 1, Data`int2oid(i2));
+            assert(
+                Data`hash(Data`pointer2oid(p1)) <> Data`hash(Data`pointer2oid(p2)),
+                "hash heap objects with different contents"));
 
 end DataTest

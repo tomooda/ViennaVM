@@ -237,14 +237,11 @@ operations
     
     hash : OID ==> Int
     hash(oid) ==
-        return if
-                oid mod 4 = 0
-            then
-                hashPointer(oid2pointer(oid))
+        return if oid mod 4 = 0
+                then hashPointer(oid2pointer(oid))
+            elseif oid mod 0x100 = floatTag
+                then hashFloat(oid2float(oid))
             else
-                cases oid mod 0x100:
-                    floatTag -> hashFloat(oid2float(oid)),
-                    others -> oid mod (hashMask + 1)
-                    end;
+                oid mod (hashMask + 1);
 
 end Data

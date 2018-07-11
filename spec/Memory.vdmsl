@@ -15,7 +15,7 @@ values
      SIZE_OFFSET = 0; -- dword
      FLAGS_OFFSET = 4; -- dword
      REFERENCE_COUNT_OFFSET = 8; -- qword
-     FORWARDER_OFFSET = 16;
+     HASH_OFFSET = 16;
      SLOTS_SIZE_OFFSET = 24;
      CONTENT_OFFSET = 32;
      /* FLAGS IN "basic_read_dword(pointer + FLAGS_OFFSET)" */
@@ -69,7 +69,7 @@ operations
                                     basic_write_dword(pointer + SIZE_OFFSET, size);
                                     basic_write_dword(pointer + FLAGS_OFFSET, 0);
                                     basic_write(pointer + REFERENCE_COUNT_OFFSET, 0);
-                                    basic_write(pointer + FORWARDER_OFFSET, Data`invalidPointerValue);
+                                    basic_write(pointer + HASH_OFFSET, Data`invalidIntValue);
                                     basic_write(pointer + SLOTS_SIZE_OFFSET, num_slots);
                                     for s = 0 to  num_slots - 1
                                     do
@@ -285,5 +285,12 @@ operations
     pure read_reference_count : Data`Pointer ==> Data`Qword
     read_reference_count(pointer) ==
         return basic_read(pointer + REFERENCE_COUNT_OFFSET);
+    
+    pure read_hash : Data`Pointer ==> Data`Int
+    read_hash(pointer) == return basic_read(pointer + HASH_OFFSET);
+    
+    write_hash : Data`Pointer * Data`Int ==> ()
+    write_hash(pointer, hash) ==
+        basic_write(pointer + HASH_OFFSET, hash);
 
 end Memory

@@ -1,11 +1,4 @@
 module Data
-imports
-    from Memory
-        operations
-            read_hash;
-            write_hash;
-            slots_size;
-            read_slot;
 exports all
 definitions
 types
@@ -78,7 +71,6 @@ values
      invalidFloatValue = mk_Float(1, 255, 0x7fffff);
      invalidCharValue = 0xffffffff;
      invalidPointerValue = 0x100000000000000;
-     hashMask = 0xffffffff;
 
 functions
     float2real : Float -> real
@@ -206,42 +198,17 @@ functions
     pointer2oid : Pointer -> OID
     pointer2oid(p) ==
         if p <> invalidPointerValue then p  * 0x100 else invalidOidValue;
-
-operations
-    pure hashInt : Int ==> Int
-    hashInt(i) == return int2oid(i) mod (hashMask + 1);
     
-    pure hashFloat : Float ==> Int
-    hashFloat(f) ==
-        let r = float2real(f), i = floor r
-        in
-            return if r - i = 0.0 then hashInt(i) else float2oid(f) mod (hashMask + 1);
+    isInt : OID -> bool
+    isInt(oid) == oid mod 2 = 1;
     
-    pure hashChar : Char ==> Int
-    hashChar(c) == return char2oid(c) mod (hashMask + 1);
+    isFloat : OID -> bool
+    isFloat(oid) == oid mod 0x100 = floatTag;
     
-    hashPointer : Pointer ==> Int
-    hashPointer(p) ==
-        let basic_hash = Memory`read_hash(p)
-        in
-            (if
-                basic_hash = invalidIntValue
-            then
-                (dcl h:Int := 0;
-                for i = 1 to  Memory`slots_size(p)
-                do h := (h + hash(Memory`read_slot(p, i))) mod (hashMask + 1);
-                Memory`write_hash(p, h);
-                return h)
-            else
-                return basic_hash);
+    isChar : OID -> bool
+    isChar(oid) == oid mod 0x100 = charTag;
     
-    hash : OID ==> Int
-    hash(oid) ==
-        return if oid mod 4 = 0
-                then hashPointer(oid2pointer(oid))
-            elseif oid mod 0x100 = floatTag
-                then hashFloat(oid2float(oid))
-            else
-                oid mod (hashMask + 1);
+    isPointer : OID -> bool
+    isPointer(oid) == oid mod 4 = 0;
 
 end Data

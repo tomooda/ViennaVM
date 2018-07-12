@@ -1,5 +1,7 @@
 module Memory
-imports from Data all
+imports
+    from Data all,
+    from Equality values invalidHashValue;
 exports all
 definitions
 types
@@ -17,7 +19,8 @@ values
      REFERENCE_COUNT_OFFSET = 8; -- qword
      HASH_OFFSET = 16;
      SLOTS_SIZE_OFFSET = 24;
-     CONTENT_OFFSET = 32;
+     ELEMENTS_SIZE_OFFSET = 32;
+     CONTENT_OFFSET = 40;
      /* FLAGS IN "basic_read_dword(pointer + FLAGS_OFFSET)" */
      LARGE_OBJECT_FLAG = 1;
 
@@ -69,8 +72,9 @@ operations
                                     basic_write_dword(pointer + SIZE_OFFSET, size);
                                     basic_write_dword(pointer + FLAGS_OFFSET, 0);
                                     basic_write(pointer + REFERENCE_COUNT_OFFSET, 0);
-                                    basic_write(pointer + HASH_OFFSET, Data`invalidIntValue);
+                                    basic_write(pointer + HASH_OFFSET, Equality`invalidHashValue);
                                     basic_write(pointer + SLOTS_SIZE_OFFSET, num_slots);
+                                    basic_write(pointer + ELEMENTS_SIZE_OFFSET, 0);
                                     for s = 0 to  num_slots - 1
                                     do
                                         basic_write(pointer + CONTENT_OFFSET + s  * 8, Data`invalidOidValue);
@@ -137,7 +141,7 @@ operations
                         poolPages(page)(i) .size := size);
                     return ));
     
-    pure slots_size : Data`Pointer ==> Data`Dword
+    pure slots_size : Data`Pointer ==> Data`Qword
     slots_size(pointer) ==
         return basic_read(pointer + SLOTS_SIZE_OFFSET);
     
@@ -148,7 +152,7 @@ operations
     
     write_slot : Data`Pointer * Data`Int * Data`OID ==> ()
     write_slot(pointer, index, oid) ==
-        (basic_write(pointer + HASH_OFFSET, Data`invalidIntValue);
+        (basic_write(pointer + HASH_OFFSET, Equality`invalidHashValue);
         let oidPointer = Data`oid2pointer(oid)
         in
             if

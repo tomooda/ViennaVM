@@ -150,37 +150,49 @@ operations
             Data`invalidOidValue,
             "invalid pointer to invalid OID"));
     
-    test_hash : () ==> ()
-    test_hash() ==
-        let
-            i1 : Data`Int = 123,
-            i2 : Data`Int = -321,
-            f : Data`Float = Data`real2float(3.14),
-            c : Data`Char = 0x41,
-            p1 : Data`Pointer = Memory`alloc(3),
-            p2 : Data`Pointer = Memory`alloc(3)
-        in
-            (assertEquals(Data`hash(Data`int2oid(i1)), Data`hashInt(i1), "hash int value");
-            assertEquals(
-                Data`hash(Data`float2oid(f)), Data`hashFloat(f), "hash float value");
-            assertEquals(Data`hash(Data`char2oid(c)), Data`hashChar(c), "hash char value");
-            Memory`write_slot(p1, 1, Data`int2oid(i1));
-            Memory`write_slot(p1, 2, Data`float2oid(f));
-            Memory`write_slot(p1, 3, Data`char2oid(c));
-            Memory`write_slot(p2, 1, Data`int2oid(i1));
-            Memory`write_slot(p2, 2, Data`float2oid(f));
-            Memory`write_slot(p2, 3, Data`char2oid(c));
-            assertEquals(
-                Data`hash(Data`pointer2oid(p1)),
-                Data`hashPointer(p1),
-                "hash pointer value");
-            assertEquals(
-                Data`hash(Data`pointer2oid(p1)),
-                Data`hash(Data`pointer2oid(p2)),
-                "hash heap objects with the same contents");
-            Memory`write_slot(p2, 1, Data`int2oid(i2));
-            assert(
-                Data`hash(Data`pointer2oid(p1)) <> Data`hash(Data`pointer2oid(p2)),
-                "hash heap objects with different contents"));
+    test_isInt : () ==> ()
+    test_isInt() ==
+        (assert(Data`isInt(Data`int2oid(123)), "isInt against int oid");
+        assert(
+            not Data`isInt(Data`float2oid(Data`real2float(3.14))),
+            "isInt against float oid");
+        assert(not Data`isInt(Data`char2oid(0x41)), "isInt against char oid");
+        assert(not Data`isInt(Data`pointer2oid(0)), "isInt against pointer oid");
+        assert(not Data`isInt(Data`invalidOidValue), "isInt against invalid OID"));
+    
+    test_isFloat : () ==> ()
+    test_isFloat() ==
+        (assert(not Data`isFloat(Data`int2oid(123)), "isInt against int oid");
+        assert(
+            Data`isFloat(Data`float2oid(Data`real2float(3.14))),
+            "isInt against float oid");
+        assert(not Data`isFloat(Data`char2oid(0x41)), "isInt against char oid");
+        assert(
+            not Data`isFloat(Data`pointer2oid(0)), "isInt against pointer oid");
+        assert(
+            not Data`isFloat(Data`invalidOidValue), "isInt against invalid OID"));
+    
+    test_isChar : () ==> ()
+    test_isChar() ==
+        (assert(not Data`isChar(Data`int2oid(123)), "isInt against int oid");
+        assert(
+            not Data`isChar(Data`float2oid(Data`real2float(3.14))),
+            "isInt against float oid");
+        assert(Data`isChar(Data`char2oid(0x41)), "isInt against char oid");
+        assert(not Data`isChar(Data`pointer2oid(0)), "isInt against pointer oid");
+        assert(
+            not Data`isChar(Data`invalidOidValue), "isInt against invalid OID"));
+    
+    test_isPointer : () ==> ()
+    test_isPointer() ==
+        (assert(not Data`isPointer(Data`int2oid(123)), "isInt against int oid");
+        assert(
+            not Data`isPointer(Data`float2oid(Data`real2float(3.14))),
+            "isInt against float oid");
+        assert(not Data`isPointer(Data`char2oid(0x41)), "isInt against char oid");
+        assert(Data`isPointer(Data`pointer2oid(0)), "isInt against pointer oid");
+        assert(
+            not Data`isPointer(Data`invalidOidValue),
+            "isInt against invalid OID"));
 
 end DataTest

@@ -1,0 +1,134 @@
+module EqualityTest
+imports
+    from Equality all,
+    from Data all,
+    from Memory all,
+    from UnitTesting
+        operations
+            assertEquals renamed assertEquals;
+            assert renamed assert;
+exports all
+definitions
+operations
+    test_equal_int : () ==> ()
+    test_equal_int() ==
+        (assert(Equality`equal(Data`int2oid(1), Data`int2oid(1)), "1 = 1");
+        assert(not Equality`equal(Data`int2oid(1), Data`int2oid(-1)), "1 = -1");
+        assert(
+            Equality`equal(
+                Data`int2oid(1), Data`float2oid(Data`real2float(1.0))),
+            "1 = 1.0");
+        assert(
+            not Equality`equal(
+                Data`int2oid(1), Data`float2oid(Data`real2float(-1.0))),
+            "1 = -1.0");
+        assert(
+            not Equality`equal(Data`int2oid(1), Data`char2oid(1)),
+            "1 = '\0x01'");
+        assert(
+            not Equality`equal(Data`int2oid(1), Data`pointer2oid(1)),
+            "1 = Pointer(1)"));
+    
+    test_equal_float : () ==> ()
+    test_equal_float() ==
+        let
+            f1 : Data`Float = Data`real2float(1.0),
+            f2 : Data`Float = Data`real2float(-1.0)
+        in
+            (assert(
+                Equality`equal(Data`float2oid(f1), Data`float2oid(f1)), "1.0 = 1.0");
+            assert(
+                not Equality`equal(Data`float2oid(f1), Data`float2oid(f2)),
+                "10 = -1.0");
+            assert(Equality`equal(Data`float2oid(f1), Data`int2oid(1)), "1.0 = 1");
+            assert(
+                not Equality`equal(Data`float2oid(f1), Data`int2oid(-1)),
+                "1.0 = -1");
+            assert(
+                not Equality`equal(Data`float2oid(f1), Data`char2oid(1)),
+                "1.0 = '\0x01'");
+            assert(
+                not Equality`equal(Data`float2oid(f1), Data`pointer2oid(1)),
+                "1.0 = Pointer(1)"));
+    
+    test_equal_char : () ==> ()
+    test_equal_char() ==
+        (assert(
+            Equality`equal(Data`char2oid(1), Data`char2oid(1)),
+            "char(1) = char(1)");
+        assert(
+            not Equality`equal(Data`char2oid(1), Data`char2oid(2)),
+            "char(1) = char(2)");
+        assert(
+            not Equality`equal(Data`char2oid(1), Data`int2oid(1)),
+            "char(1) = 1");
+        assert(
+            not Equality`equal(
+                Data`char2oid(1), Data`float2oid(Data`real2float(1.0))),
+            "char(1) = 1.0");
+        assert(
+            not Equality`equal(Data`char2oid(1), Data`pointer2oid(1)),
+            "char(1) = Pointer(1)"));
+    
+    test_equal_pointer : () ==> ()
+    test_equal_pointer() ==
+        (assert(
+            Equality`equal(Data`pointer2oid(1), Data`pointer2oid(1)),
+            "pointer(1) = pointer(1)");
+        assert(
+            not Equality`equal(Data`pointer2oid(1), Data`pointer2oid(2)),
+            "pointer(1) = pointer(2)");
+        assert(
+            not Equality`equal(Data`pointer2oid(1), Data`int2oid(1)),
+            "pointer(1) = 1");
+        assert(
+            not Equality`equal(
+                Data`pointer2oid(1), Data`float2oid(Data`real2float(1.0))),
+            "pointer(1) = 1.0");
+        assert(
+            not Equality`equal(Data`pointer2oid(1), Data`char2oid(1)),
+            "pointer(1) = char(1)"));
+    
+    test_hash : () ==> ()
+    test_hash() ==
+        let
+            i1 : Data`Int = 123,
+            i2 : Data`Int = -321,
+            f : Data`Float = Data`real2float(3.14),
+            c : Data`Char = 0x41,
+            p1 : Data`Pointer = Memory`alloc(3),
+            p2 : Data`Pointer = Memory`alloc(3)
+        in
+            (assertEquals(
+                Equality`hash(Data`int2oid(i1)),
+                Equality`hashInt(i1),
+                "hash int value");
+            assertEquals(
+                Equality`hash(Data`float2oid(f)),
+                Equality`hashFloat(f),
+                "hash float value");
+            assertEquals(
+                Equality`hash(Data`char2oid(c)),
+                Equality`hashChar(c),
+                "hash char value");
+            Memory`write_slot(p1, 1, Data`int2oid(i1));
+            Memory`write_slot(p1, 2, Data`float2oid(f));
+            Memory`write_slot(p1, 3, Data`char2oid(c));
+            Memory`write_slot(p2, 1, Data`int2oid(i1));
+            Memory`write_slot(p2, 2, Data`float2oid(f));
+            Memory`write_slot(p2, 3, Data`char2oid(c));
+            assertEquals(
+                Equality`hash(Data`pointer2oid(p1)),
+                Equality`hashPointer(p1),
+                "hash pointer value");
+            assertEquals(
+                Equality`hash(Data`pointer2oid(p1)),
+                Equality`hash(Data`pointer2oid(p2)),
+                "hash heap objects with the same contents");
+            Memory`write_slot(p2, 1, Data`int2oid(i2));
+            assert(
+                Equality`hash(Data`pointer2oid(p1))
+                <> Equality`hash(Data`pointer2oid(p2)),
+                "hash heap objects with different contents"));
+
+end EqualityTest

@@ -1,0 +1,91 @@
+module Equality
+imports
+    from Data all,
+    from Memory
+        operations
+            read_hash;
+            write_hash;
+            slots_size;
+            read_slot;
+exports all
+definitions
+types
+     Hash = Data`Qword;
+
+values
+     hashMask = 0xffffffffffffffff;
+     invalidHashValue = 0;
+
+operations
+    equal : Data`OID * Data`OID ==> bool
+    equal(oid1, oid2) ==
+        (if oid1 = oid2 then return true;
+        if hash(oid1) <> hash(oid2) then return false;
+        if Data`isInt(oid1) and Data`isFloat(oid2) then return true;
+        if Data`isFloat(oid1) and Data`isInt(oid2) then return true;
+        if
+            Data`isPointer(oid1) and Data`isPointer(oid2)
+        then
+            return let tag1 = oid1 mod 0x100, tag2 = oid2 mod 0x100
+                in
+                    tag1 = tag2
+                    and cases tag1:
+                        (Data`seqTag) -> equalSeq(oid1, oid2),
+                        (Data`setTag) -> equalSet(oid1, oid2),
+                        (Data`mapTag) -> equalMap(oid1, oid2),
+                        others -> equalTuple(oid1, oid2)
+                        end;
+        return false);
+    
+    equalSeq : Data`OID * Data`OID ==> bool
+    equalSeq(oid1, oid2) == return false;
+    
+    equalSet : Data`OID * Data`OID ==> bool
+    equalSet(oid1, oid2) == return false;
+    
+    equalMap : Data`OID * Data`OID ==> bool
+    equalMap(oid1, oid2) == return false;
+    
+    equalTuple : Data`OID * Data`OID ==> bool
+    equalTuple(oid1, oid2) == return false;
+    
+    hash : Data`OID ==> Hash
+    hash(oid) ==
+        return if Data`isPointer(oid)
+                then hashPointer(Data`oid2pointer(oid))
+            elseif Data`isFloat(oid)
+                then hashFloat(Data`oid2float(oid))
+            else
+                oid mod (hashMask + 1);
+    
+    pure hashInt : Data`Int ==> Hash
+    hashInt(i) == return Data`int2oid(i) mod (hashMask + 1);
+    
+    pure hashFloat : Data`Float ==> Hash
+    hashFloat(f) ==
+        let r = Data`float2real(f), i = floor r
+        in
+            return if r - i = 0.0 then hashInt(i) else Data`float2oid(f) mod (hashMask + 1);
+    
+    pure hashChar : Data`Char ==> Hash
+    hashChar(c) == return Data`char2oid(c) mod (hashMask + 1);
+    
+    hashPointer : Data`Pointer ==> Hash
+    hashPointer(p) ==
+        let cachedHash : Hash = Memory`read_hash(p)
+        in
+            (if
+                cachedHash = invalidHashValue
+            then
+                (dcl h:int := 0;
+                for i = 1 to  Memory`slots_size(p)
+                do
+                    let oid = Memory`read_slot(p, i)
+                    in if oid <> Data`invalidOidValue then h := h + hash(oid);
+                h := h mod (hashMask + 1);
+                Memory`write_hash(p, h);
+                return h)
+            else
+                return cachedHash);
+
+end Equality

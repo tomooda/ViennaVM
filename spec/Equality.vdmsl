@@ -6,7 +6,8 @@ imports
             read_hash;
             write_hash;
             slots_size;
-            read_slot;
+            read_slot;,
+    from Seq all
 exports all
 definitions
 types
@@ -19,26 +20,23 @@ values
 operations
     equal : Data`OID * Data`OID ==> bool
     equal(oid1, oid2) ==
-        (if oid1 = oid2 then return true;
-        if hash(oid1) <> hash(oid2) then return false;
-        if Data`isInt(oid1) and Data`isFloat(oid2) then return true;
-        if Data`isFloat(oid1) and Data`isInt(oid2) then return true;
-        if
+        (if
             Data`isPointer(oid1) and Data`isPointer(oid2)
         then
             return let tag1 = oid1 mod 0x100, tag2 = oid2 mod 0x100
                 in
                     tag1 = tag2
                     and cases tag1:
-                        (Data`seqTag) -> equalSeq(oid1, oid2),
+                        (Data`seqTag) -> Seq`equal(oid1, oid2),
                         (Data`setTag) -> equalSet(oid1, oid2),
                         (Data`mapTag) -> equalMap(oid1, oid2),
                         others -> equalTuple(oid1, oid2)
                         end;
+        if oid1 = oid2 then return true;
+        if hash(oid1) <> hash(oid2) then return false;
+        if Data`isInt(oid1) and Data`isFloat(oid2) then return true;
+        if Data`isFloat(oid1) and Data`isInt(oid2) then return true;
         return false);
-    
-    equalSeq : Data`OID * Data`OID ==> bool
-    equalSeq(oid1, oid2) == return false;
     
     equalSet : Data`OID * Data`OID ==> bool
     equalSet(oid1, oid2) == return false;
@@ -47,7 +45,7 @@ operations
     equalMap(oid1, oid2) == return false;
     
     equalTuple : Data`OID * Data`OID ==> bool
-    equalTuple(oid1, oid2) == return false;
+    equalTuple(oid1, oid2) == return true;
     
     hash : Data`OID ==> Hash
     hash(oid) ==

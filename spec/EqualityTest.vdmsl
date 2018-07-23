@@ -24,7 +24,7 @@ operations
             "1 = -1.0");
         assert(
             not Equality`equal(Data`int2oid(1), Data`char2oid(1)),
-            "1 = '\0x01'");
+            "1 = char(1)");
         assert(
             not Equality`equal(Data`int2oid(1), Data`pointer2oid(1)),
             "1 = Pointer(1)"));
@@ -46,7 +46,7 @@ operations
                 "1.0 = -1");
             assert(
                 not Equality`equal(Data`float2oid(f1), Data`char2oid(1)),
-                "1.0 = '\0x01'");
+                "1.0 = 'char(1)'");
             assert(
                 not Equality`equal(Data`float2oid(f1), Data`pointer2oid(1)),
                 "1.0 = Pointer(1)"));
@@ -72,22 +72,25 @@ operations
     
     test_equal_pointer : () ==> ()
     test_equal_pointer() ==
-        (assert(
-            Equality`equal(Data`pointer2oid(1), Data`pointer2oid(1)),
-            "pointer(1) = pointer(1)");
-        assert(
-            not Equality`equal(Data`pointer2oid(1), Data`pointer2oid(2)),
-            "pointer(1) = pointer(2)");
-        assert(
-            not Equality`equal(Data`pointer2oid(1), Data`int2oid(1)),
-            "pointer(1) = 1");
-        assert(
-            not Equality`equal(
-                Data`pointer2oid(1), Data`float2oid(Data`real2float(1.0))),
-            "pointer(1) = 1.0");
-        assert(
-            not Equality`equal(Data`pointer2oid(1), Data`char2oid(1)),
-            "pointer(1) = char(1)"));
+        let p1 : Data`Pointer = Memory`alloc(1)
+        in
+            (Memory`write_slot(p1, 1, Data`int2oid(1));
+            assert(
+                Equality`equal(
+                    Data`pointer2oid(p1) + Data`seqTag,
+                    Data`pointer2oid(p1) + Data`seqTag),
+                "pointer([1]) = pointer([1])");
+            assert(
+                not Equality`equal(Data`pointer2oid(1) + Data`seqTag, Data`int2oid(1)),
+                "pointer(1) = 1");
+            assert(
+                not Equality`equal(
+                    Data`pointer2oid(1) + Data`seqTag,
+                    Data`float2oid(Data`real2float(1.0))),
+                "pointer(1) = 1.0");
+            assert(
+                not Equality`equal(Data`pointer2oid(1) + Data`seqTag, Data`char2oid(1)),
+                "pointer(1) = char(1)"));
     
     test_hash : () ==> ()
     test_hash() ==

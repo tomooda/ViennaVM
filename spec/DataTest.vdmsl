@@ -194,5 +194,11 @@ operations
         assert(
             not Data`isPointer(Data`invalidOidValue),
             "isInt against invalid OID"));
+    
+    test_char2int : () ==> ()
+    test_char2int() ==
+        (assertEquals(Data`char2int('0'), 0x30, "char2int('0') = 0x30");
+        assertEquals(Data`char2int('A'), 0x41, "char2int('A') = 0x41");
+        assertEquals(Data`char2int('a'), 0x61, "char2int('a') = 0x61"));
 
 end DataTest

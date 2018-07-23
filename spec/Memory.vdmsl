@@ -19,8 +19,7 @@ values
      REFERENCE_COUNT_OFFSET = 8; -- qword
      HASH_OFFSET = 16;
      SLOTS_SIZE_OFFSET = 24;
-     ELEMENTS_SIZE_OFFSET = 32;
-     CONTENT_OFFSET = 40;
+     CONTENT_OFFSET = 32;
      /* FLAGS IN "basic_read_dword(pointer + FLAGS_OFFSET)" */
      LARGE_OBJECT_FLAG = 1;
 
@@ -74,7 +73,6 @@ operations
                                     basic_write(pointer + REFERENCE_COUNT_OFFSET, 0);
                                     basic_write(pointer + HASH_OFFSET, Equality`invalidHashValue);
                                     basic_write(pointer + SLOTS_SIZE_OFFSET, num_slots);
-                                    basic_write(pointer + ELEMENTS_SIZE_OFFSET, 0);
                                     for s = 0 to  num_slots - 1
                                     do
                                         basic_write(pointer + CONTENT_OFFSET + s  * 8, Data`invalidOidValue);

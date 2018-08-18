@@ -287,57 +287,38 @@ void bnot(Register dst, Register src) {
   }
 }
     
-void jump(Register intReg) {
-  if (intReg) {
-    Int ip = read_int(intReg);
-    if (ip != invalidIntValue) {
-      write_ip(ip);
-    } else {
-      err("jump instruction error: operand not integer");
-    }
-  } else {
-    err("jump instruction error: register not specified");
-  }
+void jump(Register offset) {
+  offset_ip((int16_t)offset);
 }
     
-void jumptrue(Register boolReg, Register intReg) {
-  if (boolReg && intReg) {
-    Int ip = read_int(intReg);
-    if (ip != invalidIntValue) {
-      switch (read_oid(boolReg)) {
-      case trueValue:
-	write_ip(ip);
-	return;
-      case falseValue:
-	return;
-      default:
-	err("jumptrue instruction error: operand not boolean");
-	return;
-      }
-    } else {
-      err("jumptrue instruction error: operand not integer");
+void jumptrue(Register boolReg, Register offset) {
+  if (boolReg) {
+    switch (read_oid(boolReg)) {
+    case trueValue:
+      offset_ip((int16_t)offset);
+      return;
+    case falseValue:
+      return;
+    default:
+      err("jumptrue instruction error: operand not boolean");
+      return;
     }
   } else {
     err("jumptrue instruction error: operands not specified");
   }
 }
     
-void jumpfalse(Register boolReg, Register intReg) {
-  if (boolReg && intReg) {
-    Int ip = read_int(intReg);
-    if (ip != invalidIntValue) {
-      switch (read_oid(boolReg)) {
-      case falseValue:
-	write_ip(ip);
-	return;
-      case trueValue:
-	return;
-      default:
-	err("jumpfalse instruction error: operand not boolean");
-	return;
-      }
-    } else {
-      err("jumpfalse instruction error: operand not integer");
+void jumpfalse(Register boolReg, Register offset) {
+  if (boolReg) {
+    switch (read_oid(boolReg)) {
+    case falseValue:
+      offset_ip((int16_t)offset);
+      return;
+    case trueValue:
+      return;
+    default:
+      err("jumpfalse instruction error: operand not boolean");
+      return;
     }
   } else {
     err("jumpfalse instruction error: operands not specified");
@@ -347,13 +328,13 @@ void jumpfalse(Register boolReg, Register intReg) {
 void call(Register dst, Register crPointerReg) {
   if (crPointerReg) {
     Pointer cr = read_pointer(crPointerReg);
+    Pointer caller_cr = read_cr();
     if (cr != invalidPointerValue) {
-      Int num_regs = read_num_regs(cr);
-      Pointer ar =alloc_ar(read_ar(), dst, read_ip(), read_cr(), num_regs);
+      Pointer ar =alloc_ar(read_ar(), dst, read_ip(), read_cr(), 0);
       write_ar(ar);
       write_cr(cr);
-      for (int i = 1; i <=  num_regs; i++) {
-	write_local(ar, i, read_oid(i));
+      if (caller_cr != invalidPointerValue) {
+	offset_registers(read_num_regs(caller_cr));
       }
     } else {
       err("call instruction error: second operand not pointer");
@@ -365,31 +346,28 @@ void call(Register dst, Register crPointerReg) {
 
 void callrec(Register dst) {
   Pointer cr = read_cr();
-  Int num_regs = read_num_regs(cr);
-  Pointer ar = alloc_ar(read_ar(), dst, read_ip(), cr, num_regs);
+  Pointer ar = alloc_ar(read_ar(), dst, read_ip(), cr, 0);
   write_ar(ar);
   write_ip(0);
-  for (int i = 1; i <= num_regs; i++) {
-    init_local(ar, i, read_oid(i));
-  }
+  offset_registers(read_num_regs(cr));
 }
     
 void ret(Register src) {
   Pointer ar = read_ar();
   Pointer cr = read_cr();
   if (ar != invalidPointerValue && cr != invalidPointerValue) {
+    Int num_regs = read_num_regs(cr);
     Pointer ret_ar = read_dynamic_link(ar);
     Pointer ret_cr = read_return_cr(ar);
     Dword ret_ip = read_return_ip(ar);
     Register ret_reg = read_ret_reg(ar);
-    Int num_regs = read_num_regs(cr);
-    if (src && ret_reg && src != ret_reg) {
-      move(ret_reg, src);
+    Int ret_num_regs = ret_cr != invalidPointerValue ? read_num_regs(ret_cr) : 0;
+    offset_registers(ret_num_regs * -1);
+    if (src && ret_reg) {
+      move(ret_reg, src+ret_num_regs);
     }
     for (int i = 1; i <= num_regs; i++) {
-      if (i != ret_reg) {
-	write_oid(i, read_local(ar, i));
-      }
+      write_invalid(ret_num_regs+i);
     }
     write_cr(ret_cr);
     write_ip(ret_ip);
@@ -400,79 +378,21 @@ void ret(Register src) {
 }
     
 void rettrue(Register boolReg, Register src) {
-  Pointer ar;
-  Pointer cr;
-  if (boolReg) {
-    switch (read_oid(boolReg)) {
-    case trueValue:
-      ar = read_ar();
-      cr = read_cr();
-      if (ar != invalidPointerValue && cr != invalidPointerValue) {
-	Pointer ret_ar = read_dynamic_link(ar);
-	Pointer ret_cr = read_return_cr(ar);
-	Dword ret_ip = read_return_ip(ar);
-	Register ret_reg = read_ret_reg(ar);
-	Int num_regs = read_num_regs(cr);
-	if (src && ret_reg && src != ret_reg) {
-	  move(ret_reg, src);
-	}
-	for (int i = 1; i <= num_regs; i++) {
-	  if (i != ret_reg) {
-	    write_oid(i, read_local(ar, i));
-	  }
-	}
-	write_cr(ret_cr);
-	write_ip(ret_ip);
-	write_ar(ret_ar);
-      } else {
-	err("rettrue instruction error: no cr/ar");
-      }
-      return;
-    case falseValue:
-      return;
-    default:
-      err("rettrue instruction error: operand1 not boolean");
-    }
-  } else {
+  if (!boolReg) {
     err("rettrue instruction error: operand1 not specified");
+    return;
+  }
+  if (read_oid(boolReg) == trueValue) {
+    ret(src);
   }
 }
     
 void retfalse(Register boolReg, Register src) {
-  Pointer ar;
-  Pointer cr;
-  if (boolReg) {
-    switch (read_oid(boolReg)) {
-    case falseValue:
-      ar = read_ar();
-      cr = read_cr();
-      if (ar != invalidPointerValue && cr != invalidPointerValue) {
-	Pointer ret_ar = read_dynamic_link(ar);
-	Pointer ret_cr = read_return_cr(ar);
-	Dword ret_ip = read_return_ip(ar);
-	Register ret_reg = read_ret_reg(ar);
-	Int num_regs = read_num_regs(cr);
-	if (src && ret_reg && src != ret_reg) {
-	  move(ret_reg, src);
-	}
-	for (int i = 1; i <= num_regs; i++) {
-	  if (i != ret_reg) {
-	    write_oid(i, read_local(ar, i));
-	  }
-	}
-	write_cr(ret_cr);
-	write_ip(ret_ip);
-	write_ar(ret_ar);
-      } else {
-	err("retfalse instruction error: no cr/ar");
-      }
-      return;
-    case trueValue:
-      return;
-    default:
-      err("retfalse instruction error: operand1 not boolean");
-    }
-  } else {
-    err("retfalse instruction error: operand1 not specified");
+  if (!boolReg) {
+    err("rettrue instruction error: operand1 not specified");
+    return;
+  }
+  if (read_oid(boolReg) == falseValue) {
+    ret(src);
   }
 }

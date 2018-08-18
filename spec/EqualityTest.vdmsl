@@ -3,6 +3,7 @@ imports
     from Equality all,
     from Data all,
     from Memory all,
+    from Seq all,
     from UnitTesting
         operations
             assertEquals renamed assertEquals;
@@ -99,8 +100,8 @@ operations
             i2 : Data`Int = -321,
             f : Data`Float = Data`real2float(3.14),
             c : Data`Char = 0x41,
-            p1 : Data`Pointer = Memory`alloc(3),
-            p2 : Data`Pointer = Memory`alloc(3)
+            p1 : Data`Pointer = Seq`alloc(3),
+            p2 : Data`Pointer = Seq`alloc(3)
         in
             (assertEquals(
                 Equality`hash(Data`int2oid(i1)),
@@ -121,17 +122,13 @@ operations
             Memory`write_slot(p2, 2, Data`float2oid(f));
             Memory`write_slot(p2, 3, Data`char2oid(c));
             assertEquals(
-                Equality`hash(Data`pointer2oid(p1)),
-                Equality`hashPointer(p1),
-                "hash pointer value");
-            assertEquals(
-                Equality`hash(Data`pointer2oid(p1)),
-                Equality`hash(Data`pointer2oid(p2)),
+                Equality`hash(Seq`pointer2oid(p1)),
+                Equality`hash(Seq`pointer2oid(p2)),
                 "hash heap objects with the same contents");
             Memory`write_slot(p2, 1, Data`int2oid(i2));
             assert(
-                Equality`hash(Data`pointer2oid(p1))
-                <> Equality`hash(Data`pointer2oid(p2)),
+                Equality`hash(Seq`pointer2oid(p1))
+                <> Equality`hash(Seq`pointer2oid(p2)),
                 "hash heap objects with different contents"));
 
 end EqualityTest

@@ -35,9 +35,9 @@ static inline void write_code(Pointer cr, Dword ip, OID code) {
 
 typedef struct Instruction_s {
   Word opcode;
-  Register reg1;
-  Register reg2;
-  Register reg3;
+  int reg1;
+  int reg2;
+  int reg3;
   OID imm;
   char *labelref;
   char *labeldef;

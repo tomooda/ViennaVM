@@ -11,79 +11,88 @@ imports
 exports all
 definitions
 operations
+    makeSeq : seq of Data`OID ==> Data`Pointer
+    makeSeq(oids) ==
+        let p : Data`Pointer = Seq`alloc(len oids)
+        in
+            (for i = 1 to  len oids do Memory`write_slot(p, i, oids(i));
+            return p)
+    pre  len oids > 0;
+    
     test_alloc : () ==> ()
     test_alloc() ==
-        let s1 = Seq`alloc(1), s2 = Seq`alloc(2)
+        let p1 = Seq`alloc(1), p2 = Seq`alloc(2)
         in
-            (assertEquals(Seq`size(s1), 1, "size(alloc(1)) = 1");
-            assertEquals(Seq`size(s2), 2, "size(alloc(2)) = 2");
-            assertEquals(Seq`read(s1, 1), Data`invalidOidValue, "s1(1) = undefined");
-            assertEquals(Seq`read(s2, 1), Data`invalidOidValue, "s2(1) = undefined");
-            assertEquals(Seq`read(s2, 2), Data`invalidOidValue, "s2(2) = undefined"));
-    
-    test_make : () ==> ()
-    test_make() ==
-        let
-            s0 = Seq`make([]),
-            s1 =
-                Seq`make(
-                    [Data`int2oid(1), Data`int2oid(2), Seq`make([Data`int2oid(3)])])
-        in
-            (assertEquals(s0, Data`emptySeqValue, "[] = empty");
-            assertEquals(Seq`read(s1, 1), Data`int2oid(1), "[1,2,[3]](1) = 1");
-            assertEquals(Seq`read(s1, 2), Data`int2oid(2), "[1,2,[3]](2) = 2");
-            assertEquals(
-                Seq`read(Seq`read(s1, 3), 1), Data`int2oid(3), "[1,2,[3]](3)(1) = 3"));
+            (assertEquals(Seq`size(p1), 1, "size(alloc(1)) = 1");
+            assertEquals(Seq`size(p2), 2, "size(alloc(2)) = 2");
+            assertEquals(Seq`read(p1, 1), Data`invalidOidValue, "s1(1) = undefined");
+            assertEquals(Seq`read(p2, 1), Data`invalidOidValue, "s2(1) = undefined");
+            assertEquals(Seq`read(p2, 2), Data`invalidOidValue, "s2(2) = undefined"));
     
     test_make_string : () ==> ()
     test_make_string() ==
-        let s = Seq`make_string("abc")
+        let p = Data`oid2pointer(Seq`make_string("abc"))
         in
-            (assertEquals(Seq`size(s), 3, "len \"abc\" = 3");
-            assert(Data`isChar(Seq`read(s, 1)), "\"abc\"(1) is a char");
-            assertEquals(Data`oid2char(Seq`read(s, 1)), 0x61, "\"abc\"(1) = 'a'");
-            assertEquals(Data`oid2char(Seq`read(s, 2)), 0x62, "\"abc\"(2) = 'b'");
-            assertEquals(Data`oid2char(Seq`read(s, 3)), 0x63, "\"abc\"(3) = 'c'"));
+            (assertEquals(Seq`size(p), 3, "len \"abc\" = 3");
+            assert(Data`isChar(Seq`read(p, 1)), "\"abc\"(1) is a char");
+            assertEquals(Data`oid2char(Seq`read(p, 1)), 0x61, "\"abc\"(1) = 'a'");
+            assertEquals(Data`oid2char(Seq`read(p, 2)), 0x62, "\"abc\"(2) = 'b'");
+            assertEquals(Data`oid2char(Seq`read(p, 3)), 0x63, "\"abc\"(3) = 'c'"));
     
     test_size : () ==> ()
     test_size() ==
         let
-            s0 = Seq`make([]),
-            s1 = Seq`make([Data`int2oid(1)]),
-            s2 =
-                Seq`make(
-                    [Data`int2oid(1), Seq`make([Data`int2oid(2), Data`int2oid(3)])])
+            p1 = makeSeq([Data`int2oid(1)]),
+            p2 =
+                makeSeq(
+                    [Data`int2oid(1),
+                    Seq`pointer2oid(makeSeq([Data`int2oid(2), Data`int2oid(3)]))])
         in
-            (assertEquals(Seq`size(s0), 0, "size([])");
-            assertEquals(Seq`size(s1), 1, "size([1])");
-            assertEquals(Seq`size(s2), 2, "size([1, [2,3]])");
-            Memory`release(Data`oid2pointer(s1));
-            Memory`release(Data`oid2pointer(s2)));
+            (assertEquals(Seq`size(p1), 1, "size([1])");
+            assertEquals(Seq`size(p2), 2, "size([1, [2,3]])");
+            Memory`release(Data`oid2pointer(p1));
+            Memory`release(Data`oid2pointer(p2)));
     
     test_read_write : () ==> ()
     test_read_write() ==
-        let s = Seq`alloc(2)
+        let p = Seq`alloc(2)
         in
-            (assertEquals(Seq`size(s), 2, "size(alloc(2)) = 2");
-            assertEquals(Seq`read(s, 1), Data`invalidOidValue, "s(1) = undefined");
-            assertEquals(Seq`read(s, 2), Data`invalidOidValue, "s(2) = undefined");
-            Seq`write(s, 1, Data`int2oid(3));
-            Seq`write(s, 2, Data`int2oid(4));
-            assertEquals(Seq`read(s, 1), Data`int2oid(3), "[3,4](1) = 3");
-            assertEquals(Seq`read(s, 2), Data`int2oid(4), "[3,4](2) = 4"));
+            (assertEquals(Seq`size(p), 2, "size(alloc(2)) = 2");
+            assertEquals(Seq`read(p, 1), Data`invalidOidValue, "s(1) = undefined");
+            assertEquals(Seq`read(p, 2), Data`invalidOidValue, "s(2) = undefined");
+            Seq`write(p, 1, Data`int2oid(3));
+            Seq`write(p, 2, Data`int2oid(4));
+            assertEquals(Seq`read(p, 1), Data`int2oid(3), "[3,4](1) = 3");
+            assertEquals(Seq`read(p, 2), Data`int2oid(4), "[3,4](2) = 4"));
     
     test_equal : () ==> ()
     test_equal() ==
         let
-            s1 = Seq`make([Data`int2oid(1), Data`int2oid(2)]),
-            s2 = Seq`make([Data`int2oid(1), Data`int2oid(2)]),
-            s3 = Seq`make([Data`int2oid(2), Data`int2oid(1)])
+            p1 = makeSeq([Data`int2oid(1), Data`int2oid(2)]),
+            p2 = makeSeq([Data`int2oid(1), Data`int2oid(2)]),
+            p3 = makeSeq([Data`int2oid(2), Data`int2oid(1)]),
+            p4 =
+                makeSeq(
+                    [Data`float2oid(Data`real2float(1.0)),
+                    Data`float2oid(Data`real2float(2.0))])
         in
-            (assert(Seq`equal(s1, s1), "s1 = s1");
-            assert(Seq`equal(s1, s2), "[1, 2] = [1, 2]");
-            assert(not Seq`equal(s1, s3), "[1, 2] <> [2, 1]"));
+            (assert(Seq`equal(p1, p1), "p1 = p1");
+            assert(Seq`equal(p1, p2), "[1, 2] = [1, 2]");
+            assert(not Seq`equal(p1, p3), "[1, 2] <> [2, 1]");
+            assert(Seq`equal(p1, p4), "[1, 2] = [1.0, 2.0]"));
     
     test_hash : () ==> ()
-    test_hash() == skip;
+    test_hash() ==
+        let
+            hash1 = Seq`hash(makeSeq([Data`int2oid(1), Data`int2oid(2)])),
+            hash2 = Seq`hash(makeSeq([Data`int2oid(1), Data`int2oid(2)])),
+            hash3 =
+                Seq`hash(
+                    makeSeq(
+                        [Data`float2oid(Data`real2float(1.0)),
+                        Data`float2oid(Data`real2float(2.0))]))
+        in
+            (assertEquals(hash1, hash2, "hash([1, 2]) = hash([1, 2])");
+            assertEquals(hash1, hash3, "hash([1, 2]) = hash([1.0, 2.0])"));
 
 end SeqTest

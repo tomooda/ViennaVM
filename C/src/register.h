@@ -20,7 +20,8 @@ typedef uint16_t Register;
 extern Pointer codeRecord;
 extern Dword instructionPointer;
 extern Pointer activationRecord;
-extern Reg registers[NUM_REGISTERS];
+extern Reg registers[];
+extern Reg *regs;
 
 extern void register_reset();
 
@@ -47,7 +48,11 @@ static inline Dword read_ip() {
 static inline void write_ip(Dword i) {
   instructionPointer = i;
 }
-    
+
+static inline void offset_ip(int offset) {
+  instructionPointer += offset;
+}
+
 static inline Pointer read_ar() {
   return activationRecord;
 }
@@ -63,6 +68,10 @@ static inline void write_ar(Pointer ar) {
   }
 }
 
+static inline void offset_registers(int offset) {
+  regs += offset;
+}
+
 extern void move(Register dst, Register src);
 extern OID read_oid(Register r);
 extern void write_oid(Register r, OID oid);
@@ -74,5 +83,6 @@ extern Char read_char(Register r);
 extern void write_char(Register r, Char c);
 extern Pointer read_pointer(Register r);
 extern void write_pointer(Register r, Pointer p);
+extern void write_invalid(Register dst);
 
 #endif

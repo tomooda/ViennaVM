@@ -18,13 +18,14 @@ operations
     test_reset() ==
         (Instruction`movei(1, Data`int2oid(0));
         assertEquals(Register`read_int(1), 0, "r1 is now set to 0");
-        Instruction`reset(1, 0, 0);
+        Instruction`reset(1);
         assertEquals(
             Register`read_oid(1), Data`invalidOidValue, "reset r1 to invalid oid"));
     
     test_move : () ==> ()
     test_move() ==
-        (Instruction`reset(1, 2, 0);
+        (Instruction`reset(1);
+        Instruction`reset(2);
         Instruction`movei(1, Data`int2oid(0));
         assertEquals(Register`read_int(1), 0, "r1 is now set to 0");
         Instruction`move(2, 1);
@@ -75,7 +76,8 @@ operations
             Memory`basic_read(p2 + Memory`REFERENCE_COUNT_OFFSET),
             2,
             "(r2).refCount = 2");
-        Instruction`reset(1, 2, 0);
+        Instruction`reset(1);
+        Instruction`reset(2);
         assertEquals(
             Memory`basic_read(p1 + Memory`REFERENCE_COUNT_OFFSET),
             0,
@@ -213,34 +215,29 @@ operations
     test_jumptrue() ==
         (Register`write_ip(0);
         Instruction`movei(1, Data`trueValue);
-        Instruction`movei(2, Data`int2oid(100));
-        Instruction`jumptrue(1, 2);
-        assertEquals(Register`read_ip(), 100, "jumped with true");
+        Instruction`jumptrue(1, 0x100);
+        assertEquals(Register`read_ip(), 0x100, "jumped with true");
         Register`write_ip(0);
         Instruction`movei(1, Data`falseValue);
-        Instruction`movei(2, Data`int2oid(100));
-        Instruction`jumptrue(1, 2);
+        Instruction`jumptrue(1, 0x100);
         assertEquals(Register`read_ip(), 0, "not jumped with false"));
     
     test_jumpfalse : () ==> ()
     test_jumpfalse() ==
         (Register`write_ip(0);
         Instruction`movei(1, Data`trueValue);
-        Instruction`movei(2, Data`int2oid(100));
-        Instruction`jumpfalse(1, 2);
+        Instruction`jumpfalse(1, 0x100);
         assertEquals(Register`read_ip(), 0, "not jumped with true");
         Register`write_ip(0);
         Instruction`movei(1, Data`falseValue);
-        Instruction`movei(2, Data`int2oid(100));
-        Instruction`jumpfalse(1, 2);
-        assertEquals(Register`read_ip(), 100, "jumped with false"));
+        Instruction`jumpfalse(1, 0x100);
+        assertEquals(Register`read_ip(), 0x100, "jumped with false"));
     
     test_jump : () ==> ()
     test_jump() ==
         (Register`write_ip(0);
-        Instruction`movei(1, Data`int2oid(100));
-        Instruction`jump(1);
-        assertEquals(Register`read_ip(), 100, "jumped"));
+        Instruction`jump(0x100);
+        assertEquals(Register`read_ip(), 0x100, "jumped"));
     
     test_call : () ==> ()
     test_call() ==
@@ -279,15 +276,7 @@ operations
                 assertEquals(
                     ActivationRecord`read_return_cr(callee_ar), caller_cr, "caller's cr");
                 assertEquals(ActivationRecord`read_return_ip(callee_ar), 2, "caller's ip");
-                assertEquals(ActivationRecord`read_ret_reg(callee_ar), 1, "return value to r1");
-                assertEquals(
-                    ActivationRecord`read_local(callee_ar, 1),
-                    Data`int2oid(10),
-                    "r1 is saved");
-                assertEquals(
-                    ActivationRecord`read_local(callee_ar, 2),
-                    Data`pointer2oid(callee_cr),
-                    "r2 is saved")));
+                assertEquals(ActivationRecord`read_ret_reg(callee_ar), 1, "return value to r1")));
     
     test_callrec : () ==> ()
     test_callrec() ==
@@ -319,15 +308,7 @@ operations
                 assertEquals(
                     ActivationRecord`read_return_cr(callee_ar), caller_cr, "caller's cr");
                 assertEquals(ActivationRecord`read_return_ip(callee_ar), 2, "caller's ip");
-                assertEquals(ActivationRecord`read_ret_reg(callee_ar), 1, "return value to r1");
-                assertEquals(
-                    ActivationRecord`read_local(callee_ar, 1),
-                    Data`int2oid(10),
-                    "r1 is saved");
-                assertEquals(
-                    ActivationRecord`read_local(callee_ar, 2),
-                    Data`int2oid(20),
-                    "r2 is saved")));
+                assertEquals(ActivationRecord`read_ret_reg(callee_ar), 1, "return value to r1")));
     
     test_ret : () ==> ()
     test_ret() ==
@@ -477,16 +458,15 @@ operations
                     mk_(Instruction`MOVEI, 3, 0, 0, Data`int2oid(10), nil),
                     mk_(Instruction`MOVEI, 2, 0, 0, Data`int2oid(1), nil),
                     mk_(Instruction`MOVE, 4, 2, 0, nil, nil),
-                    mk_(Instruction`MOVEI, 5, 0, 0, "loop", nil),
                     mk_(Instruction`ADD, 1, 1, 2, nil, "loop"),
                     mk_(Instruction`ADD, 2, 2, 4, nil, nil),
-                    mk_(Instruction`LESSTHAN, 6, 3, 2, nil, nil),
-                    mk_(Instruction`JUMPFALSE, 6, 5, 0, nil, nil),
+                    mk_(Instruction`LESSTHAN, 5, 3, 2, nil, nil),
+                    mk_(Instruction`JUMPFALSE, 5, "loop", 0, nil, nil),
                     mk_(Instruction`ERR, 0, 0, 0, nil, nil)])
         in
             (Register`write_cr(cr);
             Register`write_ip(0);
-            while Register`read_ip() < 13 do Instruction`step();
+            while Register`read_ip() < 11 do Instruction`step();
             assertEquals(Register`read_int(2), 11, "r2 = 11 (just over the stop value=10)");
             assertEquals(Register`read_int(1), 55, "r1 = 55 (sum of 0,...,10)")));
 

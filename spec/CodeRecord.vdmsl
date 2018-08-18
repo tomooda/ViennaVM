@@ -34,8 +34,8 @@ operations
         Memory`write_slot(cr, IP_SLOT_OFFSET + ip, code);
     
     assemble : Data`OID * Data`OID *
-    seq of (Data`Word * Data`Word * Data`Word * Data`Word *
-        [Data`OID| seq of char] * [seq of char]) ==> Data`Pointer
+    seq of (Data`Word * [int| seq of char] * [int| seq of char] *
+        [int| seq of char] * [Data`OID] * [seq of char]) ==> Data`Pointer
     assemble(argtypes, rettype, instructions) ==
         let
             size =
@@ -48,9 +48,9 @@ operations
                 labels:map seq of char to Data`Dword := {|->};
             for mk_(-, reg1, reg2, reg3, imm, label) in instructions
             do
-                (if reg1 > max_reg then max_reg := reg1;
-                if reg2 > max_reg then max_reg := reg2;
-                if reg3 > max_reg then max_reg := reg3;
+                (if is_int(reg1) and reg1 > max_reg then max_reg := reg1;
+                if is_int(reg2) and reg2 > max_reg then max_reg := reg2;
+                if is_int(reg3) and reg3 > max_reg then max_reg := reg3;
                 if label <> nil then labels(label) := ip;
                 ip := ip + 1;
                 if imm <> nil then ip := ip + 1);
@@ -58,25 +58,43 @@ operations
             Memory`write_slot(cr, ARGTYPES_SLOT, argtypes);
             Memory`write_slot(cr, RETTYPE_SLOT, rettype);
             ip := 0;
-            for mk_(opcode, reg1, reg2, reg3, imm, label) in instructions
+            for mk_(opcode, r1, r2, r3, imm, label) in instructions
             do
-                (Memory`write_slot(
-                    cr,
-                    IP_SLOT_OFFSET + ip,
-                    Data`int2oid(Data`words2qword(opcode, reg1, reg2, reg3)));
-                ip := ip + 1;
-                if
-                    imm <> nil
-                then
-                    (if
-                        is_(imm, seq of char)
+                let current_ip = ip
+                in
+                    (ip := ip + 1;
+                    if
+                        imm <> nil
                     then
-                        let address : Data`Dword = labels(imm)
-                        in
-                            Memory`write_slot(cr, IP_SLOT_OFFSET + ip, Data`int2oid(address))
-                    else
-                        Memory`write_slot(cr, IP_SLOT_OFFSET + ip, imm);
-                    ip := ip + 1));
+                        (Memory`write_slot(cr, IP_SLOT_OFFSET + ip, imm);
+                        ip := ip + 1);
+                    let
+                        reg1 =
+                            if
+                                is_int(r1)
+                            then
+                                (if r1 >= 0 then r1 else max_reg - r1)
+                            else
+                                Data`int2word(labels(r1) - ip),
+                        reg2 =
+                            if
+                                is_int(r2)
+                            then
+                                (if r2 >= 0 then r2 else max_reg - r2)
+                            else
+                                Data`int2word(labels(r2) - ip),
+                        reg3 =
+                            if
+                                is_int(r3)
+                            then
+                                (if r3 >= 0 then r3 else max_reg - r3)
+                            else
+                                Data`int2word(labels(r3) - ip)
+                    in
+                        Memory`write_slot(
+                            cr,
+                            IP_SLOT_OFFSET + current_ip,
+                            Data`int2oid(Data`words2qword(opcode, reg1, reg2, reg3))));
             return cr);
 
 end CodeRecord

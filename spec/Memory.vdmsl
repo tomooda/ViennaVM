@@ -80,6 +80,29 @@ operations
             add_page();
             return alloc(num_slots));
     
+    realloc : Data`Pointer * Data`Qword ==> Data`Pointer
+    realloc(pointer, num_slots) ==
+        let
+            old_num_slots = basic_read(pointer + SLOTS_SIZE_OFFSET),
+            old_size = basic_read_dword(pointer + SIZE_OFFSET)
+        in
+            if
+                CONTENT_OFFSET + num_slots  * 8 <= old_size
+            then
+                (for index = num_slots + 1 to  old_num_slots
+                do write_slot(pointer, index, Data`invalidOidValue);
+                basic_write(pointer + SLOTS_SIZE_OFFSET, num_slots);
+                return pointer)
+            else
+                let
+                    new_pointer = alloc(num_slots),
+                    initialization_size =
+                        if old_num_slots < num_slots then old_num_slots else num_slots
+                in
+                    (for index = 1 to  initialization_size
+                    do write_slot(new_pointer, index, read_slot(pointer, index));
+                    return new_pointer);
+    
     release : Data`Pointer ==> ()
     release(pointer) ==
         let

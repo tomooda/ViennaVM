@@ -56,16 +56,16 @@ values
      largePositiveIntTag = 0x90;
      largeNegativeIntTag = 0xa0;
      /* heap type oid defs */
-     tupleType = 0x04;
-     recordType = 0x14;
-     seqType = 0x24;
-     setType = 0x34;
-     mapType = 0x44;
-     quoteType = 0x54;
-     functionType = 0x64;
-     operationType = 0x74;
-     productType = 0x84;
-     unionType = 0x94;
+     tupleTypeTag = 0x04;
+     recordTypeTag = 0x14;
+     seqTypeTag = 0x24;
+     setTypeTag = 0x34;
+     mapTypeTag = 0x44;
+     quoteTypeTag = 0x54;
+     functionTypeTag = 0x64;
+     operationTypeTag = 0x74;
+     productTypeTag = 0x84;
+     unionTypeTag = 0x94;
 	  /* default values */
      invalidOidValue = invalidTag;
      invalidIntValue = 0x7fffffffffffffff;
@@ -136,6 +136,12 @@ functions
     
     dword2int : Dword -> int
     dword2int(x) == if x < 0x80000000 then x else x - 0x100000000;
+    
+    int2word : int -> Word
+    int2word(x) == if x < 0 then x + 0x10000 else x;
+    
+    word2int : Word -> int
+    word2int(x) == if x < 0x8000 then x else x - 0x10000;
     
     byte2int : Byte -> int
     byte2int(x) == if x < 0x80 then x else x - 0x100;

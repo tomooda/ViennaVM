@@ -4,7 +4,7 @@
 
 typedef struct labeldef_s {
   char *label;
-  int value;
+  Dword value;
 } labeldef;
 
 Pointer assemble(OID argtypes, OID rettype, Instruction *instructions) {
@@ -14,8 +14,6 @@ Pointer assemble(OID argtypes, OID rettype, Instruction *instructions) {
   for (int i = 0; instructions[i].opcode < 0x8000; i++) {
     ++size;
     if (instructions[i].imm != invalidOidValue) {
-      ++size;
-    } else if (instructions[i].labelref) {
       ++size;
     }
     if (instructions[i].labeldef) {
@@ -44,8 +42,6 @@ Pointer assemble(OID argtypes, OID rettype, Instruction *instructions) {
     ++ip;
     if (instructions[i].imm != invalidOidValue) {
       ++ip;
-    } else if (instructions[i].labelref) {
-      ++ip;
     }
     write_slot(cr, NUM_REGS_SLOT, int2oid(max_reg));
     write_slot(cr, ARGTYPES_SLOT, argtypes);
@@ -53,27 +49,31 @@ Pointer assemble(OID argtypes, OID rettype, Instruction *instructions) {
   }
   ip = 0;
   for (int i = 0; instructions[i].opcode < 0x8000; i++) {
-    write_slot
-      (cr,
-       IP_SLOT_OFFSET + ip,
-       int2oid(words2qword
-	       (instructions[i].opcode,
-		instructions[i].reg1,
-		instructions[i].reg2,
-		instructions[i].reg3)));
+    Dword old_ip = ip;
+    Word opcode = instructions[i].opcode;
     ++ip;
     if (instructions[i].imm != invalidOidValue) {
       write_slot(cr, IP_SLOT_OFFSET + ip, instructions[i].imm);
       ++ip;
-    } else if (instructions[i].labelref) {
+    }
+    Word reg1 = instructions[i].reg1 >= 0 ? instructions[i].reg1 : max_reg - instructions[i].reg1;
+    Word reg2 = instructions[i].reg2 >= 0 ? instructions[i].reg2 : max_reg - instructions[i].reg2;
+    Word reg3 = instructions[i].reg3 >= 0 ? instructions[i].reg3 : max_reg - instructions[i].reg3;
+    if (instructions[i].labelref) {
       for (int l = 0; l < labelTableSize; l++) {
 	if (!strcmp(instructions[i].labelref, labelTable[l].label)) {
-	  write_slot(cr, IP_SLOT_OFFSET + ip, int2oid(labelTable[l].value));
+	  int offset = (int)labelTable[l].value - (int)ip;
+	  if (!reg1) reg1 = offset;
+	  else if (!reg2) reg2 = offset;
+	  else if (!reg3) reg3 = offset;
 	  break;
 	}
       }
-      ++ip;
     }
+    write_slot
+      (cr,
+       IP_SLOT_OFFSET + old_ip,
+       int2oid(words2qword(opcode, reg1, reg2, reg3)));
   }
   return cr;
 }

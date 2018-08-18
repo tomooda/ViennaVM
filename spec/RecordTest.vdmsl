@@ -1,0 +1,138 @@
+module RecordTest
+imports
+    from Data all,
+    from Memory all,
+    from Equality all,
+    from UnitTesting
+        operations
+            assertEquals renamed assertEquals;
+            assert renamed assert;,
+    from RecordType all,
+    from Record all
+exports all
+definitions
+operations
+    makeRecord : Data`Pointer * seq of Data`OID ==> Data`Pointer
+    makeRecord(t, oids) ==
+        let p : Data`Pointer = Record`make(t)
+        in
+            (for i = 1 to  Record`fields_size(p)
+            do
+                Record`write(p, i, if i <= len oids then oids(i) else Data`invalidOidValue);
+            return p)
+    pre  len oids = RecordType`fields_size(t);
+    
+    test_alloc : () ==> ()
+    test_alloc() ==
+        let p1 = Record`alloc(1)
+        in
+            (assertEquals(Record`fields_size(p1), 1, "fields_size(alloc(1)) = 1");
+            assertEquals(
+                Record`read_constructor(p1),
+                Data`invalidOidValue,
+                "constructor not assigned");
+            assertEquals(
+                Record`read(p1, 1), Data`invalidOidValue, "field1 is not assigned"));
+    
+    test_make : () ==> ()
+    test_make() ==
+        let
+            t = RecordType`alloc(2),
+            p = Record`make(t),
+            c = Record`read_constructor(p)
+        in
+            (assertEquals(RecordType`pointer2oid(t), c, "oid(t) = c");
+            assertEquals(Data`oid2pointer(c), t, "pointer(c) = t");
+            assertEquals(Record`fields_size(p), 2, "fields_size(p) = 2");
+            assertEquals(Record`read(p, 1), Data`invalidOidValue, "p(1) = undefined"));
+    
+    test_read_write : () ==> ()
+    test_read_write() ==
+        let p = Record`make(RecordType`alloc(2))
+        in
+            (Record`write(p, 1, Data`int2oid(1));
+            Record`write(p, 2, Data`float2oid(Data`real2float(2.0)));
+            assertEquals(Record`read(p, 1), Data`int2oid(1), "p(1) = oid(1)");
+            assertEquals(
+                Record`read(p, 2),
+                Data`float2oid(Data`real2float(2.0)),
+                "p(2) = oid(2.0)");
+            Record`write(p, 1, Data`int2oid(3));
+            Record`write(p, 2, Data`float2oid(Data`real2float(4.0)));
+            assertEquals(Record`read(p, 1), Data`int2oid(3), "p(1) = oid(3)");
+            assertEquals(
+                Record`read(p, 2),
+                Data`float2oid(Data`real2float(4.0)),
+                "p(2) = oid(4.0)"));
+    
+    test_equal : () ==> ()
+    test_equal() ==
+        let
+            t1 = RecordType`alloc(2),
+            t2 = RecordType`alloc(2),
+            p1 = Record`make(t1),
+            p2 = Record`make(t1),
+            p3 = Record`make(t1),
+            p4 = Record`make(t2)
+        in
+            (assert(
+                Record`read_constructor(p1) <> Record`read_constructor(p4),
+                "t1 <> t2");
+            RecordType`write_equality_visibility(t1, 2, false);
+            RecordType`write_equality_visibility(t2, 2, false);
+            Record`write(p1, 1, Data`int2oid(1));
+            Record`write(p1, 2, Data`int2oid(2));
+            Record`write(p2, 1, Data`float2oid(Data`real2float(1.0)));
+            Record`write(p2, 2, Data`int2oid(3));
+            Record`write(p3, 1, Data`int2oid(2));
+            Record`write(p3, 2, Data`int2oid(2));
+            Record`write(p4, 1, Data`int2oid(1));
+            Record`write(p4, 2, Data`int2oid(2));
+            assertEquals(
+                Record`equal(p1, p2),
+                true,
+                "mk_t1(1, 2) = mk_t1(1.0, 3) where field 2 is invisible");
+            assertEquals(
+                Record`equal(p1, p3),
+                false,
+                "mk_t1(1, 2) <> mk_t1(2, 2) where field 2 is invisible");
+            assertEquals(Record`equal(p1, p4), false, "mk_t1(1, 2) <> mk_t2(1, 2)"));
+    
+    test_hash : () ==> ()
+    test_hash() ==
+        let
+            t1 = RecordType`alloc(2),
+            t2 = RecordType`alloc(2),
+            p1 = Record`make(t1),
+            p2 = Record`make(t1),
+            p3 = Record`make(t1),
+            p4 = Record`make(t2)
+        in
+            (assert(
+                Record`read_constructor(p1) <> Record`read_constructor(p4),
+                "t1 <> t2");
+            RecordType`write_equality_visibility(t1, 2, false);
+            RecordType`write_equality_visibility(t2, 2, false);
+            Record`write(p1, 1, Data`int2oid(1));
+            Record`write(p1, 2, Data`int2oid(2));
+            Record`write(p2, 1, Data`float2oid(Data`real2float(1.0)));
+            Record`write(p2, 2, Data`int2oid(3));
+            Record`write(p3, 1, Data`int2oid(2));
+            Record`write(p3, 2, Data`int2oid(2));
+            Record`write(p4, 1, Data`int2oid(1));
+            Record`write(p4, 2, Data`int2oid(2));
+            let
+                h1 = Record`hash(p1),
+                h2 = Record`hash(p2),
+                h3 = Record`hash(p3),
+                h4 = Record`hash(p4)
+            in
+                (assert(
+                    h1 = h2,
+                    "hash(mk_t1(1, 2)) = hash(mk_t1(1.0, 3)) where field 2 is invisible");
+                assert(
+                    h1 <> h3,
+                    "hash(mk_t1(1, 2)) <> hash(mk_t1(2, 2)) where field 2 is invisible");
+                assert(h1 <> h4, "hash(mk_t1(1, 2)) <> hash(mk_t2(1, 2))")));
+
+end RecordTest

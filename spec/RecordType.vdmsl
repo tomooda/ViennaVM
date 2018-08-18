@@ -1,0 +1,39 @@
+module RecordType
+imports
+    from Data all,
+    from Memory all,
+    from Equality all,
+    from Record all
+exports all
+definitions
+functions
+    pointer2oid : Data`Pointer -> Data`OID
+    pointer2oid(p) == Data`pointer2oid(p) + Data`recordTypeTag;
+
+operations
+    alloc : Data`Qword ==> Data`Pointer
+    alloc(s) ==
+        let p = Memory`alloc(s)
+        in
+            (for i = 1 to  s do Memory`write_slot(p, i, Data`trueValue);
+            return p)
+    pre  s >= 1;
+    
+    pure fields_size : Data`Pointer ==> Data`Qword
+    fields_size(p) == return Memory`slots_size(p);
+    
+    pure read_equality_visibility : Data`Pointer * Data`Qword ==> bool
+    read_equality_visibility(p, i) ==
+        return Memory`read_slot(p, i) = Data`trueValue;
+    
+    write_equality_visibility : Data`Pointer * Data`Qword * bool ==> ()
+    write_equality_visibility(p, i, b) ==
+        Memory`write_slot(p, i, if b then Data`trueValue else Data`falseValue);
+    
+    pure equal : Data`Pointer * Data`Pointer ==> bool
+    equal(p1, p2) == return p1 = p2;
+    
+    pure hash : Data`Pointer ==> Data`Qword
+    hash(p) == return pointer2oid(p) mod (Equality`hashMask + 1);
+
+end RecordType

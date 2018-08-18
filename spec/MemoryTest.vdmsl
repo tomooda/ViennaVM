@@ -174,5 +174,80 @@ operations
                 Memory`basic_read_dword(p1 + Memory`SIZE_OFFSET) = 0, "p1 is free");
             assert(
                 Memory`basic_read_dword(p2 + Memory`SIZE_OFFSET) = 0, "p2 is free"));
+    
+    test_realloc_shrink : () ==> ()
+    test_realloc_shrink() ==
+        let
+            p1 = Memory`alloc(0), p2 = Memory`alloc(0), p3 = Memory`alloc(2)
+        in
+            (Memory`write_slot(p3, 1, Data`pointer2oid(p1));
+            Memory`write_slot(p3, 2, Data`pointer2oid(p2));
+            assertEquals(Memory`read_reference_count(p1), 1, "ref(p1) = 1");
+            assertEquals(Memory`read_reference_count(p2), 1, "ref(p2) = 1");
+            let p4 = Memory`realloc(p3, 1)
+            in
+                (assertEquals(Memory`slots_size(p4), 1, "p4 is resized to 1");
+                assertEquals(p3, p4, "not newly allocated"));
+            assertEquals(Memory`read_reference_count(p1), 1, "ref(p1) does not change");
+            assertEquals(
+                Memory`read_reference_count(p2),
+                0,
+                "p2 is released because p3 was resized");
+            Memory`release(p3);
+            assertEquals(Memory`read_reference_count(p3), 0, "ref(p3) is free");
+            assertEquals(Memory`read_reference_count(p1), 0, "ref(p1) is free");
+            assertEquals(Memory`read_reference_count(p2), 0, "ref(p2) is free"));
+    
+    test_realloc_expand : () ==> ()
+    test_realloc_expand() ==
+        let
+            p1 = Memory`alloc(0), p2 = Memory`alloc(0), p3 = Memory`alloc(3)
+        in
+            (let p4 = Memory`realloc(p3, 2)
+            in
+                (assertEquals(Memory`slots_size(p4), 2, "p4 is resized to 2");
+                assertEquals(p3, p4, "not newly allocated"));
+            Memory`write_slot(p3, 1, Data`pointer2oid(p1));
+            Memory`write_slot(p3, 2, Data`pointer2oid(p2));
+            assertEquals(
+                Memory`slots_size(p3),
+                2,
+                "p3 is now sized 2 and can be expanded to 3 in-place");
+            assertEquals(Memory`read_reference_count(p1), 1, "ref(p1) = 1");
+            assertEquals(Memory`read_reference_count(p2), 1, "ref(p2) = 1");
+            let p4 = Memory`realloc(p3, 3)
+            in
+                (assertEquals(Memory`slots_size(p4), 3, "p4 is resized to 3");
+                assertEquals(p3, p4, "not newly allocated"));
+            assertEquals(Memory`read_reference_count(p1), 1, "ref(p1) does not change");
+            assertEquals(Memory`read_reference_count(p2), 1, "ref(p2) does not change");
+            Memory`release(p3);
+            assertEquals(Memory`read_reference_count(p3), 0, "ref(p3) is free");
+            assertEquals(Memory`read_reference_count(p1), 0, "ref(p1) is free");
+            assertEquals(Memory`read_reference_count(p2), 0, "ref(p2) is free"));
+    
+    test_realloc_new : () ==> ()
+    test_realloc_new() ==
+        let
+            p1 = Memory`alloc(0), p2 = Memory`alloc(0), p3 = Memory`alloc(2)
+        in
+            (Memory`write_slot(p3, 1, Data`pointer2oid(p1));
+            Memory`write_slot(p3, 2, Data`pointer2oid(p2));
+            assertEquals(Memory`read_reference_count(p1), 1, "ref(p1) = 1");
+            assertEquals(Memory`read_reference_count(p2), 1, "ref(p2) = 1");
+            let p4 = Memory`realloc(p3, 2 + 64)
+            in
+                (assertEquals(Memory`slots_size(p4), 2 + 64, "p4 is resized to 2+64");
+                assert(p3 <> p4, "not newly allocated");
+                assertEquals(Memory`read_reference_count(p1), 2, "ref(p1) = 2");
+                assertEquals(Memory`read_reference_count(p2), 2, "ref(p2) = 2");
+                Memory`release(p3);
+                assertEquals(Memory`read_reference_count(p3), 0, "ref(p3) is free");
+                assertEquals(Memory`read_reference_count(p1), 1, "ref(p1) is 1");
+                assertEquals(Memory`read_reference_count(p2), 1, "ref(p2) is 1");
+                Memory`release(p4);
+                assertEquals(Memory`read_reference_count(p4), 0, "ref(p4) is free");
+                assertEquals(Memory`read_reference_count(p1), 0, "ref(p1) is free");
+                assertEquals(Memory`read_reference_count(p2), 0, "ref(p2) is free")));
 
 end MemoryTest

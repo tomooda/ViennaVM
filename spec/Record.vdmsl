@@ -2,104 +2,86 @@ module Record
 imports
     from Data all,
     from Memory all,
-    from Equality all
+    from Equality all,
+    from RecordType all
 exports all
 definitions
 types
      FieldSpec :: name : seq of char equality : bool;
 
 values
-     CNAME_SLOT = 1;
-     FSPEC_SIZE = 2;
-     FSPEC_NAME_SLOT = 1;
-     FSPEC_EQUALITY = 2;
      TYPE_SLOT = 1;
      ELEMENTS_SLOT_OFFSET = 1;
 
+functions
+    pointer2oid : Data`Pointer -> Data`OID
+    pointer2oid(p) == Data`pointer2oid(p) + Data`recordTag;
+
 operations
-    alloc : Data`Qword ==> Data`OID
-    alloc(s) ==
-        return Data`pointer2oid(Memory`alloc(s + ELEMENTS_SLOT_OFFSET))
-            + Data`recordTag;
+    alloc : Data`Qword ==> Data`Pointer
+    alloc(s) == Memory`alloc(s + ELEMENTS_SLOT_OFFSET);
     
-    make : Data`OID * seq of Data`OID ==> Data`OID
-    make(type, oids) ==
-        let p : Data`Pointer = Memory`alloc(len oids)
+    make : Data`Pointer ==> Data`Pointer
+    make(t) ==
+        let p = alloc(RecordType`fields_size(t))
         in
-            (Memory`write_slot(p, TYPE_SLOT, type);
-            for i = 1 to  len oids
-            do Memory`write_slot(p, i + ELEMENTS_SLOT_OFFSET, oids(i));
-            return Data`pointer2oid(p) + Data`recordTag)
-    pre  type <> Data`invalidOidValue;
+            (Memory`write_slot(p, TYPE_SLOT, RecordType`pointer2oid(t));
+            return p);
     
-    size : Data`OID ==> Data`Qword
-    size(oid) ==
-        return Memory`slots_size(Data`oid2pointer(oid)) - ELEMENTS_SLOT_OFFSET
-    pre  Data`isRecord(oid);
+    pure fields_size : Data`Pointer ==> Data`Qword
+    fields_size(p) ==
+        return Memory`slots_size(p) - ELEMENTS_SLOT_OFFSET;
     
-    read_constructor : Data`OID ==> Data`OID
-    read_constructor(oid) ==
-        return Memory`read_slot(Data`oid2pointer(oid), TYPE_SLOT)
-    pre  Data`isRecord(oid);
+    pure read_constructor : Data`Pointer ==> Data`OID
+    read_constructor(p) == return Memory`read_slot(p, TYPE_SLOT);
     
-    read : Data`OID * Data`Qword ==> Data`OID
-    read(oid, index) ==
-        return Memory`read_slot(
-                Data`oid2pointer(oid), index + ELEMENTS_SLOT_OFFSET)
-    pre 
-        (Data`isRecord(oid) and index > ELEMENTS_SLOT_OFFSET)
-        and Memory`slots_size(Data`oid2pointer(oid))
-        >= index + ELEMENTS_SLOT_OFFSET;
+    pure read : Data`Pointer * Data`Qword ==> Data`OID
+    read(p, index) ==
+        return Memory`read_slot(p, index + ELEMENTS_SLOT_OFFSET)
+    pre  1 <= index and index <= fields_size(p);
     
-    write : Data`OID * Data`Qword * Data`OID ==> ()
-    write(oid, index, elem) ==
-        return Memory`write_slot(
-                Data`oid2pointer(oid), index + ELEMENTS_SLOT_OFFSET, elem)
-    pre 
-        (Data`isRecord(oid) and index > ELEMENTS_SLOT_OFFSET)
-        and Memory`slots_size(Data`oid2pointer(oid))
-        >= index + ELEMENTS_SLOT_OFFSET;
+    write : Data`Pointer * Data`Qword * Data`OID ==> ()
+    write(p, index, elem) ==
+        return Memory`write_slot(p, index + ELEMENTS_SLOT_OFFSET, elem)
+    pre  1 <= index and index <= fields_size(p);
     
-    equal : Data`OID * Data`OID ==> bool
-    equal(oid1, oid2) ==
-        let
-            p1 : Data`Pointer = Data`oid2pointer(oid1),
-            p2 : Data`Pointer = Data`oid2pointer(oid2)
+    equal : Data`Pointer * Data`Pointer ==> bool
+    equal(p1, p2) ==
+        (if fields_size(p1) <> fields_size(p2) then return false;
+        let constructor = read_constructor(p1)
         in
-            (if p1 = p2 then return true;
-            if
-                phash(p1) <> phash(p2)
-                or Memory`slots_size(p1) <> Memory`slots_size(p2)
-            then
-                return false;
-            for i = 1 to  Memory`slots_size(p1)
-            do
-                if
-                    not Equality`equal(Memory`read_slot(p1, i), Memory`read_slot(p2, i))
-                then
-                    return false;
-            return true)
-    pre  Data`isRecord(oid1) and Data`isRecord(oid2);
+            (if read_constructor(p2) <> constructor then return false;
+            let c = Data`oid2pointer(constructor)
+            in
+                for i = 1 to  RecordType`fields_size(c)
+                do
+                    if
+                        RecordType`read_equality_visibility(c, i)
+                        and not Equality`equal(read(p1, i), read(p2, i))
+                    then
+                        return false);
+        return true);
     
-    hash : Data`OID ==> Equality`Hash
-    hash(oid) == return phash(Data`oid2pointer(oid))
-    pre  Data`isRecord(oid);
-    
-    phash : Data`Pointer ==> Equality`Hash
-    phash(p) ==
+    hash : Data`Pointer ==> Equality`Hash
+    hash(p) ==
         let cachedHash : Equality`Hash = Memory`read_hash(p)
         in
             (if
                 cachedHash = Equality`invalidHashValue
             then
-                (dcl h:int := 0;
-                for i = 1 to  Memory`slots_size(p)
-                do
-                    let oid = Memory`read_slot(p, i)
-                    in if oid <> Data`invalidOidValue then h := h + Equality`hash(oid);
-                h := h mod (Equality`hashMask + 1);
-                Memory`write_hash(p, h);
-                return h)
+                let c = Data`oid2pointer(read_constructor(p))
+                in
+                    (dcl h:int := RecordType`hash(c);
+                    for i = 1 to  Record`fields_size(p)
+                    do
+                        if
+                            RecordType`read_equality_visibility(c, i)
+                        then
+                            let oid = Record`read(p, i)
+                            in if oid <> Data`invalidOidValue then h := h + Equality`hash(oid);
+                    h := h mod (Equality`hashMask + 1);
+                    Memory`write_hash(p, h);
+                    return h)
             else
                 return cachedHash);
 

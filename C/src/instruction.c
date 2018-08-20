@@ -4,33 +4,41 @@ void nop() {
 }
 
 void allocate(Register reg1, Register reg2) {
-  Int size = read_int(reg2);
-  if (size != invalidIntValue) {
-    Pointer p = alloc(size);
-    write_pointer(reg1, p);
+  if (reg1 && reg2) {
+    Int size = read_int(reg2);
+    if (size != invalidIntValue) {
+      Pointer p = alloc(size);
+      write_pointer(reg1, p);
+    } else {
+      err("alloc instruction error: size is not integer");
+    }
   } else {
-    err("alloc instruction error: size is not integer");
+    err("alloc instruction error: operands not specified");
   }
 }
 
-void reset(Register reg1, Register reg2, Register reg3) {
-  if (reg1) {
-    write_oid(reg1, invalidOidValue);
-  }
-  if (reg2) {
-    write_oid(reg2, invalidOidValue);
-  }
-  if (reg3) {
-    write_oid(reg3, invalidOidValue);
+void reset(Register dst) {
+  if (dst) {
+    write_oid(dst, invalidOidValue);
+  } else {
+    err("reset instruction error: oeprand not specified");
   }
 }
     
 void mov(Register dst, Register src) {
-  move(dst, src);
+  if (dst && src) {
+    move(dst, src);
+  } else {
+    err("mov instruction error: operand not specified");
+  }
 }
 
 void movei(Register dst, OID imm) {
-  write_oid(dst, imm);
+  if (dst) {
+    write_oid(dst, imm);
+  } else {
+    err("movei instruction error: operand not specified");
+  }
 }
     
 void loadi(Register dst, Register src, Register intReg, int offset) {
@@ -366,8 +374,13 @@ void ret(Register src) {
     if (src && ret_reg) {
       move(ret_reg, src+ret_num_regs);
     }
+    Reg *reg = regs;
     for (int i = 1; i <= num_regs; i++) {
-      write_invalid(ret_num_regs+i);
+      if ((++reg)->p != invalidPointerValue) {
+	decrement_reference_count(reg->p);
+	reg->oid = invalidOidValue;
+	reg->p = invalidPointerValue;
+      }
     }
     write_cr(ret_cr);
     write_ip(ret_ip);
@@ -380,9 +393,7 @@ void ret(Register src) {
 void rettrue(Register boolReg, Register src) {
   if (!boolReg) {
     err("rettrue instruction error: operand1 not specified");
-    return;
-  }
-  if (read_oid(boolReg) == trueValue) {
+  } else  if (read_oid(boolReg) == trueValue) {
     ret(src);
   }
 }
@@ -390,9 +401,7 @@ void rettrue(Register boolReg, Register src) {
 void retfalse(Register boolReg, Register src) {
   if (!boolReg) {
     err("rettrue instruction error: operand1 not specified");
-    return;
-  }
-  if (read_oid(boolReg) == falseValue) {
+  } else if (read_oid(boolReg) == falseValue) {
     ret(src);
   }
 }

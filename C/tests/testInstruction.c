@@ -64,13 +64,14 @@ int testInstruction()
 static int test_reset() {
   movei(1, int2oid(0));
   assertEquals(read_int(1), 0, "r1 is now set to 0");
-  reset(1, 0, 0);
+  reset(1);
   assertEquals(read_oid(1), invalidOidValue, "reset r1 to invalid oid");
   return 0;
 }
     
 static int test_move() {
-  reset(1, 2, 0);
+  reset(1);
+  reset(2);
   movei(1, int2oid(0));
   assertEquals(read_int(1), 0, "r1 is now set to 0");
   mov(2, 1);
@@ -117,7 +118,8 @@ static int test_store_load() {
     (basic_read(p2 + REFERENCE_COUNT_OFFSET),
      2,
      "(r2).refCount = 2");
-  reset(1, 2, 0);
+  reset(1);
+  reset(2);
   assertEquals
     (basic_read(p1 + REFERENCE_COUNT_OFFSET),
      0,

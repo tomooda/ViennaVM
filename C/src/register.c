@@ -191,11 +191,3 @@ void write_pointer(Register dst, Pointer p) {
   reg->p = p;
 }
 
-void write_invalid(Register dst) {
-  Reg *reg = regs+dst;
-  if (reg->p != invalidPointerValue) {
-    decrement_reference_count(reg->p);
-    reg->oid = invalidOidValue;
-    reg->p = invalidPointerValue;
-  }
-}

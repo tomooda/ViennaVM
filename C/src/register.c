@@ -19,21 +19,6 @@ void register_reset() {
   regs = registers;
 }
 
-void move(Register dst, Register src) {
-  if (dst == src) {
-    return;
-  }
-  Pointer dstPointer = regs[dst].p;
-  Pointer srcPointer = regs[src].p;
-  if (srcPointer != invalidPointerValue) {
-    increment_reference_count(srcPointer);
-  }
-  if (dstPointer != invalidPointerValue) {
-    decrement_reference_count(dstPointer);
-  }
-  regs[dst] = regs[src];
-}
-
 OID read_oid(Register src) {
   Reg *reg = regs + src;
   OID oid;
@@ -64,51 +49,25 @@ OID read_oid(Register src) {
 }
 
 void write_oid(Register dst, OID oid) {
-  Reg *reg = regs + dst;
-  if (reg->oid == oid && oid != invalidOidValue) {
-    return;
+  static Reg r = {invalidOidValue, invalidIntValue, invalidFloatValue, invalidCharValue, invalidPointerValue};
+  r.oid = oid;
+  r.p = oid2pointer(oid);
+  if (r.p != invalidPointerValue) {
+    increment_reference_count(r.p);
   }
-  Pointer p1 = regs[dst].p;
-  Pointer p2 = oid2pointer(oid);
-  if (p1 != p2) {
-    if (p2 != invalidPointerValue) {
-      increment_reference_count(p2);
-    }
-    if (p1 != invalidPointerValue) {
-      decrement_reference_count(p1);
-    }
+  if (regs[dst].p != invalidPointerValue) {
+    decrement_reference_count(regs[dst].p);
   }
-  reg->oid = oid;
-  reg->i = invalidIntValue;
-  reg->f = invalidFloatValue;
-  reg->c = invalidCharValue;
-  reg->p = p2;
-}
-
-Int read_int(Register src) {
-  Int i = regs[src].i;
-  if (i == invalidIntValue) {
-    i = oid2int(regs[src].oid);
-    if (i != invalidIntValue) {
-      regs[src].i = i;
-    }
-  }
-  return i;
+  regs[dst] = r;
 }
 
 void write_int(Register dst, Int i) {
-  Reg *reg = regs+dst;
-  if (reg->i == i) {
-    return;
+  static Reg r = {invalidOidValue, invalidIntValue, invalidFloatValue, invalidCharValue, invalidPointerValue};
+  r.i = i;
+  if (regs[dst].p != invalidPointerValue) {
+    decrement_reference_count(regs[dst].p);
   }
-  if (reg->p != invalidPointerValue) {
-    decrement_reference_count(reg->p);
-  }
-  reg->oid = invalidOidValue;
-  reg->i = i;
-  reg->f = invalidFloatValue;
-  reg->c = invalidCharValue;
-  reg->p = invalidPointerValue;
+  regs[dst] = r;
 }
 
 Float read_float(Register src) {
@@ -128,18 +87,12 @@ Float read_float(Register src) {
 }
     
 void write_float(Register dst, Float f) {
-  Reg *reg = regs+dst;
-  if (reg->f == f) {
-    return;
+  static Reg r = {invalidOidValue, invalidIntValue, invalidFloatValue, invalidCharValue, invalidPointerValue};
+  r.f = f;
+  if (regs[dst].p != invalidPointerValue) {
+    decrement_reference_count(regs[dst].p);
   }
-  if (reg->p != invalidPointerValue) {
-    decrement_reference_count(reg->p);
-  }
-  reg->oid = invalidOidValue;
-  reg->i = invalidIntValue;
-  reg->f = f;
-  reg->c = invalidCharValue;
-  reg->p = invalidPointerValue;
+  regs[dst] = r;
 }
 
 Char read_char(Register src) {
@@ -155,18 +108,12 @@ Char read_char(Register src) {
 }
 
 void write_char(Register dst, Char c) {
-  Reg *reg = regs+dst;
-  if (reg -> c == c) {
-    return;
+  static Reg r = {invalidOidValue, invalidIntValue, invalidFloatValue, invalidCharValue, invalidPointerValue};
+  r.c = c;
+  if (regs[dst].p != invalidPointerValue) {
+    decrement_reference_count(regs[dst].p);
   }
-  if (reg->p != invalidPointerValue) {
-    decrement_reference_count(reg->p);
-  }
-  reg->oid = invalidOidValue;
-  reg->i = invalidIntValue;
-  reg->f = invalidFloatValue;
-  reg->c = c;
-  reg->p = invalidPointerValue;
+  regs[dst] = r;
 }
 
 Pointer read_pointer(Register src) {
@@ -174,20 +121,14 @@ Pointer read_pointer(Register src) {
 }
     
 void write_pointer(Register dst, Pointer p) {
-  Reg *reg = regs+dst;
-  if (reg -> p == p) {
-    return;
-  }
+  static Reg r = {invalidOidValue, invalidIntValue, invalidFloatValue, invalidCharValue, invalidPointerValue};
+  r.p = p;
   if (p != invalidPointerValue) {
     increment_reference_count(p);
   }
-  if (reg->p != invalidPointerValue) {
-    decrement_reference_count(reg->p);
+  if (regs[dst].p != invalidPointerValue) {
+    decrement_reference_count(regs[dst].p);
   }
-  reg->oid = invalidOidValue;
-  reg->i = invalidIntValue;
-  reg->f = invalidFloatValue;
-  reg->c = invalidCharValue;
-  reg->p = p;
+  regs[dst] = r;
 }
 

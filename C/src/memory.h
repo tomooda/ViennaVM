@@ -6,6 +6,7 @@
 typedef struct {
   Pointer address;
   Qword size;
+  Pointer endAddress;
 } Slot;
 
 /* constants on memory space */
@@ -90,6 +91,23 @@ static inline OID read_slot(Pointer pointer, Int index) {
 }
 
 extern void write_slot(Pointer pointer, Int index, OID oid);
-extern void init_slot(Pointer pointer, Int index, OID oid);
+
+static inline void init_slot(Pointer pointer, Int index, OID oid) {
+  if (isPointer(oid) && oid2pointer(oid) != invalidPointerValue) {
+    increment_reference_count(oid2pointer(oid));
+  }
+  basic_write(pointer + CONTENT_OFFSET + (index - 1) * 8, oid);
+}
+
+static inline void init_slot_p(Pointer pointer, Int index, Pointer p) {
+  if (p != invalidPointerValue) {
+    increment_reference_count(p);
+  }
+  basic_write(pointer + CONTENT_OFFSET + (index - 1) * 8, pointer2oid(p));
+}
+
+static inline void init_slot_i(Pointer pointer, Int index, Int i) {
+  basic_write(pointer + CONTENT_OFFSET + (index - 1) * 8, int2oid(i));
+}
 
 #endif

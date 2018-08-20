@@ -257,13 +257,11 @@ static int test_bnot() {
 static int test_jumptrue() {
   write_ip(0);
   movei(1, trueValue);
-  movei(2, int2oid(100));
-  jumptrue(1, 2);
+  jumptrue(1, 100);
   assertEquals(read_ip(), 100, "jumped with true");
   write_ip(0);
   movei(1, falseValue);
-  movei(2, int2oid(100));
-  jumptrue(1, 2);
+  jumptrue(1, 100);
   assertEquals(read_ip(), 0, "not jumped with false");
   return 0;
 }
@@ -271,21 +269,18 @@ static int test_jumptrue() {
 static int test_jumpfalse() {
   write_ip(0);
   movei(1, trueValue);
-  movei(2, int2oid(100));
-  jumpfalse(1, 2);
+  jumpfalse(1, 100);
   assertEquals(read_ip(), 0, "not jumped with true");
   write_ip(0);
   movei(1, falseValue);
-  movei(2, int2oid(100));
-  jumpfalse(1, 2);
+  jumpfalse(1, 100);
   assertEquals(read_ip(), 100, "jumped with false");
   return 0;
 }
     
 static int test_jump() {
   write_ip(0);
-  movei(1, int2oid(100));
-  jump(1);
+  jump(100);
   assertEquals(read_ip(), 100, "jumped");
   return 0;
 }
@@ -311,8 +306,6 @@ static int test_call() {
   assertEquals(read_return_cr(callee_ar), caller_cr, "caller's cr");
   assertEquals(read_return_ip(callee_ar), 2, "caller's ip");
   assertEquals(read_ret_reg(callee_ar), 1, "return value to r1");
-  assertEquals(read_local(callee_ar, 1), int2oid(10), "r1 is saved");
-  assertEquals(read_local(callee_ar, 2), pointer2oid(callee_cr), "r2 is saved");
   return 0;
 }
 
@@ -336,8 +329,6 @@ static int test_callrec() {
   assertEquals(read_return_cr(callee_ar), caller_cr, "caller's cr");
   assertEquals(read_return_ip(callee_ar), 2, "caller's ip");
   assertEquals(read_ret_reg(callee_ar), 1, "return value to r1");
-  assertEquals(read_local(callee_ar, 1), int2oid(10), "r1 is saved");
-  assertEquals(read_local(callee_ar, 2), int2oid(20), "r2 is saved");
   return 0;
 }
     
@@ -363,7 +354,6 @@ static int test_ret() {
   write_ip(4);
   ret(3);
   assertEquals(read_int(1), 100, "r1 is the return value");
-  assertEquals(read_pointer(2), callee_cr, "r2 is restored");
   assertEquals(read_cr(), caller_cr, "cr is the caller");
   assertEquals(read_ip(), 2, "ip is the caller");
   assertEquals(read_ar(), caller_ar, "ar is the caller");
@@ -395,7 +385,6 @@ static int test_rettrue() {
   assertEquals(read_ip(), 4, "not returned");
   rettrue(2, 3);
   assertEquals(read_oid(1), falseValue, "r1 is the return value");
-  assertEquals(read_pointer(2), callee_cr, "r2 is restored");
   assertEquals(read_cr(), caller_cr, "cr is the caller");
   assertEquals(read_ip(), 2, "ip is the caller");
   assertEquals(read_ar(), caller_ar, "ar is the caller");
@@ -427,7 +416,6 @@ static int test_retfalse() {
   assertEquals(read_ip(), 4, "not returned");
   retfalse(3, 2);
   assertEquals(read_oid(1), trueValue, "r1 is the return value");
-  assertEquals(read_pointer(2), callee_cr, "r2 is restored");
   assertEquals(read_cr(), caller_cr, "cr is the caller");
   assertEquals(read_ip(), 2, "ip is the caller");
   assertEquals(read_ar(), caller_ar, "ar is the caller");
@@ -435,23 +423,30 @@ static int test_retfalse() {
   return 0;
 }
     
+static OID _ = invalidOidValue;
+
 static int test_step() {
   Instruction src[11] = {
     {MOVEI, 1, 0, 0, int2oid(0), NULL, NULL},
     {MOVEI, 3, 0, 0, int2oid(10), NULL, NULL},
     {MOVEI, 2, 0, 0, int2oid(1), NULL, NULL},
-    {MOVE,  4, 2, 0, invalidOidValue, NULL, NULL},
-    {MOVEI, 5, 0, 0, invalidOidValue, "loop", NULL},
-    {ADD, 1, 1, 2, invalidOidValue, NULL, "loop"},
-    {ADD, 2, 2, 4, invalidOidValue, NULL, NULL},
-    {LESSTHAN, 6, 3, 2, invalidOidValue, NULL, NULL},
-    {JUMPFALSE, 6, 5, 0, invalidOidValue, NULL, NULL},
-    {ERR, 0, 0, 0, invalidOidValue, NULL, NULL},
-    {0xffff, 0, 0, 0, invalidOidValue, NULL, NULL}};
+    {MOVE,  4, 2, 0, _, NULL, NULL},
+    {ADD, 1, 1, 2, _, NULL, "loop"},
+    {ADD, 2, 2, 4, _, NULL, NULL},
+    {LESSTHAN, 5, 3, 2, _, NULL, NULL},
+    {JUMPFALSE, 5, 0, 0, _, "loop", NULL},
+    {ERR, 0, 0, 0, _, NULL, NULL},
+    {0xffff, 0, 0, 0, _, NULL, NULL}};
+  memory_reset();
+  register_reset();
   Pointer cr = assemble(invalidOidValue, invalidOidValue, src);
+  assertEquals(read_code_size(cr), 12, "code size = 12");
+  assertEquals(read_num_regs(cr), 5, "uses r1-r5");
+  assertEquals(read_argtypes(cr), invalidOidValue, "no argtypes");
+  assertEquals(read_rettype(cr), invalidOidValue, "no rettype");
   write_cr(cr);
   write_ip(0);
-  while (read_ip() < 13) {
+  while (read_ip() < 11) {
     step();
   }
   assertEquals(read_int(2), 11, "r2 = 11 (just over the stop value=10)");

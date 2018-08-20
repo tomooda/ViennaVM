@@ -36,9 +36,11 @@ void add_page() {
   }
   pool[0].address = 0;
   pool[0].size = HEAP_PAGE_SIZE;
+  pool[0].endAddress = HEAP_PAGE_SIZE;
   for (int i = 1; i < POOL_PAGE_SIZE; i++) {
     pool[i].address = 0;
     pool[i].size = 0;
+    pool[i].endAddress = 0;
   }
   heapPages[num_pages] = heap;
   poolPages[num_pages] = pool;
@@ -49,21 +51,23 @@ void add_page() {
 Pointer alloc(Qword num_slots) {
   Qword size = align(CONTENT_OFFSET + num_slots * 8);
   for (int page = 0; page < num_pages; page++) {
-    Slot *pool = poolPages[page];
+    Slot *pool = poolPages[page]-1;
     int poolSize = poolSizes[page];
-    for (int i = 0; i < poolSize; i++) {
-      if (pool[i].size >= size) {
-	Pointer address = pool[i].address;
+    
+    for (int i = poolSize; i; --i) {
+      if ((++pool)->size >= size) {
+	Pointer address = pool->address;
 	Pointer pointer = page * HEAP_PAGE_SIZE + address;
-	pool[i].address += size;
-	pool[i].size -= size;
+	pool->address += size;
+	pool->size -= size;
 	basic_write_dword(pointer + SIZE_OFFSET, size);
 	basic_write_dword(pointer + FLAGS_OFFSET, 0);
 	basic_write(pointer + REFERENCE_COUNT_OFFSET, 0);
 	basic_write(pointer + FORWARDER_OFFSET, invalidPointerValue);
 	basic_write(pointer + SLOTS_SIZE_OFFSET, num_slots);
+	Pointer p = pointer + CONTENT_OFFSET - 8;
 	for (int s = 0; s < num_slots; s++) {
-	  basic_write(pointer + CONTENT_OFFSET + s * 8, invalidOidValue);
+	  basic_write((p += 8), invalidOidValue);
 	}
 	return pointer;
       }
@@ -80,22 +84,32 @@ void release(Pointer pointer) {
   int poolSize = poolSizes[page];
   Dword address = pointer % HEAP_PAGE_SIZE;
   Dword slotsSize = slots_size(pointer);
+  Dword endAddress = address + size;
+  Slot *vacant = NULL;
   basic_write_dword(pointer+SIZE_OFFSET, 0);
+  Pointer pointer_i = pointer + CONTENT_OFFSET - 8;
   for (int i = 0; i < slotsSize; i++) {
-    Pointer p = oid2pointer(basic_read(pointer + CONTENT_OFFSET + i * 8));
+    Pointer p = oid2pointer(basic_read(pointer_i += 8));
     if (p != invalidPointerValue) {
       decrement_reference_count(p);
     }
   }
+  Slot *pool_i = pool - 1;
+  Slot *pool_j;
   for (int i = 0; i < poolSize; i++) {
-    if (!pool[i].size) continue;
-    if (pool[i].address + pool[i].size == address) {
-      Dword endAddress = address + size;
+    if (!((++pool_i)->size)) {
+      vacant = pool_i;
+      continue;
+    }
+    if (pool_i->endAddress == address) {
+      pool_j = pool + i;
       for (int j = i+1; j <= poolSize; j++) {
-	if (pool[j].size && pool[j].address == endAddress) {
-	  pool[i].size += size + pool[j].size;
-	  pool[j].address = 0;
-	  pool[j].size = 0;
+	if ((++pool_j)->size && pool_j->address == endAddress) {
+	  pool_i->size += size + pool_j->size;
+	  pool_i->endAddress = pool_j->endAddress;
+	  pool_j->address = 0;
+	  pool_j->size = 0;
+	  pool_j->endAddress = 0;
 	  if (j == poolSize - 1) {
 	    while (j && !pool[j].size) {
 	      --j;
@@ -105,18 +119,21 @@ void release(Pointer pointer) {
 	  return;
 	}
       }
-      pool[i].size += size;
+      pool_i->size += size;
+      pool_i->endAddress = endAddress;
       return;
     }
-    if (address + size == pool[i].address) {
+    if (endAddress == pool_i->address) {
+      pool_j = pool + i;
       for (int j = i+1; j <= poolSize; j++) {
-	if (pool[j].size && pool[j].address + pool[j].size == address) {
-	  pool[i].address = pool[j].address;
-	  pool[i].size += pool[j].size + size;
-	  pool[j].address = 0;
-	  pool[j].size = 0;
+	if ((++pool_j)->size && pool_j->endAddress == address) {
+	  pool_i->address = pool_j->address;
+	  pool_i->size += pool_j->size + size;
+	  pool_j->address = 0;
+	  pool_j->size = 0;
+	  pool_j->endAddress = 0;
 	  if (j == poolSize - 1) {
-	    while (j && !pool[j].size) {
+	    while (j && !pool_j->size) {
 	      --j;
 	    }
 	    poolSizes[page] = j;
@@ -124,15 +141,23 @@ void release(Pointer pointer) {
 	  return;
 	}
       }
-      pool[i].address = address;
-      pool[i].size += size;
+      pool_i->address = address;
+      pool_i->size += size;
       return;
     }
   }
-  for (int i = 0; i < POOL_PAGE_SIZE; i++) {
-    if (!pool[i].size) {
-      pool[i].address = address;
-      pool[i].size = size;
+  if (vacant) {
+      vacant->address = address;
+      vacant->size = size;
+      vacant->endAddress = endAddress;
+      return;
+  }
+  pool_i = pool+poolSize-1;
+  for (int i = poolSize; i < POOL_PAGE_SIZE; i++) {
+    if (!((++pool_i)->size)) {
+      pool_i->address = address;
+      pool_i->size = size;
+      pool_i->endAddress = endAddress;
       return;
     }
   }
@@ -151,11 +176,3 @@ void write_slot(Pointer pointer, Int index, OID oid) {
   }
   basic_write(address, oid);
 }
-
-void init_slot(Pointer pointer, Int index, OID oid) {
-  if (isPointer(oid)) {
-    increment_reference_count(oid2pointer(oid));
-  }
-  basic_write(pointer + CONTENT_OFFSET + (index - 1) * 8, oid);
-}
-

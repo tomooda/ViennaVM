@@ -72,10 +72,25 @@ static inline void offset_registers(int offset) {
   regs += offset;
 }
 
-extern void move(Register dst, Register src);
+static inline void move(Register dst, Register src) {
+  if (regs[src].p != invalidPointerValue) {
+    increment_reference_count(regs[src].p);
+  }
+  if (regs[dst].p != invalidPointerValue) {
+    decrement_reference_count(regs[dst].p);
+  }
+  regs[dst] = regs[src];
+}
+
+static inline OID basic_read_oid(Register src) {
+  return regs[src].oid;
+}
+
 extern OID read_oid(Register r);
 extern void write_oid(Register r, OID oid);
-extern Int read_int(Register r);
+static inline Int read_int(Register src) {
+  return (regs[src].i != invalidIntValue) ? regs[src].i : (regs[src].i = oid2int(regs[src].oid));
+}
 extern void write_int(Register r, Int i);
 extern Float read_float(Register r);
 extern void write_float(Register r, Float f);

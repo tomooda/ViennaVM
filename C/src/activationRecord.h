@@ -13,9 +13,9 @@
 
 static inline Pointer alloc_ar(Pointer caller, Register ret_reg, Dword ret_ip, Pointer ret_cr, Register num_locals) {
   Pointer ar = alloc(LOCAL_SLOT_OFFSET + num_locals);
-  init_slot(ar, DYNAMIC_LINK_SLOT, pointer2oid(caller));
-  init_slot(ar, RETURN_IP_REG_SLOT, int2oid(ret_ip+ret_reg*0x100000000));
-  init_slot(ar, RETURN_CR_SLOT, pointer2oid(ret_cr));
+  init_slot_p(ar, DYNAMIC_LINK_SLOT, caller);
+  init_slot_i(ar, RETURN_IP_REG_SLOT, ret_ip+ret_reg*0x100000000);
+  init_slot_p(ar, RETURN_CR_SLOT, ret_cr);
   return ar;
 }
 

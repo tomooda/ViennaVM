@@ -279,7 +279,7 @@ void equal(Register dst, Register src1, Register src2) {
 
 void bnot(Register dst, Register src) {
   if (dst && src) {
-    switch (read_oid(src)) {
+    switch (basic_read_oid(src)) {
     case trueValue:
       write_oid(dst, falseValue);
       return;
@@ -301,7 +301,7 @@ void jump(Register offset) {
     
 void jumptrue(Register boolReg, Register offset) {
   if (boolReg) {
-    switch (read_oid(boolReg)) {
+    switch (basic_read_oid(boolReg)) {
     case trueValue:
       offset_ip((int16_t)offset);
       return;
@@ -318,7 +318,7 @@ void jumptrue(Register boolReg, Register offset) {
     
 void jumpfalse(Register boolReg, Register offset) {
   if (boolReg) {
-    switch (read_oid(boolReg)) {
+    switch (basic_read_oid(boolReg)) {
     case falseValue:
       offset_ip((int16_t)offset);
       return;
@@ -375,7 +375,7 @@ void ret(Register src) {
       move(ret_reg, src+ret_num_regs);
     }
     Reg *reg = regs;
-    for (int i = 1; i <= num_regs; i++) {
+    for (int i = num_regs; i ; --i) {
       if ((++reg)->p != invalidPointerValue) {
 	decrement_reference_count(reg->p);
 	reg->oid = invalidOidValue;
@@ -391,10 +391,12 @@ void ret(Register src) {
 }
     
 void rettrue(Register boolReg, Register src) {
-  if (!boolReg) {
+  if (boolReg) {
+    if (basic_read_oid(boolReg) == trueValue) {
+      ret(src);
+    }
+  } else {
     err("rettrue instruction error: operand1 not specified");
-  } else  if (read_oid(boolReg) == trueValue) {
-    ret(src);
   }
 }
     

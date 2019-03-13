@@ -74,7 +74,7 @@ typedef Qword                Pointer;
 typedef union {Word words[4]; Qword qword;} words_qword;
 typedef union {float r; Float f;} float_real;
 
-static inline int isPointer(oid) {
+static inline int isPointer(OID oid) {
   return !(oid & 3);
 }
 

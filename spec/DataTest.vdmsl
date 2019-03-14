@@ -144,7 +144,7 @@ operations
     test_oid2pointer : () ==> ()
     test_oid2pointer() ==
         (assertEquals(
-            Data`oid2pointer(Data`pointer2oid(0x12345)), 0x12345, "trip around");
+            Data`oid2pointer(Data`pointer2oid(0x123450)), 0x123450, "trip around");
         assertEquals(Data`oid2pointer(0x12345) mod 0x100, 0, "tagged pointer");
         assertEquals(
             Data`oid2pointer(Data`invalidOidValue),

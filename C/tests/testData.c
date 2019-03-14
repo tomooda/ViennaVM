@@ -49,8 +49,8 @@ int test_oid2char() {
 
 int test_oid2pointer() {
   assertEquals
-    (oid2pointer(pointer2oid((Pointer)0x1234)),
-     (Pointer)0x1234,
+    (oid2pointer(pointer2oid((Pointer)0x12340)),
+     (Pointer)0x12340,
      "oid2pointer");
   return 0;
 }

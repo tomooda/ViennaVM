@@ -200,11 +200,11 @@ functions
     
     oid2pointer : OID -> Pointer
     oid2pointer(oid) ==
-        if oid mod 4 = 0 then oid div 0x100 else invalidPointerValue;
+        if oid mod 4 = 0 then oid else invalidPointerValue;
     
     pointer2oid : Pointer -> OID
     pointer2oid(p) ==
-        if p <> invalidPointerValue then p  * 0x100 else invalidOidValue;
+        if p <> invalidPointerValue then p else invalidOidValue;
     
     isInt : OID -> bool
     isInt(oid) == oid mod 2 = 1;

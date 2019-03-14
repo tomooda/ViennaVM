@@ -13,8 +13,7 @@ void register_reset() {
     reg->oid = invalidTag;
     reg->i = invalidIntValue;
     reg->f = invalidFloatValue;
-    reg->c = invalidCharValue;
-    (reg++)->p = invalidPointerValue;
+    (reg++)->c = invalidCharValue;
   }
   regs = registers;
 }
@@ -24,11 +23,6 @@ OID read_oid(Register src) {
   OID oid;
   if (reg->oid != invalidOidValue) {
     return reg->oid;
-  }
-  if (reg->p != invalidPointerValue) {
-    oid = pointer2oid(reg->p);
-    reg->oid = oid;
-    return oid;
   }
   if (reg->i != invalidIntValue) {
     oid = int2oid(reg->i);
@@ -49,23 +43,22 @@ OID read_oid(Register src) {
 }
 
 void write_oid(Register dst, OID oid) {
-  static Reg r = {invalidOidValue, invalidIntValue, invalidFloatValue, invalidCharValue, invalidPointerValue};
+  static Reg r = {invalidOidValue, invalidIntValue, invalidFloatValue, invalidCharValue};
   r.oid = oid;
-  r.p = oid2pointer(oid);
-  if (r.p != invalidPointerValue) {
-    increment_reference_count(r.p);
+  if (isPointer(r.oid)) {
+    increment_reference_count(r.oid);
   }
-  if (regs[dst].p != invalidPointerValue) {
-    decrement_reference_count(regs[dst].p);
+  if (isPointer(regs[dst].oid)) {
+    decrement_reference_count(regs[dst].oid);
   }
   regs[dst] = r;
 }
 
 void write_int(Register dst, Int i) {
-  static Reg r = {invalidOidValue, invalidIntValue, invalidFloatValue, invalidCharValue, invalidPointerValue};
+  static Reg r = {invalidOidValue, invalidIntValue, invalidFloatValue, invalidCharValue};
   r.i = i;
-  if (regs[dst].p != invalidPointerValue) {
-    decrement_reference_count(regs[dst].p);
+  if (isPointer(regs[dst].oid)) {
+    decrement_reference_count(regs[dst].oid);
   }
   regs[dst] = r;
 }
@@ -87,10 +80,10 @@ Float read_float(Register src) {
 }
     
 void write_float(Register dst, Float f) {
-  static Reg r = {invalidOidValue, invalidIntValue, invalidFloatValue, invalidCharValue, invalidPointerValue};
+  static Reg r = {invalidOidValue, invalidIntValue, invalidFloatValue, invalidCharValue};
   r.f = f;
-  if (regs[dst].p != invalidPointerValue) {
-    decrement_reference_count(regs[dst].p);
+  if (isPointer(regs[dst].oid)) {
+    decrement_reference_count(regs[dst].oid);
   }
   regs[dst] = r;
 }
@@ -108,26 +101,26 @@ Char read_char(Register src) {
 }
 
 void write_char(Register dst, Char c) {
-  static Reg r = {invalidOidValue, invalidIntValue, invalidFloatValue, invalidCharValue, invalidPointerValue};
+  static Reg r = {invalidOidValue, invalidIntValue, invalidFloatValue, invalidCharValue};
   r.c = c;
-  if (regs[dst].p != invalidPointerValue) {
-    decrement_reference_count(regs[dst].p);
+  if (isPointer(regs[dst].oid)) {
+    decrement_reference_count(regs[dst].oid);
   }
   regs[dst] = r;
 }
 
 Pointer read_pointer(Register src) {
-  return regs[src].p;
+  return oid2pointer(regs[src].oid);
 }
     
 void write_pointer(Register dst, Pointer p) {
-  static Reg r = {invalidOidValue, invalidIntValue, invalidFloatValue, invalidCharValue, invalidPointerValue};
-  r.p = p;
+  static Reg r = {invalidOidValue, invalidIntValue, invalidFloatValue, invalidCharValue};
+  r.oid = pointer2oid(p);
   if (p != invalidPointerValue) {
     increment_reference_count(p);
   }
-  if (regs[dst].p != invalidPointerValue) {
-    decrement_reference_count(regs[dst].p);
+  if (isPointer(regs[dst].oid)) {
+    decrement_reference_count(regs[dst].oid);
   }
   regs[dst] = r;
 }

@@ -69,7 +69,7 @@ typedef Qword                Pointer;
 #define invalidIntValue      (Int)0x7fffffffffffffff
 #define invalidFloatValue    (Float)0xffffffff
 #define invalidCharValue     0xffffffff
-#define invalidPointerValue  (Pointer)0x100000000000000
+#define invalidPointerValue  invalidTag
 
 typedef union {Word words[4]; Qword qword;} words_qword;
 typedef union {float r; Float f;} float_real;
@@ -120,10 +120,10 @@ static inline OID char2oid(Char c) {
 }
 
 static inline Pointer oid2pointer(OID oid) {
-  return (oid & 0x3) == 0 ? oid >> 8 : invalidPointerValue;
+  return (oid & 0x3) == 0 ? oid : invalidPointerValue;
 }
 static inline OID pointer2oid(Pointer p) {
-  return p != invalidPointerValue ? ((OID)p) << 8 : invalidOidValue;
+  return p;
 }
 
 static inline Qword words2qword(Word w1, Word w2, Word w3, Word w4) {

@@ -103,7 +103,7 @@ static inline void init_slot_p(Pointer pointer, Int index, Pointer p) {
   if (p != invalidPointerValue) {
     increment_reference_count(p);
   }
-  basic_write(pointer + CONTENT_OFFSET + (index - 1) * 8, pointer2oid(p));
+  basic_write(pointer + CONTENT_OFFSET + (index - 1) * 8, p);
 }
 
 static inline void init_slot_i(Pointer pointer, Int index, Int i) {

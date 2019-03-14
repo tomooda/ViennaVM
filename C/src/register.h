@@ -9,7 +9,6 @@ typedef struct Reg_s {
   Int i;
   Float f;
   Char c;
-  Pointer p;
 } Reg;
 
 typedef uint16_t Register;
@@ -73,11 +72,11 @@ static inline void offset_registers(int offset) {
 }
 
 static inline void move(Register dst, Register src) {
-  if (regs[src].p != invalidPointerValue) {
-    increment_reference_count(regs[src].p);
+  if (isPointer(regs[src].oid)) {
+    increment_reference_count(regs[src].oid);
   }
-  if (regs[dst].p != invalidPointerValue) {
-    decrement_reference_count(regs[dst].p);
+  if (isPointer(regs[dst].oid)) {
+    decrement_reference_count(regs[dst].oid);
   }
   regs[dst] = regs[src];
 }

@@ -376,10 +376,9 @@ void ret(Register src) {
     }
     Reg *reg = regs;
     for (int i = num_regs; i ; --i) {
-      if ((++reg)->p != invalidPointerValue) {
-	decrement_reference_count(reg->p);
+      if (isPointer((++reg)->oid)) {
+	decrement_reference_count(reg->oid);
 	reg->oid = invalidOidValue;
-	reg->p = invalidPointerValue;
       }
     }
     write_cr(ret_cr);

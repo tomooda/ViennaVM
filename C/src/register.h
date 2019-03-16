@@ -84,17 +84,58 @@ static inline void move(Register dst, Register src) {
 static inline OID basic_read_oid(Register src) {
   return regs[src].oid;
 }
+static inline Int basic_read_int(Register src) {
+  return (regs[src].i != invalidIntValue) ? regs[src].i : (regs[src].i = oid2int(regs[src].oid));
+}
+static inline Float basic_read_float(Register src) {
+  Reg *reg = regs+src;
+  register Float f = reg->f;
+  if (f != invalidFloatValue)
+    return f;
+  f = oid2float(reg->oid);
+  if (f != invalidFloatValue)
+    return reg->f = f;
+  return invalidFloatValue;
+}
 
 extern OID read_oid(Register r);
 extern void write_oid(Register r, OID oid);
+
 static inline Int read_int(Register src) {
-  return (regs[src].i != invalidIntValue) ? regs[src].i : (regs[src].i = oid2int(regs[src].oid));
+  register Int i = regs[src].i;
+  if (i != invalidIntValue)
+    return i;
+  i = oid2int(regs[src].oid);
+  if (i != invalidIntValue)
+    return regs[src].i = i;
+  Float f = basic_read_float(src);
+  if (f == invalidFloatValue)
+    return invalidIntValue;
+  float r = float2real(f);
+  if (r == (float)((int)r)) 
+    return regs[src].i = (int)r;
+  return invalidIntValue;
 }
 extern void write_int(Register r, Int i);
-extern Float read_float(Register r);
+
+static inline Float read_float(Register src) {
+  Reg *reg = regs+src;
+  register Float f = reg->f;
+  if (f != invalidFloatValue)
+    return f;
+  f = oid2float(reg->oid);
+  if (f != invalidFloatValue)
+    return reg->f = f;
+  Int i = basic_read_int(src);
+  if (i != invalidIntValue)
+    return reg->f = real2float((float)i);
+  return invalidFloatValue;
+}
 extern void write_float(Register r, Float f);
+
 extern Char read_char(Register r);
 extern void write_char(Register r, Char c);
+
 extern Pointer read_pointer(Register r);
 extern void write_pointer(Register r, Pointer p);
 extern void write_invalid(Register dst);

@@ -127,7 +127,7 @@ static int testBoxAndReadPointer() {
 static int testWriteBoxedIntAndUbox() {
   write_oid(1, int2oid(int1));
   assertEquals(read_int(1), int1, "int->int");
-  assertEquals(read_float(1), (Float)(int1), "int->float");
+  assertEquals(read_float(1), real2float((float)int1), "int->float");
   assertEquals(read_char(1), invalidCharValue, "int-char");
   assertEquals(read_pointer(1), invalidPointerValue, "int->pointer");
   return 0;

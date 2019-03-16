@@ -62,22 +62,6 @@ void write_int(Register dst, Int i) {
   }
   regs[dst] = r;
 }
-
-Float read_float(Register src) {
-  Reg *reg = regs+src;
-  Float f = reg->f;
-  if (f == invalidFloatValue) {
-    f = oid2float(reg->oid);
-    if (f == invalidFloatValue) {
-      Int i = read_int(src);
-      if (i != invalidIntValue) {
-	f = (Float)i;
-      }
-    }
-    reg->f = f;
-  }
-  return f;
-}
     
 void write_float(Register dst, Float f) {
   static Reg r = {invalidOidValue, invalidIntValue, invalidFloatValue, invalidCharValue};

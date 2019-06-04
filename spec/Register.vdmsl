@@ -138,22 +138,40 @@ operations
                     Data`invalidFloatValue,
                     Data`invalidCharValue));
     
+    basic_read_int : Register ==> Data`Int
+    basic_read_int(src) ==
+        let r : Register = src + registerOffset, reg : Reg = registers(r)
+        in
+            (if reg.i <> Data`invalidIntValue then return reg.i;
+            let i : Data`Int = Data`oid2int(reg.oid)
+            in
+                if
+                    i <> Data`invalidIntValue
+                then
+                    (registers(r) .i := i;
+                    return i);
+            return Data`invalidIntValue);
+    
     read_int : Register ==> Data`Int
     read_int(src) ==
-        let
-            r = src + registerOffset,
-            reg : Reg = registers(r),
-            i : [Data`Int] = reg.i
+        (let i : Data`Int = basic_read_int(src)
+        in if i <> Data`invalidIntValue then return i;
+        let f : Data`Float = basic_read_float(src)
         in
             if
-                i = Data`invalidIntValue
+                f <> Data`invalidFloatValue
             then
-                let i2 : Data`Int = Data`oid2int(reg.oid)
+                let
+                    r : Register = src + registerOffset,
+                    f2 = Data`float2real(f),
+                    int_f = floor (r + 0.5)
                 in
-                    (if i2 <> Data`invalidIntValue then registers(r) .i := i2;
-                    return i2)
-            else
-                return i;
+                    if
+                        f2 = int_f
+                    then
+                        (registers(r) .i := int_f;
+                        return int_f);
+        return Data`invalidIntValue);
     
     write_int : Register * Data`Int ==> ()
     write_int(dst, i) ==
@@ -163,37 +181,54 @@ operations
             registers(r)
                 := mk_Reg(Data`invalidTag, i, Data`invalidFloatValue, Data`invalidCharValue));
     
+    basic_read_float : Register ==> Data`Float
+    basic_read_float(src) ==
+        let r : Register = src + registerOffset, reg : Reg = registers(r)
+        in
+            (if reg.f <> Data`invalidFloatValue then return reg.f;
+            let f : Data`Float = Data`oid2float(reg.oid)
+            in
+                if
+                    f <> Data`invalidFloatValue
+                then
+                    (registers(r) .f := f;
+                    return f);
+            return Data`invalidFloatValue);
+    
     read_float : Register ==> Data`Float
     read_float(src) ==
+        (let f : Data`Float = basic_read_float(src)
+        in if f <> Data`invalidFloatValue then return f;
+        let i : Data`Int = basic_read_int(src)
+        in
+            if
+                i <> Data`invalidIntValue
+            then
+                let f : Data`Float = Data`real2float(i)
+                in
+                    (registers(src + registerOffset) .f := f;
+                    return f);
+        return Data`invalidFloatValue);
+    
+    read_float : Register ==> Data`Float
+    read_float(src) ==
+        (let f : Data`Float = basic_read_float(src)
+        in if f <> Data`invalidFloatValue then return f;
         let
-            r = src + registerOffset,
+            r : Register = registerOffset + src,
             reg : Reg = registers(r),
             f : [Data`Float] = reg.f
         in
-            if
-                f = Data`invalidFloatValue
-            then
-                let f2 : Data`Float = Data`oid2float(reg.oid)
-                in
-                    if
-                        f2 <> Data`invalidFloatValue
-                    then
-                        (registers(r) .f := f2;
-                        return f2)
-                    else
-                        let i : Data`Int = read_int(r)
-                        in
-                            if
-                                i <> Data`invalidIntValue
-                            then
-                                let f3 : Data`Float = Data`real2float(i)
-                                in
-                                    (registers(r) .f := f3;
-                                    return f3)
-                            else
-                                return Data`invalidFloatValue
-            else
-                return f;
+            let i : Data`Int = basic_read_int(r)
+            in
+                if
+                    i <> Data`invalidIntValue
+                then
+                    let f3 : Data`Float = Data`real2float(i)
+                    in
+                        (registers(r) .f := f3;
+                        return f3);
+        return Data`invalidFloatValue);
     
     write_float : Register * Data`Float ==> ()
     write_float(dst, f) ==

@@ -33,7 +33,8 @@ operations
     test_make_string() ==
         let p = Data`oid2pointer(Seq`make_string("abc"))
         in
-            (assertEquals(Seq`size(p), 3, "len \"abc\" = 3");
+            (assertEquals(Memory`slots_size(p), 3, "len \"abc\" = 3 using Memory");
+            assertEquals(Seq`size(p), 3, "len \"abc\" = 3");
             assert(Data`isChar(Seq`read(p, 1)), "\"abc\"(1) is a char");
             assertEquals(Data`oid2char(Seq`read(p, 1)), 0x61, "\"abc\"(1) = 'a'");
             assertEquals(Data`oid2char(Seq`read(p, 2)), 0x62, "\"abc\"(2) = 'b'");
@@ -46,7 +47,7 @@ operations
             p2 =
                 makeSeq(
                     [Data`int2oid(1),
-                    Seq`pointer2oid(makeSeq([Data`int2oid(2), Data`int2oid(3)]))])
+                    Data`pointer2oid(makeSeq([Data`int2oid(2), Data`int2oid(3)]))])
         in
             (assertEquals(Seq`size(p1), 1, "size([1])");
             assertEquals(Seq`size(p2), 2, "size([1, [2,3]])");
@@ -64,35 +65,5 @@ operations
             Seq`write(p, 2, Data`int2oid(4));
             assertEquals(Seq`read(p, 1), Data`int2oid(3), "[3,4](1) = 3");
             assertEquals(Seq`read(p, 2), Data`int2oid(4), "[3,4](2) = 4"));
-    
-    test_equal : () ==> ()
-    test_equal() ==
-        let
-            p1 = makeSeq([Data`int2oid(1), Data`int2oid(2)]),
-            p2 = makeSeq([Data`int2oid(1), Data`int2oid(2)]),
-            p3 = makeSeq([Data`int2oid(2), Data`int2oid(1)]),
-            p4 =
-                makeSeq(
-                    [Data`float2oid(Data`real2float(1.0)),
-                    Data`float2oid(Data`real2float(2.0))])
-        in
-            (assert(Seq`equal(p1, p1), "p1 = p1");
-            assert(Seq`equal(p1, p2), "[1, 2] = [1, 2]");
-            assert(not Seq`equal(p1, p3), "[1, 2] <> [2, 1]");
-            assert(Seq`equal(p1, p4), "[1, 2] = [1.0, 2.0]"));
-    
-    test_hash : () ==> ()
-    test_hash() ==
-        let
-            hash1 = Seq`hash(makeSeq([Data`int2oid(1), Data`int2oid(2)])),
-            hash2 = Seq`hash(makeSeq([Data`int2oid(1), Data`int2oid(2)])),
-            hash3 =
-                Seq`hash(
-                    makeSeq(
-                        [Data`float2oid(Data`real2float(1.0)),
-                        Data`float2oid(Data`real2float(2.0))]))
-        in
-            (assertEquals(hash1, hash2, "hash([1, 2]) = hash([1, 2])");
-            assertEquals(hash1, hash3, "hash([1, 2]) = hash([1.0, 2.0])"));
 
 end SeqTest

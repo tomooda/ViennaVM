@@ -77,20 +77,17 @@ operations
         in
             (Memory`write_slot(p1, 1, Data`int2oid(1));
             assert(
-                Equality`equal(
-                    Data`pointer2oid(p1) + Data`seqTag,
-                    Data`pointer2oid(p1) + Data`seqTag),
+                Equality`equal(Data`pointer2oid(p1), Data`pointer2oid(p1)),
                 "pointer([1]) = pointer([1])");
             assert(
-                not Equality`equal(Data`pointer2oid(1) + Data`seqTag, Data`int2oid(1)),
+                not Equality`equal(Data`pointer2oid(1), Data`int2oid(1)),
                 "pointer(1) = 1");
             assert(
                 not Equality`equal(
-                    Data`pointer2oid(1) + Data`seqTag,
-                    Data`float2oid(Data`real2float(1.0))),
+                    Data`pointer2oid(1), Data`float2oid(Data`real2float(1.0))),
                 "pointer(1) = 1.0");
             assert(
-                not Equality`equal(Data`pointer2oid(1) + Data`seqTag, Data`char2oid(1)),
+                not Equality`equal(Data`pointer2oid(1), Data`char2oid(1)),
                 "pointer(1) = char(1)"));
     
     test_hash : () ==> ()
@@ -122,13 +119,17 @@ operations
             Memory`write_slot(p2, 2, Data`float2oid(f));
             Memory`write_slot(p2, 3, Data`char2oid(c));
             assertEquals(
-                Equality`hash(Seq`pointer2oid(p1)),
-                Equality`hash(Seq`pointer2oid(p2)),
+                Equality`hashPointer(p1),
+                Equality`hashPointer(p2),
+                "hashPointer pointers to the same contents");
+            assertEquals(
+                Equality`hash(Data`pointer2oid(p1)),
+                Equality`hash(Data`pointer2oid(p2)),
                 "hash heap objects with the same contents");
             Memory`write_slot(p2, 1, Data`int2oid(i2));
             assert(
-                Equality`hash(Seq`pointer2oid(p1))
-                <> Equality`hash(Seq`pointer2oid(p2)),
+                Equality`hash(Data`pointer2oid(p1))
+                <> Equality`hash(Data`pointer2oid(p2)),
                 "hash heap objects with different contents"));
 
 end EqualityTest

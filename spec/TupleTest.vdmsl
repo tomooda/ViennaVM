@@ -58,34 +58,4 @@ operations
             assertEquals(Tuple`read(p, 1), Data`int2oid(3), "mk_(3, 4).#1 = 3");
             assertEquals(Tuple`read(p, 2), Data`int2oid(4), "mk_(3, 4).#2 = 4"));
     
-    test_equal : () ==> ()
-    test_equal() ==
-        let
-            p1 = makeTuple([Data`int2oid(1), Data`int2oid(2)]),
-            p2 = makeTuple([Data`int2oid(1), Data`int2oid(2)]),
-            p3 = makeTuple([Data`int2oid(2), Data`int2oid(1)]),
-            p4 =
-                makeTuple(
-                    [Data`float2oid(Data`real2float(1.0)),
-                    Data`float2oid(Data`real2float(2.0))])
-        in
-            (assert(Tuple`equal(p1, p1), "p1 = p1");
-            assert(Tuple`equal(p1, p2), "mk_(1, 2) = mk_(1, 2)");
-            assert(not Tuple`equal(p1, p3), "mk_(1, 2) <> mk_(2, 1)");
-            assert(Tuple`equal(p1, p4), "mk_(1, 2) = mk_(1.0, 2.0)"));
-    
-    test_hash : () ==> ()
-    test_hash() ==
-        let
-            hash1 = Tuple`hash(makeTuple([Data`int2oid(1), Data`int2oid(2)])),
-            hash2 = Tuple`hash(makeTuple([Data`int2oid(1), Data`int2oid(2)])),
-            hash3 =
-                Tuple`hash(
-                    makeTuple(
-                        [Data`float2oid(Data`real2float(1.0)),
-                        Data`float2oid(Data`real2float(2.0))]))
-        in
-            (assertEquals(hash1, hash2, "hash(mk_(1, 2)) = hash(mk_(1, 2))");
-            assertEquals(hash1, hash3, "hash(mk_(1, 2)) = hash(mk_(1.0, 2.0))"));
-
 end TupleTest

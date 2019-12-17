@@ -6,10 +6,6 @@ imports
     from Record all
 exports all
 definitions
-functions
-    pointer2oid : Data`Pointer -> Data`OID
-    pointer2oid(p) == Data`pointer2oid(p) + Data`recordTypeTag;
-
 operations
     alloc : Data`Qword ==> Data`Pointer
     alloc(s) ==
@@ -34,6 +30,6 @@ operations
     equal(p1, p2) == return p1 = p2;
     
     pure hash : Data`Pointer ==> Data`Qword
-    hash(p) == return pointer2oid(p) mod (Equality`hashMask + 1);
+    hash(p) == return Data`pointer2oid(p) mod (Equality`hashMask + 1);
 
 end RecordType

@@ -1,7 +1,8 @@
 module Register
 imports
     from Data all,
-    from Memory all
+    from Memory all,
+    from Data types Float renamed Float;
 exports all
 definitions
 types

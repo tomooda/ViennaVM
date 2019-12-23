@@ -101,14 +101,15 @@ operations
     equalityTableIndex : Data`Pointer ==> nat
     equalityTableIndex(pointer) ==
         (dcl
-            index:nat := hashPointer(pointer) mod len equalityTable,
+            baseIndex:nat := hashPointer(pointer) mod len equalityTable,
+            index:nat := baseIndex,
             p:Data`Pointer := equalityTable(index + 1),
             zoneIn:bool := false;
         while p <> pointer and p <> Data`invalidPointerValue
         do
             (dcl i:nat := hashPointer(p) mod len equalityTable;
-            if zoneIn and i <> index then return index;
-            if index = i then zoneIn := true;
+            if zoneIn and i <> baseIndex then return index;
+            if i = baseIndex then zoneIn := true;
             index := (index + 1) mod len equalityTable;
             p := equalityTable(index + 1));
         return index);

@@ -15,6 +15,18 @@ types
 values
      hashMask = 0xffffffffffffffff;
      invalidHashValue = 0;
+     initialEqualityTableSize = 256;
+
+state State of
+    equalityTable : seq of Data`Pointer
+    numElements : nat
+init s ==
+    s
+    = mk_State(
+        [Data`invalidPointerValue
+            | p in set {1, ..., initialEqualityTableSize}],
+        0)
+end
 
 operations
     equal : Data`OID * Data`OID ==> bool
@@ -82,5 +94,23 @@ operations
                 return h)
             else
                 return cachedHash);
+    
+    setEqualityTable : seq of Data`Pointer ==> ()
+    setEqualityTable(newTable) == equalityTable := newTable;
+    
+    equalityTableIndex : Data`Pointer ==> nat
+    equalityTableIndex(pointer) ==
+        (dcl
+            index:nat := hashPointer(pointer) mod len equalityTable,
+            p:Data`Pointer := equalityTable(index + 1),
+            zoneIn:bool := false;
+        while p <> pointer and p <> Data`invalidPointerValue
+        do
+            (dcl i:nat := hashPointer(p) mod len equalityTable;
+            if zoneIn and i <> index then return index;
+            if index = i then zoneIn := true;
+            index := (index + 1) mod len equalityTable;
+            p := equalityTable(index + 1));
+        return index);
 
 end Equality

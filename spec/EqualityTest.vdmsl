@@ -157,18 +157,6 @@ operations
                     Data`invalidPointerValue];
                 Equality`setEqualityTable(table);
                 assertEquals(
-                    Equality`hashPointer(p1),
-                    Equality`hash(Data`int2oid(1)),
-                    "hash(p1) = hash(1)");
-                assertEquals(
-                    Equality`hashPointer(p2),
-                    Equality`hash(Data`int2oid(2)),
-                    "hash(p2) = hash(2)");
-                assertEquals(
-                    Equality`hashPointer(p3),
-                    Equality`hash(Data`int2oid(3)),
-                    "hash(p3) = hash(3)");
-                assertEquals(
                     Equality`equalityTableIndex(p1),
                     hash1 mod len table,
                     "no conflict to get a vacant slot");
@@ -191,7 +179,7 @@ operations
                     Equality`equalityTableIndex(p1),
                     (hash1 + 1) mod len table,
                     "one conflicts to get a bingo slot");
-                table := [p2, p2, p2, p2, p2];
+                table := [p2, p2, p3, p3, p3];
                 table((hash1 - 1) mod len table + 1) := Data`invalidPointerValue;
                 Equality`setEqualityTable(table);
                 assertEquals(
@@ -204,5 +192,44 @@ operations
                     Equality`equalityTableIndex(p1),
                     (hash1 - 1) mod len table,
                     "wrap around to get a bingo slot")));
+    
+    testAddToEqualityTable : () ==> ()
+    testAddToEqualityTable() ==
+        let
+            p1 : Data`Pointer = Memory`alloc(1),
+            p2 : Data`Pointer = Memory`alloc(1),
+            p3 : Data`Pointer = Memory`alloc(1)
+        in
+            (Memory`write_slot(p1, 1, Data`int2oid(1));
+            Memory`write_slot(p2, 1, Data`int2oid(2));
+            Memory`write_slot(p3, 1, Data`int2oid(3));
+            let
+                hash1 : Equality`Hash = Equality`hashPointer(p1),
+                hash2 : Equality`Hash = Equality`hashPointer(p2),
+                hash3 : Equality`Hash = Equality`hashPointer(p3),
+                baseIndex1 : Equality`HashIndex = hash1 mod 5
+            in
+                (dcl
+                    table:seq of Data`Pointer := [Data`invalidPointerValue, Data`invalidPointerValue,
+                    Data`invalidPointerValue, Data`invalidPointerValue,
+                    Data`invalidPointerValue];
+                Equality`setEqualityTable(table);
+                Equality`insertToEqualityTable(baseIndex1, p1);
+                table := Equality`getEqualityTable();
+                assertEquals(table(baseIndex1 + 1), p1, "p1 at the base index");
+                table((baseIndex1 + 1) mod len table + 1) := p2;
+                table((baseIndex1 + 2) mod len table + 1) := p3;
+                Equality`setEqualityTable(table);
+                Equality`insertToEqualityTable(baseIndex1, p1);
+                table := Equality`getEqualityTable();
+                assertEquals(table(baseIndex1 + 1), p1, "get the first inserted p1");
+                assertEquals(
+                    table((baseIndex1 + 1) mod len table + 1),
+                    p1,
+                    "get the second inserted p1");
+                assertEquals(
+                    table((baseIndex1 + 2) mod len table + 1), p2, "get the swapped p2");
+                assertEquals(
+                    table((baseIndex1 + 3) mod len table + 1), p3, "get the swapped p3")));
 
 end EqualityTest

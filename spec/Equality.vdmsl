@@ -11,6 +11,7 @@ exports all
 definitions
 types
      Hash = Data`Qword;
+     HashIndex = nat;
 
 values
      hashMask = 0xffffffffffffffff;
@@ -98,20 +99,33 @@ operations
     setEqualityTable : seq of Data`Pointer ==> ()
     setEqualityTable(newTable) == equalityTable := newTable;
     
-    equalityTableIndex : Data`Pointer ==> nat
+    getEqualityTable : () ==> seq of Data`Pointer
+    getEqualityTable() == return equalityTable;
+    
+    equalityTableIndex : Data`Pointer ==> HashIndex
     equalityTableIndex(pointer) ==
         (dcl
-            baseIndex:nat := hashPointer(pointer) mod len equalityTable,
-            index:nat := baseIndex,
+            baseIndex:HashIndex := hashPointer(pointer) mod len equalityTable,
+            index:HashIndex := baseIndex,
             p:Data`Pointer := equalityTable(index + 1),
             zoneIn:bool := false;
         while p <> pointer and p <> Data`invalidPointerValue
         do
-            (dcl i:nat := hashPointer(p) mod len equalityTable;
+            (dcl i:HashIndex := hashPointer(p) mod len equalityTable;
             if zoneIn and i <> baseIndex then return index;
             if i = baseIndex then zoneIn := true;
             index := (index + 1) mod len equalityTable;
             p := equalityTable(index + 1));
         return index);
+    
+    insertToEqualityTable : HashIndex * Data`Pointer ==> ()
+    insertToEqualityTable(index, pointer) ==
+        (dcl hand:Data`Pointer := pointer, handIndex:HashIndex := index;
+        while hand <> Data`invalidPointerValue
+        do
+            (dcl t:Data`Pointer := hand;
+            hand := equalityTable(handIndex + 1);
+            equalityTable(handIndex + 1) := t;
+            handIndex := (handIndex + 1) mod len equalityTable));
 
 end Equality

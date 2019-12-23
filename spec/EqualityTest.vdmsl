@@ -77,20 +77,17 @@ operations
         in
             (Memory`write_slot(p1, 1, Data`int2oid(1));
             assert(
-                Equality`equal(
-                    Data`pointer2oid(p1) + Data`seqTag,
-                    Data`pointer2oid(p1) + Data`seqTag),
+                Equality`equal(Data`pointer2oid(p1), Data`pointer2oid(p1)),
                 "pointer([1]) = pointer([1])");
             assert(
-                not Equality`equal(Data`pointer2oid(1) + Data`seqTag, Data`int2oid(1)),
+                not Equality`equal(Data`pointer2oid(1), Data`int2oid(1)),
                 "pointer(1) = 1");
             assert(
                 not Equality`equal(
-                    Data`pointer2oid(1) + Data`seqTag,
-                    Data`float2oid(Data`real2float(1.0))),
+                    Data`pointer2oid(1), Data`float2oid(Data`real2float(1.0))),
                 "pointer(1) = 1.0");
             assert(
-                not Equality`equal(Data`pointer2oid(1) + Data`seqTag, Data`char2oid(1)),
+                not Equality`equal(Data`pointer2oid(1), Data`char2oid(1)),
                 "pointer(1) = char(1)"));
     
     test_hash : () ==> ()
@@ -112,6 +109,10 @@ operations
                 Equality`hashFloat(f),
                 "hash float value");
             assertEquals(
+                Equality`hash(Data`float2oid(Data`real2float(1.0))),
+                Equality`hash(Data`int2oid(1)),
+                "hash(1) and hash(1.0)");
+            assertEquals(
                 Equality`hash(Data`char2oid(c)),
                 Equality`hashChar(c),
                 "hash char value");
@@ -122,13 +123,86 @@ operations
             Memory`write_slot(p2, 2, Data`float2oid(f));
             Memory`write_slot(p2, 3, Data`char2oid(c));
             assertEquals(
-                Equality`hash(Seq`pointer2oid(p1)),
-                Equality`hash(Seq`pointer2oid(p2)),
+                Equality`hashPointer(p1),
+                Equality`hashPointer(p2),
+                "hashPointer pointers to the same contents");
+            assertEquals(
+                Equality`hash(Data`pointer2oid(p1)),
+                Equality`hash(Data`pointer2oid(p2)),
                 "hash heap objects with the same contents");
             Memory`write_slot(p2, 1, Data`int2oid(i2));
             assert(
-                Equality`hash(Seq`pointer2oid(p1))
-                <> Equality`hash(Seq`pointer2oid(p2)),
+                Equality`hash(Data`pointer2oid(p1))
+                <> Equality`hash(Data`pointer2oid(p2)),
                 "hash heap objects with different contents"));
+    
+    testEqualityTableIndex : () ==> ()
+    testEqualityTableIndex() ==
+        let
+            p1 : Data`Pointer = Memory`alloc(1),
+            p2 : Data`Pointer = Memory`alloc(1),
+            p3 : Data`Pointer = Memory`alloc(1)
+        in
+            (Memory`write_slot(p1, 1, Data`int2oid(1));
+            Memory`write_slot(p2, 1, Data`int2oid(2));
+            Memory`write_slot(p3, 1, Data`int2oid(3));
+            let
+                hash1 : Equality`Hash = Equality`hashPointer(p1),
+                hash2 : Equality`Hash = Equality`hashPointer(p2),
+                hash3 : Equality`Hash = Equality`hashPointer(p3)
+            in
+                (dcl
+                    table:seq of Data`Pointer := [Data`invalidPointerValue, Data`invalidPointerValue,
+                    Data`invalidPointerValue, Data`invalidPointerValue,
+                    Data`invalidPointerValue];
+                Equality`setEqualityTable(table);
+                assertEquals(
+                    Equality`hashPointer(p1),
+                    Equality`hash(Data`int2oid(1)),
+                    "hash(p1) = hash(1)");
+                assertEquals(
+                    Equality`hashPointer(p2),
+                    Equality`hash(Data`int2oid(2)),
+                    "hash(p2) = hash(2)");
+                assertEquals(
+                    Equality`hashPointer(p3),
+                    Equality`hash(Data`int2oid(3)),
+                    "hash(p3) = hash(3)");
+                assertEquals(
+                    Equality`equalityTableIndex(p1),
+                    hash1 mod len table,
+                    "no conflict to get a vacant slot");
+                table(hash1 mod len table + 1) := p3;
+                Equality`setEqualityTable(table);
+                assertEquals(
+                    Equality`equalityTableIndex(p1),
+                    (hash1 + 1) mod len table,
+                    "one conflict to get a vacant slot");
+                table(hash1 + 1 mod len table + 1) := p3;
+                Equality`setEqualityTable(table);
+                assertEquals(
+                    Equality`equalityTableIndex(p1),
+                    (hash1 + 2) mod len table,
+                    "two conflicts to get a vacant slot");
+                table(hash1 + 1 mod len table + 1) := p1;
+                table(hash1 + 2 mod len table + 1) := p2;
+                Equality`setEqualityTable(table);
+                assertEquals(
+                    Equality`equalityTableIndex(p1),
+                    (hash1 + 1) mod len table,
+                    "one conflicts to get a bingo slot");
+                table := [p2, p2, p2, p2, p2];
+                table((hash1 - 1) mod len table + 1) := Data`invalidPointerValue;
+                Equality`setEqualityTable(table);
+                assertEquals(
+                    Equality`equalityTableIndex(p1),
+                    (hash1 - 1) mod len table,
+                    "wrap around to get a vacant slot");
+                table((hash1 - 1) mod len table + 1) := p1;
+                Equality`setEqualityTable(table);
+                assertEquals(
+                    Equality`equalityTableIndex(p1),
+                    (hash1 - 1) mod len table,
+                    "wrap around to get a bingo slot")));
 
 end EqualityTest

@@ -5,10 +5,6 @@ imports
     from Equality all
 exports all
 definitions
-functions
-    pointer2oid : Data`Pointer -> Data`OID
-    pointer2oid(p) == Data`pointer2oid(p) + Data`tupleTag;
-
 operations
     alloc : Data`Qword ==> Data`Pointer
     alloc(s) == return Memory`alloc(s)
@@ -24,11 +20,5 @@ operations
     write : Data`Pointer * Data`Qword * Data`OID ==> ()
     write(p, index, elem) == return Memory`write_slot(p, index, elem)
     pre  index >= 1 and Memory`slots_size(p) >= index;
-    
-    equal : Data`Pointer * Data`Pointer ==> bool
-    equal(p1, p2) == return Equality`defaultEqualPointer(p1, p2);
-    
-    hash : Data`Pointer ==> Equality`Hash
-    hash(p) == return Equality`defaultHashPointer(p);
 
 end Tuple

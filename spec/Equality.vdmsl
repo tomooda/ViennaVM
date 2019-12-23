@@ -6,23 +6,7 @@ imports
             read_hash;
             write_hash;
             slots_size;
-            read_slot;,
-    from Seq
-        operations
-            hash;
-            equal;,
-    from Tuple
-        operations
-            hash;
-            equal;,
-    from Record
-        operations
-            hash;
-            equal;,
-    from RecordType
-        operations
-            hash;
-            equal;
+            read_slot;
 exports all
 definitions
 types
@@ -31,11 +15,24 @@ types
 values
      hashMask = 0xffffffffffffffff;
      invalidHashValue = 0;
+     initialEqualityTableSize = 256;
+
+state State of
+    equalityTable : seq of Data`Pointer
+    numElements : nat
+init s ==
+    s
+    = mk_State(
+        [Data`invalidPointerValue
+            | p in set {1, ..., initialEqualityTableSize}],
+        0)
+end
 
 operations
     equal : Data`OID * Data`OID ==> bool
     equal(oid1, oid2) ==
         (if oid1 = oid2 then return true;
+        if hash(oid1) <> hash(oid2) then return false;
         if
             Data`isPointer(oid1) and Data`isPointer(oid2)
         then
@@ -43,22 +40,13 @@ operations
             in
                 (if tag1 <> tag2 then return false;
                 return let p1 = Data`oid2pointer(oid1), p2 = Data`oid2pointer(oid2)
-                    in
-                        cases tag1:
-                            (Data`seqTag) -> Seq`hash(p1) = Seq`hash(p2) and Seq`equal(p1, p2),
-                            (Data`tupleTag) ->
-                                Tuple`hash(p1) = Tuple`hash(p2) and Tuple`equal(p1, p2),
-                            (Data`recordTypeTag) ->
-                                RecordType`hash(p1) = RecordType`hash(p2) and RecordType`equal(p1, p2),
-                            others -> undefined
-                            end);
-        if hash(oid1) <> hash(oid2) then return false;
+                    in equalPointer(p1, p2));
         if Data`isInt(oid1) and Data`isFloat(oid2) then return true;
         if Data`isFloat(oid1) and Data`isInt(oid2) then return true;
         return false);
     
-    defaultEqualPointer : Data`Pointer * Data`Pointer ==> bool
-    defaultEqualPointer(p1, p2) ==
+    equalPointer : Data`Pointer * Data`Pointer ==> bool
+    equalPointer(p1, p2) ==
         (if Memory`slots_size(p1) <> Memory`slots_size(p2) then return false;
         for i = 1 to  Memory`slots_size(p1)
         do
@@ -71,19 +59,7 @@ operations
     hash : Data`OID ==> Hash
     hash(oid) ==
         return if Data`isPointer(oid)
-                then (let tag = oid mod 0x100
-                    in
-                        (let p = Data`oid2pointer(oid)
-                            in
-                                cases tag:
-                                    (Data`seqTag) -> Seq`hash(p),
-                                    (Data`setTag) -> undefined,
-                                    (Data`mapTag) -> undefined,
-                                    (Data`tupleTag) -> Tuple`hash(p),
-                                    (Data`recordTag) -> Record`hash(p),
-                                    (Data`recordTypeTag) -> RecordType`hash(p),
-                                    others -> undefined
-                                    end))
+                then hashPointer(Data`oid2pointer(oid))
             elseif Data`isFloat(oid)
                 then hashFloat(Data`oid2float(oid))
             else
@@ -101,22 +77,40 @@ operations
     pure hashChar : Data`Char ==> Hash
     hashChar(c) == return Data`char2oid(c) mod (hashMask + 1);
     
-    defaultHashPointer : Data`Pointer ==> Hash
-    defaultHashPointer(p) ==
-        let cachedHash : Equality`Hash = Memory`read_hash(p)
+    hashPointer : Data`Pointer ==> Hash
+    hashPointer(p) ==
+        let cachedHash : Hash = Memory`read_hash(p)
         in
             (if
-                cachedHash = Equality`invalidHashValue
+                cachedHash = invalidHashValue
             then
                 (dcl h:int := 0;
                 for i = 1 to  Memory`slots_size(p)
                 do
                     let oid = Memory`read_slot(p, i)
-                    in if oid <> Data`invalidOidValue then h := h + Equality`hash(oid);
-                h := h mod (Equality`hashMask + 1);
+                    in if oid <> Data`invalidOidValue then h := h + hash(oid);
+                h := h mod (hashMask + 1);
                 Memory`write_hash(p, h);
                 return h)
             else
                 return cachedHash);
+    
+    setEqualityTable : seq of Data`Pointer ==> ()
+    setEqualityTable(newTable) == equalityTable := newTable;
+    
+    equalityTableIndex : Data`Pointer ==> nat
+    equalityTableIndex(pointer) ==
+        (dcl
+            index:nat := hashPointer(pointer) mod len equalityTable,
+            p:Data`Pointer := equalityTable(index + 1),
+            zoneIn:bool := false;
+        while p <> pointer and p <> Data`invalidPointerValue
+        do
+            (dcl i:nat := hashPointer(p) mod len equalityTable;
+            if zoneIn and i <> index then return index;
+            if index = i then zoneIn := true;
+            index := (index + 1) mod len equalityTable;
+            p := equalityTable(index + 1));
+        return index);
 
 end Equality

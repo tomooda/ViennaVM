@@ -44,7 +44,7 @@ values
      tokenType = 0x76;
      anyType = 0xf6;
      /* heap value oid defs */
-     tupleTag = 0x0;
+/*     tupleTag = 0x0;
      recordTag = 0x10;
      tokenTag = 0x20;
      seqTag = 0x30;
@@ -54,9 +54,9 @@ values
      functionTag = 0x70;
      operationTag = 0x80;
      largePositiveIntTag = 0x90;
-     largeNegativeIntTag = 0xa0;
+     largeNegativeIntTag = 0xa0;*/
      /* heap type oid defs */
-     tupleTypeTag = 0x04;
+/*     tupleTypeTag = 0x04;
      recordTypeTag = 0x14;
      seqTypeTag = 0x24;
      setTypeTag = 0x34;
@@ -65,7 +65,7 @@ values
      functionTypeTag = 0x64;
      operationTypeTag = 0x74;
      productTypeTag = 0x84;
-     unionTypeTag = 0x94;
+     unionTypeTag = 0x94;*/
 	  /* default values */
      invalidOidValue = invalidTag;
      invalidIntValue = 0x7fffffffffffffff;
@@ -217,18 +217,6 @@ functions
     
     isPointer : OID -> bool
     isPointer(oid) == oid mod 4 = 0;
-    
-    isSeq : OID -> bool
-    isSeq(oid) == oid = emptySeqValue or oid mod 0x100 = seqTag;
-    
-    isTuple : OID -> bool
-    isTuple(oid) == oid mod 0x100 = tupleTag;
-    
-    isRecord : OID -> bool
-    isRecord(oid) == oid mod 0x100 = recordTag;
-    
-    isTupleRecord : OID -> bool
-    isTupleRecord(oid) == oid mod 0x100 = tupleTag;
 
 values
      char2int : map char to nat =

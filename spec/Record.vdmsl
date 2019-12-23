@@ -13,10 +13,6 @@ values
      TYPE_SLOT = 1;
      ELEMENTS_SLOT_OFFSET = 1;
 
-functions
-    pointer2oid : Data`Pointer -> Data`OID
-    pointer2oid(p) == Data`pointer2oid(p) + Data`recordTag;
-
 operations
     alloc : Data`Qword ==> Data`Pointer
     alloc(s) == Memory`alloc(s + ELEMENTS_SLOT_OFFSET);
@@ -25,7 +21,7 @@ operations
     make(t) ==
         let p = alloc(RecordType`fields_size(t))
         in
-            (Memory`write_slot(p, TYPE_SLOT, RecordType`pointer2oid(t));
+            (Memory`write_slot(p, TYPE_SLOT, Data`pointer2oid(t));
             return p);
     
     pure fields_size : Data`Pointer ==> Data`Qword
@@ -44,45 +40,5 @@ operations
     write(p, index, elem) ==
         return Memory`write_slot(p, index + ELEMENTS_SLOT_OFFSET, elem)
     pre  1 <= index and index <= fields_size(p);
-    
-    equal : Data`Pointer * Data`Pointer ==> bool
-    equal(p1, p2) ==
-        (if fields_size(p1) <> fields_size(p2) then return false;
-        let constructor = read_constructor(p1)
-        in
-            (if read_constructor(p2) <> constructor then return false;
-            let c = Data`oid2pointer(constructor)
-            in
-                for i = 1 to  RecordType`fields_size(c)
-                do
-                    if
-                        RecordType`read_equality_visibility(c, i)
-                        and not Equality`equal(read(p1, i), read(p2, i))
-                    then
-                        return false);
-        return true);
-    
-    hash : Data`Pointer ==> Equality`Hash
-    hash(p) ==
-        let cachedHash : Equality`Hash = Memory`read_hash(p)
-        in
-            (if
-                cachedHash = Equality`invalidHashValue
-            then
-                let c = Data`oid2pointer(read_constructor(p))
-                in
-                    (dcl h:int := RecordType`hash(c);
-                    for i = 1 to  Record`fields_size(p)
-                    do
-                        if
-                            RecordType`read_equality_visibility(c, i)
-                        then
-                            let oid = Record`read(p, i)
-                            in if oid <> Data`invalidOidValue then h := h + Equality`hash(oid);
-                    h := h mod (Equality`hashMask + 1);
-                    Memory`write_hash(p, h);
-                    return h)
-            else
-                return cachedHash);
 
 end Record

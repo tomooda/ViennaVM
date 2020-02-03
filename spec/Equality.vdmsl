@@ -17,15 +17,18 @@ values
      hashMask = 0xffffffffffffffff;
      invalidHashValue = 0;
      initialEqualityTableSize = 256;
+     maxDistance = 16;
 
 state State of
     equalityTable : seq of Data`Pointer
+    capacity : nat
     numElements : nat
 init s ==
     s
     = mk_State(
         [Data`invalidPointerValue
-            | p in set {1, ..., initialEqualityTableSize}],
+            | p in set {1, ..., initialEqualityTableSize + maxDistance + 1}],
+        initialEqualityTableSize,
         0)
 end
 
@@ -102,30 +105,42 @@ operations
     getEqualityTable : () ==> seq of Data`Pointer
     getEqualityTable() == return equalityTable;
     
-    equalityTableIndex : Data`Pointer ==> HashIndex
-    equalityTableIndex(pointer) ==
-        (dcl
-            baseIndex:HashIndex := hashPointer(pointer) mod len equalityTable,
-            index:HashIndex := baseIndex,
-            p:Data`Pointer := equalityTable(index + 1),
-            zoneIn:bool := false;
-        while p <> pointer and p <> Data`invalidPointerValue
-        do
-            (dcl i:HashIndex := hashPointer(p) mod len equalityTable;
-            if zoneIn and i <> baseIndex then return index;
-            if i = baseIndex then zoneIn := true;
-            index := (index + 1) mod len equalityTable;
-            p := equalityTable(index + 1));
-        return index);
+    setCapacity : nat ==> ()
+    setCapacity(newCapacity) == capacity := newCapacity;
     
-    insertToEqualityTable : HashIndex * Data`Pointer ==> ()
-    insertToEqualityTable(index, pointer) ==
-        (dcl hand:Data`Pointer := pointer, handIndex:HashIndex := index;
-        while hand <> Data`invalidPointerValue
+    setNumElements : nat ==> ()
+    setNumElements(newNumElements) == numElements := newNumElements;
+    
+    findIndex : Data`Pointer ==> [HashIndex]
+    findIndex(pointer) ==
+        (dcl
+            hashValue:Hash := hashPointer(pointer),
+            index:HashIndex := hashValue mod capacity;
+        for distance = 0 to  maxDistance
         do
-            (dcl t:Data`Pointer := hand;
-            hand := equalityTable(handIndex + 1);
-            equalityTable(handIndex + 1) := t;
-            handIndex := (handIndex + 1) mod len equalityTable));
+            (dcl p:Data`Pointer := equalityTable(index + 1);
+            if
+                p = Data`invalidPointerValue
+            then
+                return index
+            else
+                (dcl h:Hash := hashPointer(p);
+                if hashValue = h and equalPointer(pointer, p) then return index;
+                if
+                    distance > index - h mod capacity
+                then
+                    (dcl
+                        hand:Data`Pointer := equalityTable(index + 1),
+                        i:HashIndex := index + 1;
+                    equalityTable(index + 1) := Data`invalidPointerValue;
+                    while hand <> Data`invalidPointerValue
+                    do
+                        (dcl t:Data`Pointer := equalityTable(i + 1);
+                        equalityTable(i + 1) := hand;
+                        hand := t;
+                        i := i + 1);
+                    return index);
+                index := index + 1));
+        return nil);
 
 end Equality

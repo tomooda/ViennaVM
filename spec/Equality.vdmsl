@@ -3,10 +3,12 @@ imports
     from Data all,
     from Memory
         operations
+            alloc;
             read_hash;
             write_hash;
             slots_size;
             read_slot;
+            write_slot;
 exports all
 definitions
 types
@@ -17,7 +19,7 @@ values
      hashMask = 0xffffffffffffffff;
      invalidHashValue = 0;
      initialEqualityTableSize = 256;
-     maxDistance = 16;
+     initialEqualityTableCapacity = 240;
 
 state State of
     equalityTable : seq of Data`Pointer
@@ -27,8 +29,8 @@ init s ==
     s
     = mk_State(
         [Data`invalidPointerValue
-            | p in set {1, ..., initialEqualityTableSize + maxDistance + 1}],
-        initialEqualityTableSize,
+            | p in set {1, ..., initialEqualityTableSize}],
+        initialEqualityTableCapacity,
         0)
 end
 
@@ -116,31 +118,60 @@ operations
         (dcl
             hashValue:Hash := hashPointer(pointer),
             index:HashIndex := hashValue mod capacity;
-        for distance = 0 to  maxDistance
+        for distance = 0 to  len equalityTable - capacity - 1
         do
-            (dcl p:Data`Pointer := equalityTable(index + 1);
-            if
-                p = Data`invalidPointerValue
-            then
-                return index
-            else
-                (dcl h:Hash := hashPointer(p);
-                if hashValue = h and equalPointer(pointer, p) then return index;
-                if
-                    distance > index - h mod capacity
+            let p : Data`Pointer = equalityTable(index + 1)
+            in
+                (if
+                    p = Data`invalidPointerValue
                 then
-                    (dcl
-                        hand:Data`Pointer := equalityTable(index + 1),
-                        i:HashIndex := index + 1;
-                    equalityTable(index + 1) := Data`invalidPointerValue;
-                    while hand <> Data`invalidPointerValue
-                    do
-                        (dcl t:Data`Pointer := equalityTable(i + 1);
-                        equalityTable(i + 1) := hand;
-                        hand := t;
-                        i := i + 1);
-                    return index);
-                index := index + 1));
+                    return index
+                else
+                    let h : Hash = hashPointer(p), d : nat = index - h mod capacity
+                    in
+                        (if hashValue = h and equalPointer(pointer, p) then return index;
+                        if
+                            distance > d or distance = d and pointer < p
+                        then
+                            (dcl
+                                hand:Data`Pointer := equalityTable(index + 1),
+                                i:HashIndex := index + 1;
+                            equalityTable(index + 1) := Data`invalidPointerValue;
+                            while hand <> Data`invalidPointerValue
+                            do
+                                (dcl t:Data`Pointer := equalityTable(i + 1);
+                                equalityTable(i + 1) := hand;
+                                hand := t;
+                                i := i + 1);
+                            return index);
+                        index := index + 1));
         return nil);
+    
+    basicResize : nat * nat ==> bool
+    basicResize(newSize, newCapacity) ==
+        let
+            oldTable : seq of Data`Pointer = equalityTable,
+            oldCapacity : nat = capacity
+        in
+            (equalityTable
+                := [Data`invalidPointerValue | i in set {1, ..., newSize}];
+            capacity := newCapacity;
+            for i = 1 to  len oldTable
+            do
+                let pointer : Data`Pointer = oldTable(i)
+                in
+                    if
+                        pointer <> Data`invalidPointerValue
+                    then
+                        let index : [HashIndex] = findIndex(pointer)
+                        in
+                            (if
+                                index = nil
+                            then
+                                (equalityTable := oldTable;
+                                capacity := oldCapacity;
+                                return false);
+                            equalityTable(index + 1) := pointer);
+            return true);
 
 end Equality

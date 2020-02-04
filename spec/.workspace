@@ -1,3 +1,4 @@
-Equality`hash(Data`int2oid(1)) mod 5 3
-Equality`hash(Data`int2oid(2)) mod 5 0
-Equality`hash(Data`int2oid(3)) mod 5 2
+ let
+            ps : seq of Data`Pointer = [Memory`alloc(1) | i in set {1, ..., 10}]
+        in
+	[mk_(Memory`write_slot(ps(i), 1, Data`int2oid(i)), hashPointer(ps(i)) mod 10) | i in set inds ps]

@@ -136,28 +136,121 @@ operations
                 <> Equality`hash(Data`pointer2oid(p2)),
                 "hash heap objects with different contents"));
     
-    testFindIndex : () ==> ()
-    testFindIndex() ==
+    testFindIndex_withEmptyTable : () ==> ()
+    testFindIndex_withEmptyTable() ==
         let
-            ps : seq of Data`Pointer = [Seq`alloc(1) | i in set {1, ..., 10}]
+            p : Data`Pointer = Memory`alloc(1),
+            n : Data`Pointer = Data`invalidPointerValue
         in
-            (dcl index:[Equality`HashIndex], table:seq of Data`Pointer;
-            for i = 1 to  10 do Memory`write_slot(ps(i), 1, Data`int2oid(i));
-            Equality`setEqualityTable([Data`invalidPointerValue | i in set {1, ..., 12}]);
+            (dcl table:seq of Data`Pointer := [n, n, n, n, n, n, n, n, n, n, n, n];
+            Memory`write_slot(p, 1, Data`int2oid(1));
+            assertEquals(Equality`hashPointer(p) mod 10, 3, "hashPointer");
+            Equality`setEqualityTable(table);
             Equality`setCapacity(10);
             Equality`setNumElements(0);
-            index := Equality`findIndex(ps(1));
-            assert(index <> nil, "findIndex on an empty table should always succeed");
             assertEquals(
-                index,
-                Equality`hashPointer(ps(1)) mod 10,
+                Equality`findIndex(p),
+                3, -- Equality`hashPointer(p) mod 10,
                 "findIndex on an empty table should not have any conflict");
-            table := Equality`getEqualityTable();
-            table(index + 1) := ps(1);
-            Equality`setEqualityTable(table);
             assertEquals(
-                Equality`findIndex(ps(1)),
-                index,
-                "findIndex with an existing element should return its index"));
+                Equality`getEqualityTable(), table, "equality table does not change"));
+    
+    testFindIndex_withExistingElementNoConflict : () ==> ()
+    testFindIndex_withExistingElementNoConflict() ==
+        let
+            p : Data`Pointer = Memory`alloc(1),
+            n : Data`Pointer = Data`invalidPointerValue
+        in
+            (dcl
+                table:seq of Data`Pointer := [n, n, n, p, n, n, n, n, n, n, n, n, n];
+            Memory`write_slot(p, 1, Data`int2oid(1));
+            assertEquals(Equality`hashPointer(p) mod 10, 3, "hashPointer");
+            Equality`setEqualityTable(table);
+            Equality`setCapacity(10);
+            Equality`setNumElements(0);
+            assertEquals(
+                Equality`findIndex(p),
+                3, -- Equality`hashPointer(p) mod 10,
+                "findIndex on existing element without hash conflict");
+            assertEquals(
+                Equality`getEqualityTable(), table, "equality table does not change"));
+    
+    testFindIndex_withNewElementWithConflict : () ==> ()
+    testFindIndex_withNewElementWithConflict() ==
+        let
+            p1 : Data`Pointer = Memory`alloc(1),
+            p6 : Data`Pointer = Memory`alloc(1),
+            n : Data`Pointer = Data`invalidPointerValue
+        in
+            (dcl
+                table:seq of Data`Pointer := [n, n, n, p1, n, n, n, n, n, n, n, n, n];
+            Memory`write_slot(p1, 1, Data`int2oid(1));
+            assertEquals(Equality`hashPointer(p1) mod 10, 3, "hashPointer with [1]");
+            Memory`write_slot(p6, 1, Data`int2oid(6));
+            assertEquals(Equality`hashPointer(p6) mod 10, 3, "hashPointer with [6]");
+            Equality`setEqualityTable(table);
+            Equality`setCapacity(10);
+            Equality`setNumElements(0);
+            assertEquals(
+                Equality`findIndex(p6),
+                4, -- Equality`hashPointer(p6) mod 10 + 1,
+                "findIndex on a new element with hash conflict.");
+            assertEquals(
+                Equality`getEqualityTable(), table, "equality table does not change"));
+    
+    testFindIndex_withNewElementWith2Conflicts : () ==> ()
+    testFindIndex_withNewElementWith2Conflicts() ==
+        let
+            p1 : Data`Pointer = Memory`alloc(1),
+            p2 : Data`Pointer = Memory`alloc(1),
+            p6 : Data`Pointer = Memory`alloc(1),
+            n : Data`Pointer = Data`invalidPointerValue
+        in
+            (dcl
+                table:seq of Data`Pointer := [n, n, n, p1, p1, p2, n, n, n, n, n, n, n];
+            Memory`write_slot(p1, 1, Data`int2oid(1));
+            assertEquals(Equality`hashPointer(p1) mod 10, 3, "hashPointer with [1]");
+            Memory`write_slot(p2, 1, Data`int2oid(2));
+            assertEquals(Equality`hashPointer(p2) mod 10, 5, "hashPointer with [2]");
+            Memory`write_slot(p6, 1, Data`int2oid(6));
+            assertEquals(Equality`hashPointer(p6) mod 10, 3, "hashPointer with [6]");
+            Equality`setEqualityTable(table);
+            Equality`setCapacity(10);
+            Equality`setNumElements(0);
+            assertEquals(
+                Equality`findIndex(p6),
+                5, -- Equality`hashPointer(p6) mod 10 + 1,
+                "findIndex on a new element with hash conflict.");
+            assertEquals(
+                Equality`getEqualityTable(),
+                [n, n, n, p1, p1, n, p2, n, n, n, n, n, n],
+                "inserted before p2"));
+    
+    testBasicResize : () ==> ()
+    testBasicResize() ==
+        let
+            ps : seq of Data`Pointer =
+                [Memory`alloc(1) | i in set {1, ..., 10}],
+            n : Data`Pointer = Data`invalidPointerValue
+        in
+            (dcl
+                table:seq of Data`Pointer := [n, ps(5), ps(10), ps(1), ps(6), ps(2), ps(7), ps(3), ps(8), ps(4),
+                ps(9), n, n, n];
+            for i = 1 to  10 do Memory`write_slot(ps(i), 1, Data`int2oid(i));
+            Equality`setEqualityTable(table);
+            Equality`setCapacity(10);
+            assert(
+                Equality`basicResize(24, 20),
+                "resize to larger size must always succeed");
+            assert(
+                Equality`basicResize(14, 10),
+                "resize to the original size must always succeed, too");
+            assertEquals(
+                Equality`getEqualityTable(),
+                table,
+                "resized to the original size must reproduce the same table");
+            assert(
+                not Equality`basicResize(9, 5),
+                "resize to too small size must fail"));
 
 end EqualityTest

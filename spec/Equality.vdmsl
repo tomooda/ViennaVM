@@ -110,6 +110,9 @@ operations
     setCapacity : nat ==> ()
     setCapacity(newCapacity) == capacity := newCapacity;
     
+    getCapacity : () ==> nat
+    getCapacity() == return capacity;
+    
     setNumElements : nat ==> ()
     setNumElements(newNumElements) == numElements := newNumElements;
     
@@ -173,5 +176,56 @@ operations
                                 return false);
                             equalityTable(index + 1) := pointer);
             return true);
+    
+    growEqualityTable : () ==> ()
+    growEqualityTable() ==
+        (dcl newCapacity:nat := capacity  * 3 div 2;
+        while not basicResize(newCapacity + 64, newCapacity)
+        do newCapacity := newCapacity  * 3 div 2);
+    
+    findOrAdd : Data`Pointer ==> Data`Pointer
+    findOrAdd(pointer) ==
+        (dcl index:[HashIndex] := findIndex(pointer);
+        while index = nil
+        do
+            (growEqualityTable();
+            index := findIndex(pointer));
+        let p : Data`Pointer = equalityTable(index + 1)
+        in
+            if
+                p = Data`invalidPointerValue
+            then
+                (equalityTable(index + 1) := pointer;
+                return pointer)
+            else
+                return p);
+    
+    remove : Data`Pointer ==> ()
+    remove(pointer) ==
+        (dcl
+            hashValue:Hash := hashPointer(pointer),
+            index:HashIndex := hashValue mod capacity;
+        for distance = 0 to  len equalityTable - capacity - 1
+        do
+            let p : Data`Pointer = equalityTable(index + 1)
+            in
+                (if p = Data`invalidPointerValue
+                    then return 
+                elseif pointer = p
+                    then (dcl i:HashIndex := index;
+                    while
+                        let p0 : Data`Pointer = equalityTable(i + 2)
+                        in
+                            p0 <> Data`invalidPointerValue and hashPointer(p0) mod capacity <= i
+                    do
+                        (equalityTable(i + 1) := equalityTable(i + 2);
+                        i := i + 1);
+                    equalityTable(i + 1) := Data`invalidPointerValue)
+                else
+                    let d : nat = index - hashPointer(p) mod capacity
+                    in
+                        (if distance > d or distance = d and pointer < p then return ;
+                        index := index + 1));
+        return );
 
 end Equality

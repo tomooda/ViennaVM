@@ -252,5 +252,164 @@ operations
             assert(
                 not Equality`basicResize(9, 5),
                 "resize to too small size must fail"));
+    
+    testFindOrAdd_withNewElement : () ==> ()
+    testFindOrAdd_withNewElement() ==
+        let
+            p : Data`Pointer = Memory`alloc(1),
+            n : Data`Pointer = Data`invalidPointerValue
+        in
+            (dcl table:seq of Data`Pointer := [n, n, n, n, n, n, n, n, n, n, n, n];
+            Memory`write_slot(p, 1, Data`int2oid(1));
+            assertEquals(Equality`hashPointer(p) mod 10, 3, "hashPointer");
+            Equality`setEqualityTable(table);
+            Equality`setCapacity(10);
+            Equality`setNumElements(0);
+            assertEquals(Equality`findOrAdd(p), p, "findOrAdd with a new element");
+            assertEquals(
+                Equality`getEqualityTable(),
+                [n, n, n, p, n, n, n, n, n, n, n, n],
+                "equality table has the new element"));
+    
+    testFindOrAdd_withExistingElementNoConflict : () ==> ()
+    testFindOrAdd_withExistingElementNoConflict() ==
+        let
+            p1 : Data`Pointer = Memory`alloc(1),
+            p2 : Data`Pointer = Memory`alloc(1),
+            n : Data`Pointer = Data`invalidPointerValue
+        in
+            (dcl
+                table:seq of Data`Pointer := [n, n, n, p1, n, n, n, n, n, n, n, n, n];
+            Memory`write_slot(p1, 1, Data`int2oid(1));
+            assertEquals(Equality`hashPointer(p1) mod 10, 3, "hashPointer");
+            Memory`write_slot(p2, 1, Data`int2oid(1));
+            assertEquals(Equality`hashPointer(p2) mod 10, 3, "hashPointer");
+            Equality`setEqualityTable(table);
+            Equality`setCapacity(10);
+            Equality`setNumElements(0);
+            assertEquals(
+                Equality`findOrAdd(p2),
+                p1,
+                "findorAdd with an existing element returns the existing element.");
+            assertEquals(
+                Equality`getEqualityTable(), table, "equality table does not change"));
+    
+    testFindOrAdd_withGrow : () ==> ()
+    testFindOrAdd_withGrow() ==
+        let
+            p0 : Data`Pointer = Memory`alloc(1),
+            p1 : Data`Pointer = Memory`alloc(1),
+            p2 : Data`Pointer = Memory`alloc(1),
+            p3 : Data`Pointer = Memory`alloc(1),
+            p4 : Data`Pointer = Memory`alloc(1),
+            n : Data`Pointer = Data`invalidPointerValue
+        in
+            (dcl table:seq of Data`Pointer := [n, p0, p2, p1, p3, n];
+            Memory`write_slot(p0, 1, Data`int2oid(0));
+            assertEquals(Equality`hashPointer(p0) mod 4, 1, "hashPointer");
+            Memory`write_slot(p1, 1, Data`int2oid(1));
+            assertEquals(Equality`hashPointer(p1) mod 4, 3, "hashPointer");
+            Memory`write_slot(p2, 1, Data`int2oid(2));
+            assertEquals(Equality`hashPointer(p2) mod 4, 1, "hashPointer");
+            Memory`write_slot(p3, 1, Data`int2oid(3));
+            assertEquals(Equality`hashPointer(p3) mod 4, 3, "hashPointer");
+            Memory`write_slot(p4, 1, Data`int2oid(4));
+            assertEquals(Equality`hashPointer(p4) mod 4, 1, "hashPointer");
+            Equality`setEqualityTable(table);
+            Equality`setCapacity(4);
+            Equality`setNumElements(4);
+            assertEquals(Equality`findOrAdd(p4), p4, "findOrAdd with a new element");
+            assertEquals(
+                Equality`getCapacity(),
+                6,
+                "the capacity of the equality table should grow to 6");
+            assertEquals(
+                Equality`getEqualityTable(),
+                [n, p0, p3, p1, p4, p2] ^ [n | i in set {1, ..., 64}],
+                "equality table has the new element"));
+    
+    testRemove_newElement : () ==> ()
+    testRemove_newElement() ==
+        let
+            p1 : Data`Pointer = Memory`alloc(1),
+            p2 : Data`Pointer = Memory`alloc(1),
+            n : Data`Pointer = Data`invalidPointerValue
+        in
+            (dcl table:seq of Data`Pointer := [n, n, n, p1, n, n];
+            Memory`write_slot(p1, 1, Data`int2oid(1));
+            assertEquals(Equality`hashPointer(p1) mod 4, 3, "hashPointer");
+            Memory`write_slot(p2, 1, Data`int2oid(2));
+            assertEquals(Equality`hashPointer(p2) mod 4, 1, "hashPointer");
+            Equality`setEqualityTable(table);
+            Equality`setCapacity(4);
+            Equality`setNumElements(1);
+            Equality`remove(p2);
+            assertEquals(
+                Equality`getEqualityTable(),
+                table,
+                "equality table should not change"));
+    
+    testRemove_newElementWithConflict : () ==> ()
+    testRemove_newElementWithConflict() ==
+        let
+            p1 : Data`Pointer = Memory`alloc(1),
+            p3 : Data`Pointer = Memory`alloc(1),
+            n : Data`Pointer = Data`invalidPointerValue
+        in
+            (dcl table:seq of Data`Pointer := [n, n, n, p1, n, n];
+            Memory`write_slot(p1, 1, Data`int2oid(1));
+            assertEquals(Equality`hashPointer(p1) mod 4, 3, "hashPointer");
+            Memory`write_slot(p3, 1, Data`int2oid(3));
+            assertEquals(Equality`hashPointer(p3) mod 4, 3, "hashPointer");
+            Equality`setEqualityTable(table);
+            Equality`setCapacity(4);
+            Equality`setNumElements(1);
+            Equality`remove(p3);
+            assertEquals(
+                Equality`getEqualityTable(),
+                table,
+                "equality table should not change"));
+    
+    testRemove_existingElementWithConflict1 : () ==> ()
+    testRemove_existingElementWithConflict1() ==
+        let
+            p1 : Data`Pointer = Memory`alloc(1),
+            p3 : Data`Pointer = Memory`alloc(1),
+            n : Data`Pointer = Data`invalidPointerValue
+        in
+            (dcl table:seq of Data`Pointer := [n, n, n, p1, p3, n];
+            Memory`write_slot(p1, 1, Data`int2oid(1));
+            assertEquals(Equality`hashPointer(p1) mod 4, 3, "hashPointer");
+            Memory`write_slot(p3, 1, Data`int2oid(3));
+            assertEquals(Equality`hashPointer(p3) mod 4, 3, "hashPointer");
+            Equality`setEqualityTable(table);
+            Equality`setCapacity(4);
+            Equality`setNumElements(1);
+            Equality`remove(p3);
+            assertEquals(
+                Equality`getEqualityTable(),
+                [n, n, n, p1, n, n],
+                "equality table should not have p3"));
+    
+    testRemove_existingElementWithConflict2 : () ==> ()
+    testRemove_existingElementWithConflict2() ==
+        let
+            p1 : Data`Pointer = Memory`alloc(1),
+            p3 : Data`Pointer = Memory`alloc(1),
+            n : Data`Pointer = Data`invalidPointerValue
+        in
+            (dcl table:seq of Data`Pointer := [n, n, n, p1, p3, n];
+            Memory`write_slot(p1, 1, Data`int2oid(1));
+            assertEquals(Equality`hashPointer(p1) mod 4, 3, "hashPointer");
+            Memory`write_slot(p3, 1, Data`int2oid(3));
+            assertEquals(Equality`hashPointer(p3) mod 4, 3, "hashPointer");
+            Equality`setEqualityTable(table);
+            Equality`setCapacity(4);
+            Equality`setNumElements(1);
+            Equality`remove(p1);
+            assertEquals(
+                Equality`getEqualityTable(),
+                [n, n, n, p3, n, n],
+                "equality table should not have p1 and p3 should be in the right place."));
 
 end EqualityTest
